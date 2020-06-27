@@ -1,0 +1,78 @@
+// Copyright 2020 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package pandemic;
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+
+message HealthState {
+  enum State {
+    SUSCEPTIBLE = 0;
+    EXPOSED = 1;
+    INFECTIOUS = 2;
+    RECOVERED = 3;
+    ASYMPTOMATIC = 4;
+    PRE_SYMPTOMATIC_MILD = 5;
+    PRE_SYMPTOMATIC_SEVERE = 6;
+    SYMPTOMATIC_MILD = 7;
+    SYMPTOMATIC_SEVERE = 8;
+    SYMPTOMATIC_HOSPITALIZED = 9;
+    SYMPTOMATIC_CRITICAL = 10;
+    SYMPTOMATIC_HOSPITALIZED_RECOVERING = 11;
+    REMOVED = 12;
+  }
+  State state = 1;
+}
+
+// VisitProto represents a single visit of an agent to a location.
+message VisitProto {
+  int64 location_uuid = 1;
+  int64 agent_uuid = 2;
+  google.protobuf.Timestamp start_time = 3;
+  google.protobuf.Timestamp end_time = 4;
+  HealthState.State health_state = 5;
+}
+
+message ContactReportProto {
+  int64 from_agent_uuid = 1;
+  int64 to_agent_uuid = 2;
+  google.protobuf.Timestamp test_time_requested = 3;
+  google.protobuf.Timestamp test_time_received = 4;
+  bool test_needs_retry = 5;
+  float test_probability = 6;
+}
+
+message ExposureProto {
+  google.protobuf.Timestamp start_time = 1;
+  google.protobuf.Duration duration = 2;
+  float infectivity = 3;
+}
+
+// InfectionOutcomeProto represents a health state change brought about by a
+// visit to a location.
+message InfectionOutcomeProto {
+  enum ExposureType {
+    UNKNOWN = 0;
+    CONTACT = 1;
+    LOCATION = 2;
+  }
+  int64 agent_uuid = 1;
+  ExposureProto exposure = 4;
+  ExposureType exposure_type = 5;
+  int64 source_uuid = 6;
+  reserved 2, 3;  // deprecated fields.
+}

@@ -1,0 +1,180 @@
+// Copyright 2020 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package pandemic;
+
+import "agent_based_epidemic_sim/core/pandemic.proto";
+import "agent_based_epidemic_sim/core/parameter_distribution.proto";
+import "agent_based_epidemic_sim/core/ptts_transition_model.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+
+// Represents a continuous prior distribution for a given parameter.
+message ContinuousPrior {
+  oneof prior {
+    UniformDistribution uniform_prior = 1;
+    GaussianDistribution gaussian_prior = 3;
+    GammaDistribution gamma_prior = 4;
+  }
+  reserved 2;
+}
+
+// Represents a prior for a discrete distribution.
+// A Dirichlet distribution, for example, could be represented with
+// repeated Gamma distributions with unity scales.
+message DiscretePrior {
+  repeated ContinuousPrior prior = 1;
+}
+
+message BusinessSizePrior {
+  // Prior on alpha (shape parameter).
+  ContinuousPrior alpha_prior = 1;
+  // Prior on beta (scale parameter).
+  ContinuousPrior beta_prior = 2;
+}
+
+// A configuration message for all locations to be simulated.
+message LocationDistributions {
+  // The distribution of business sizes.
+  GammaDistribution business_distribution = 1;
+  // The distributions of household sizes in the simulation.
+  DiscreteDistribution household_size_distribution = 3;
+  // TO ADD:
+  // - Disease transmissibility distributions by location type.
+  reserved 2;
+}
+
+// A configuration message for priors of locations.
+message LocationPriors {
+  // The prior on business sizes.
+  BusinessSizePrior business_size_prior = 1;
+  // The prior on household sizes.
+  DiscretePrior household_size_prior = 3;
+  reserved 2;
+}
+
+// Parametrizes the duration of a visit using a Gaussian distribution.
+message VisitDurationDistribution {
+  float mean = 1;
+  float stddev = 2;
+}
+
+// Describes a collection of agents being simulated.
+message AgentProperties {
+  // The within-agent transmission model (uniform for population).
+  PTTSTransitionModelProto ptts_transition_model = 1;
+  // The duration spent in the home, work, and home states, respectively.
+  // TODO: Account for swing and overnight shifts by retaining the last
+  // visited location. Split visits are always OK since state they are
+  // consecutive and coincident, and are resolved in-order by the location
+  // simulator.
+  VisitDurationDistribution departure_distribution = 2;
+  VisitDurationDistribution work_duration_distribution = 3;
+  VisitDurationDistribution arrival_distribution = 4;
+  // The initial health state distributions.
+  DiscreteDistribution initial_health_state_distribution = 6;
+  // TO ADD:
+  // - Infectivity, susceptibility distributions.
+  reserved 5;
+}
+
+message DistancingStageProto {
+  // The time at which this stage of distancing starts.
+  google.protobuf.Timestamp start_time = 1;
+  float essential_worker_fraction = 2;
+}
+
+message DistancingPolicy {
+  // Note that this list always implicitly starts with a stage:
+  // stages {
+  //   start_time: InfinitePast
+  //   essential_worker_fraction: 1.0
+  // }
+  // so an empty list here means no distancing.
+  repeated DistancingStageProto stages = 4;
+
+  reserved 1, 2, 3;  // deprecated fields.
+}
+
+message DistancingPriors {
+  // The distancing prior is expressed as a discrete distribution over
+  // a set of candidate policies.
+  message DistancingProbability {
+    DistancingPolicy policy = 1;
+    float probability = 2;
+  }
+  repeated DistancingProbability distancing_probability = 1;
+  reserved 2, 3, 4, 5;  // deprecated fields.
+}
+
+message PTTSTransitionPrior {
+  message TransitionProbabilitiesPrior {
+    HealthState.State health_state = 1;
+    // There should be an entry in the discrete prior for every possible
+    // detination state.
+    DiscretePrior transition_probability_prior = 2;
+    ContinuousPrior rate_prior = 3;
+  }
+  repeated TransitionProbabilitiesPrior state_transition_diagram_prior = 1;
+}
+
+// A configuration message for priors for agents.
+message AgentPriors {
+  DiscretePrior health_state_prior = 1;
+  PTTSTransitionPrior ptts_transition_prior = 2;
+}
+
+// Defines a home-work simulation.
+message HomeWorkSimulationConfig {
+  // The initial time of the simulation.
+  google.protobuf.Timestamp init_time = 1;
+  // The total population size.
+  int32 population_size = 2;
+  // Properties that describe the simulated agent population.
+  AgentProperties agent_properties = 3;
+  // Properties that describe the locations simulated agents visit.
+  LocationDistributions location_distributions = 4;
+  // A global parameter defining the between-host transmissibility of the
+  // disease.
+  float transmissibility = 5;
+  // Parameters describing the social distancing policy enacted during the
+  // simulation.
+  DistancingPolicy distancing_policy = 8;
+  // Duration of a single epoch (timestep).
+  google.protobuf.Duration step_size = 6;
+  // Number of simulation epochs (timesteps) to simulate.
+  float num_steps = 7;
+}
+
+// Defines a home-work simulation template configuration. Instead of specifying
+// distributions over locations directly, hyperparameter priors for those
+// location distributions are defined instead.
+message HomeWorkSimulationMetaConfig {
+  // The template for configuring a given simulation instance. Note that any
+  // values in location will be replaced according to the priors below.
+  HomeWorkSimulationConfig config_template = 1;
+  // Properties that describe the priors for locations simulated agents visit.
+  LocationPriors location_priors = 2;
+  // Properties that describe the priors for the social distancing policy
+  // adopted by the jurisdiction.
+  DistancingPriors distancing_priors = 5;
+  // Number of realizations to sample (taking into account priors if specified).
+  int32 num_realizations = 3;
+  // Population size prior.
+  ContinuousPrior population_size_prior = 4;
+  // Properties that describe the priors for agent properties.
+  AgentPriors agent_priors = 6;
+}

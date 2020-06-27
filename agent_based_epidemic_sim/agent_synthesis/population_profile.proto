@@ -1,0 +1,66 @@
+// Copyright 2020 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package pandemic;
+
+import "agent_based_epidemic_sim/core/pandemic.proto";
+import "agent_based_epidemic_sim/core/parameter_distribution.proto";
+import "agent_based_epidemic_sim/core/ptts_transition_model.proto";
+
+message VisitDuration {
+  LocationProto.Type location_type = 1;
+  GaussianDistribution gaussian_distribution = 2;
+}
+
+// A message representing a given class of users. May be a function of
+// age or other comorbidities.
+message PopulationProfile {
+  int64 id = 1;
+  // For example, a representation of the value of the joint distribution
+  // corresponding to these parameters, such as age.
+  // TODO: Map descriptor to Person proto.
+  string label = 2;
+  PTTSTransitionModelProto transition_model = 3;
+  float susceptibility = 4;
+  float infectiousness = 5;
+  // The duration spent in visits to each location type.
+  repeated VisitDuration visit_durations = 6;
+}
+
+message PopulationProfiles {
+  repeated PopulationProfile population_profiles = 1;
+}
+
+// Representation of a location.
+message LocationProto {
+  enum Type {
+    UNKNOWN = 0;
+    HOUSEHOLD = 1;
+    BUSINESS = 2;
+  }
+  int64 uuid = 1;
+  Type type = 2;
+  int32 size = 3;
+}
+
+// Representation of an agent.
+// TODO: Move essentialness fraction here.
+message AgentProto {
+  int64 uuid = 1;
+  int64 population_profile_id = 2;
+  HealthState.State initial_health_state = 3;
+  repeated LocationProto locations = 4;
+}

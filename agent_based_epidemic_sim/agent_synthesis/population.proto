@@ -1,0 +1,97 @@
+// Copyright 2020 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package pandemic;
+
+enum Sex {
+  SEX_UNKNOWN = 0;
+  MALE = 1;
+  FEMALE = 2;
+}
+
+message Person {
+  int32 age = 1;
+  Sex sex = 2;
+
+  // More fields might come here:
+  // race, work_place
+}
+
+message Household {
+  enum Type {
+    UNSPECIFIED = 0;
+
+    HOUSEHOLD = 1;  // Family or non-family household
+
+    // Group Quarters: Institutional -- keep the numbering!
+    GQ_INST_CORR_ADULTS = 7;    // Correctional facilities for adults
+    GQ_INST_CORR_JUVENILE = 8;  // Juvenile facilities
+    GQ_INST_NURSING = 9;        // Nursing facilities/skilled-nursing facilities
+    GQ_INST_OTHER = 10;         // Other institutional
+
+    // Group Quarters: Noninstitutional -- keep the numbering!
+    GQ_NONINST_COLLEGE = 11;   // College/university student housing
+    GQ_NONINST_MILITARY = 12;  // Military quarters
+    GQ_NONINST_OTHER = 13;     // Other noninstitutional
+  }
+
+  // The first person in this household is the Householder according to
+  // Census Terminology.
+  repeated Person person = 1;
+
+  // This is the US Census Block-level geoid like 110010001001005, see below.
+  string census_geoid = 10;
+
+  // When the synthetic person is taken from the Public Use MicroSample (PUMS),
+  // this is the housing identifier SERIALNO in the PUMS file.
+  int64 pums_serialno = 11;
+
+  // The household type.
+  Type type = 12;
+
+  // Note the "pums_*" names below correspond to the PUMS Data Dictionary:
+  // https://www2.census.gov/programs-surveys/acs/tech_docs/pums/data_dict/PUMSDataDict10.pdf
+
+  // The number of bedrooms in the household. -1 for the Group Quarters.
+  int32 pums_bds = 13;
+
+  // The number of cars avaiable in the household. -1 for the Group Quarters.
+  int32 pums_veh = 14;
+
+  // Household income (2010 dollars) for last 12 months. -1 for Group Quarters.
+  int32 pums_hincp = 15;
+}
+
+// Selector for the US Census data. The data itself is stored as
+// census_pb2.Entry protos in recordio files. Use this message to designate the
+// US region of interest for the synthetic population.
+message UsCensusLocator {
+  // The GEOID is a concatenation of STATE, COUNTY, TRACT and BLOCK, e.g.
+  //   STATE=11, COUNTY=001, TRACT=000100, BLOCK=1005 => GEOID=110010001001005
+  // The thousand's digit of the BLOCK is also known as a BLOCK GROUP.
+  // One can specify the location through geoid as follows:
+  //   - at the BLOCK level,          e.g. 110010001001005
+  //   - or at the BLOCK GROUP level, e.g. 110010001001
+  //   - or at the TRACT level,       e.g. 11001000100
+  //   - or at the COUNTY level,      e.g. 11001
+  //   - or at the STATE level,       e.g. 11
+  // GROUP level, e.g. 110010001001 or at TRACT or COUNTY or STATE levels.
+  // This value appears as geoid10 in GeoJSON and as geoid in the census.proto.
+  // The relevant values can be queried US Cesus's Geocoder and TIGERweb, see
+  // https://tigerweb.geo.census.gov/tigerweb/
+  // https://www2.census.gov/about/training-workshops/2016/2016-07-13-geo-pres.pdf
+  repeated string geoid = 1;  // e.g. 110010001001005
+}

@@ -1,0 +1,63 @@
+// Copyright 2020 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package pandemic;
+
+import "google/protobuf/any.proto";
+
+message GaussianDistribution {
+  float mean = 1;
+  float stddev = 2;
+}
+
+message UniformDistribution {
+  float min = 1;
+  float max = 2;
+}
+
+message GammaDistribution {
+  float alpha = 1;
+  float beta = 2;
+}
+
+// A discrete distribution of values.
+message DiscreteDistribution {
+  message Bucket {
+    // The count or probability for this bucket. Counts are normalized by the
+    // total for a location to obtain a probability.
+    double count = 1;
+
+    // The value for this bucket.
+    oneof value {
+      int64 int_value = 2;
+      string string_value = 3;
+      // An arbitrary proto describing this bucket.
+      google.protobuf.Any proto_value = 4;
+    }
+  }
+  // The set of sizes and their probabilities for this location.
+  repeated Bucket buckets = 1;
+}
+
+// A discrete distribution of values for a given group.
+// Represents for example the distribution of number of employees at businesses
+// in a county.
+message GroupedDiscreteDistribution {
+  // The ID of this group, e.g. S2 cell or FIPS region codes.
+  string group_id = 1;
+  // The discrete distribution.
+  DiscreteDistribution distribution = 2;
+}
