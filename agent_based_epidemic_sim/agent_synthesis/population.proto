@@ -26,8 +26,47 @@ message Person {
   int32 age = 1;
   Sex sex = 2;
 
-  // More fields might come here:
-  // race, work_place
+  // Note the "pums_*" names below correspond to the PUMS Data Dictionary:
+  // https://www2.census.gov/programs-surveys/acs/tech_docs/pums/data_dict/PUMSDataDict10.pdf
+
+  // School enrollment.
+  string pums_sch = 10;
+
+  // Place of work PUMA.
+  string pums_powpuma = 11;
+
+  // Place of work - State or foreign country recode.
+  string pums_powsp = 12;
+
+  // Time of departure for work - hour and minute.
+  string pums_jwdp = 13;
+
+  // Time of arrival at work - hour and minute.
+  string pums_jwap = 14;
+
+  // Usual hours worked per week past 12 months.
+  string pums_wkhp = 15;
+
+  // Travel time to work, minutes.
+  string pums_jwmnp = 16;
+
+  // Vehicle occupancy.
+  string pums_jwrip = 17;
+
+  // Means of transportation to work.
+  string pums_jwtr = 18;
+
+  // Industry recode.
+  string pums_indp07 = 19;
+
+  // NAICS Industry code.
+  string pums_naicsp07 = 20;
+
+  // Occupation recode 2010.
+  string pums_occp10 = 21;
+
+  // SOC Occupation code 2010.
+  string pums_socp10 = 22;
 }
 
 message Household {
