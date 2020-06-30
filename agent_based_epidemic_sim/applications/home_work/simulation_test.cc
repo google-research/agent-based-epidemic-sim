@@ -25,7 +25,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-namespace pandemic {
+namespace abesim {
 namespace {
 constexpr char kConfigPath[] =
     "agent_based_epidemic_sim/applications/home_work/"
@@ -65,4 +65,4 @@ TEST(SimulationTest, RunsSimulation) {
 }
 
 }  // namespace
-}  // namespace pandemic
+}  // namespace abesim

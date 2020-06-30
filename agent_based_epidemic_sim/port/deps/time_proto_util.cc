@@ -21,7 +21,7 @@
 #include "agent_based_epidemic_sim/port/deps/statusor.h"
 #include "google/protobuf/timestamp.pb.h"
 
-namespace pandemic {
+namespace abesim {
 
 namespace {
 
@@ -96,4 +96,4 @@ StatusOr<absl::Time> DecodeGoogleApiProto(
          absl::Nanoseconds(proto.nanos());
 }
 
-}  // namespace pandemic
+}  // namespace abesim

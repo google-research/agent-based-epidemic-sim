@@ -30,7 +30,7 @@
 #include "agent_based_epidemic_sim/core/visit.h"
 #include "agent_based_epidemic_sim/core/visit_generator.h"
 
-namespace pandemic {
+namespace abesim {
 
 // An agent that implements a stochastic SEIR model.
 class SEIRAgent : public Agent {
@@ -167,6 +167,6 @@ class SEIRAgent : public Agent {
   const PublicPolicy* const public_policy_;
 };
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_SEIR_AGENT_H_

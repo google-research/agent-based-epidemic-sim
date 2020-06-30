@@ -21,7 +21,7 @@
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 
-namespace pandemic {
+namespace abesim {
 namespace file {
 
 // An interface for writing files.
@@ -41,6 +41,6 @@ std::unique_ptr<FileWriter> OpenOrDie(absl::string_view file_name);
 absl::Status GetContents(absl::string_view file_name, std::string* output);
 
 }  // namespace file
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  //  THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_FILE_UTILS_H_

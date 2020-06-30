@@ -14,11 +14,11 @@
 
 #include "agent_based_epidemic_sim/core/timestep.h"
 
-namespace pandemic {
+namespace abesim {
 
 void Timestep::Advance() {
   start_ += duration_;
   end_ += duration_;
 }
 
-}  // namespace pandemic
+}  // namespace abesim

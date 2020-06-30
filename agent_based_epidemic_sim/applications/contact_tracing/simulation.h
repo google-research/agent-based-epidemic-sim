@@ -21,13 +21,13 @@
 #include "agent_based_epidemic_sim/applications/home_work/location_type.h"
 #include "agent_based_epidemic_sim/core/public_policy.h"
 
-namespace pandemic {
+namespace abesim {
 
 // Runs a home-work-home simulation from config.
 void RunSimulation(const std::string& output_file_path,
                    const ContactTracingHomeWorkSimulationConfig& config,
                    int num_workers);
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_APPLICATIONS_CONTACT_TRACING_SIMULATION_H_

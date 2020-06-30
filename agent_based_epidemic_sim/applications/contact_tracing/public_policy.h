@@ -22,11 +22,11 @@
 #include "agent_based_epidemic_sim/core/public_policy.h"
 #include "agent_based_epidemic_sim/port/statusor.h"
 
-namespace pandemic {
+namespace abesim {
 
 StatusOr<std::unique_ptr<PublicPolicy>> CreateTracingPolicy(
     const TracingPolicyProto& proto, LocationTypeFn location_type);
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_APPLICATIONS_CONTACT_TRACING_PUBLIC_POLICY_H_

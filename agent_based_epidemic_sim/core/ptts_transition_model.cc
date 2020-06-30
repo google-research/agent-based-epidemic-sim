@@ -17,7 +17,7 @@
 #include "absl/time/time.h"
 #include "agent_based_epidemic_sim/core/event.h"
 
-namespace pandemic {
+namespace abesim {
 namespace {
 
 PTTSTransitionModel::TransitionProbabilities FromProto(
@@ -61,4 +61,4 @@ HealthTransition PTTSTransitionModel::GetNextHealthTransition(
   return next_transition;
 }
 
-}  // namespace pandemic
+}  // namespace abesim

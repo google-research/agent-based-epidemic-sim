@@ -20,7 +20,7 @@
 #include "agent_based_epidemic_sim/core/location.h"
 #include "agent_based_epidemic_sim/core/uuid_generator.h"
 
-namespace pandemic {
+namespace abesim {
 
 // Builds a location.
 class LocationDiscreteEventSimulatorBuilder {
@@ -35,6 +35,6 @@ class LocationDiscreteEventSimulatorBuilder {
   std::unique_ptr<UuidGenerator> uuid_generator_;
 };
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_LOCATION_DISCRETE_EVENT_SIMULATOR_BUILDER_H_

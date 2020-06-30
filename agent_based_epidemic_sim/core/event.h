@@ -24,7 +24,7 @@
 #include "agent_based_epidemic_sim/core/integral_types.h"
 #include "agent_based_epidemic_sim/core/visit.h"
 
-namespace pandemic {
+namespace abesim {
 
 // An event representing a HealthState transition.
 struct HealthTransition {
@@ -233,6 +233,6 @@ struct ContactReport {
 static_assert(absl::is_trivially_copy_constructible<ContactReport>::value,
               "ContactReport must be trivially copyable.");
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_EVENT_H_

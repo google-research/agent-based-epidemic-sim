@@ -21,7 +21,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-namespace pandemic {
+namespace abesim {
 namespace {
 
 using ::testing::AnyOf;
@@ -68,4 +68,4 @@ TEST(DiscreteDistributionSamplerTest, CreatesSingleProtoDistribution) {
 }
 
 }  // namespace
-}  // namespace pandemic
+}  // namespace abesim

@@ -25,7 +25,7 @@
 #include "agent_based_epidemic_sim/core/public_policy.h"
 #include "agent_based_epidemic_sim/port/time_proto_util.h"
 
-namespace pandemic {
+namespace abesim {
 
 namespace {
 
@@ -164,4 +164,4 @@ StatusOr<std::unique_ptr<TogglePolicyGenerator>> NewPolicyGenerator(
   return absl::WrapUnique(new TogglePolicyGenerator(std::move(tiers)));
 }
 
-}  // namespace pandemic
+}  // namespace abesim

@@ -16,7 +16,7 @@
 
 #include "absl/memory/memory.h"
 
-namespace pandemic {
+namespace abesim {
 
 namespace {
 
@@ -59,4 +59,4 @@ std::unique_ptr<PublicPolicy> NewNoOpPolicy() {
   return absl::make_unique<NullPublicPolicy>();
 }
 
-}  // namespace pandemic
+}  // namespace abesim

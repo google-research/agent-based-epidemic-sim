@@ -17,7 +17,7 @@
 #include "absl/random/uniform_real_distribution.h"
 #include "agent_based_epidemic_sim/core/duration_specified_visit_generator.h"
 
-namespace pandemic {
+namespace abesim {
 namespace {
 constexpr float kEpsilon = 1e-5;
 }  // namespace
@@ -46,4 +46,4 @@ void IndexedLocationVisitGenerator::GenerateVisits(
                                    contact_summary, visits);
 }
 
-}  // namespace pandemic
+}  // namespace abesim

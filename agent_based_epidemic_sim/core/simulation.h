@@ -22,7 +22,7 @@
 #include "agent_based_epidemic_sim/core/location.h"
 #include "agent_based_epidemic_sim/core/observer.h"
 
-namespace pandemic {
+namespace abesim {
 
 // Simulation is the primary interface for managing pandemic simulations.
 // Simulations are not threadsafe, their methods should not be called
@@ -64,6 +64,6 @@ std::unique_ptr<Simulation> ParallelDistributedSimulation(
     std::vector<std::unique_ptr<Location>> locations, int num_local_workers,
     DistributedManager* distributed_manager);
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_SIMULATION_H_

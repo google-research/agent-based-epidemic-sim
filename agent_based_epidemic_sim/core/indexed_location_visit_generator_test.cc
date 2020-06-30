@@ -19,7 +19,7 @@
 #include "agent_based_epidemic_sim/core/visit.h"
 #include "gtest/gtest.h"
 
-namespace pandemic {
+namespace abesim {
 namespace {
 
 absl::Duration VisitDuration(const Visit& visit) {
@@ -59,4 +59,4 @@ TEST(IndexedLocationVisitGeneratorTest, GeneratesVisits) {
 }
 
 }  // namespace
-}  // namespace pandemic
+}  // namespace abesim

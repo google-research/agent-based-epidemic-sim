@@ -14,7 +14,7 @@
 
 #include "agent_based_epidemic_sim/core/observer.h"
 
-namespace pandemic {
+namespace abesim {
 
 void ObserverManager::AddFactory(ObserverFactoryBase* factory) {
   factories_.insert(factory);
@@ -58,4 +58,4 @@ void ObserverShard::Observe(const Location& location,
   }
 }
 
-}  // namespace pandemic
+}  // namespace abesim

@@ -25,7 +25,7 @@
 #include "agent_based_epidemic_sim/core/pandemic.pb.h"
 #include "agent_based_epidemic_sim/core/timestep.h"
 
-namespace pandemic {
+namespace abesim {
 
 // PublicPolicy represents government enacted policy choices as they apply to a
 // particular agent.
@@ -138,6 +138,6 @@ class PolicyGenerator {
 // Returns a policy that never adjusts visits.
 std::unique_ptr<PublicPolicy> NewNoOpPolicy();
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_PUBLIC_POLICY_H_

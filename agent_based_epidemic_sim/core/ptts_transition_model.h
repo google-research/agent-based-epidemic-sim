@@ -26,7 +26,7 @@
 #include "agent_based_epidemic_sim/core/transition_model.h"
 #include "agent_based_epidemic_sim/core/visit.h"
 
-namespace pandemic {
+namespace abesim {
 
 // Models transition between health states for a given disease by implementing
 // a probabilistic timed transition model (PTTS) finite state machine.
@@ -78,6 +78,6 @@ class PTTSTransitionModel : public TransitionModel {
   absl::BitGen gen_;
 };
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_PTTS_TRANSITION_MODEL_H_

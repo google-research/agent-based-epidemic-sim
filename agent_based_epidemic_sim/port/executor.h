@@ -20,7 +20,7 @@
 #include <functional>
 #include <memory>
 
-namespace pandemic {
+namespace abesim {
 
 // An Execution allows for running functions in multiple threads.
 class Execution {
@@ -46,6 +46,6 @@ class Executor {
 
 std::unique_ptr<Executor> NewExecutor(int max_parallelism);
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_EXECUTOR_H_

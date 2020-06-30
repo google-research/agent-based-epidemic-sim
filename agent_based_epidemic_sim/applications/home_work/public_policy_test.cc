@@ -23,7 +23,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-namespace pandemic {
+namespace abesim {
 namespace {
 
 absl::Time TestDay(int day) {
@@ -129,4 +129,4 @@ TEST(PublicPolicyTest, ZeroStagePolicy) {
 }
 
 }  // namespace
-}  // namespace pandemic
+}  // namespace abesim

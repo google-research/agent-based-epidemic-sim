@@ -25,7 +25,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-namespace pandemic {
+namespace abesim {
 namespace {
 
 class MemFileWriterImpl : public file::FileWriter {
@@ -278,4 +278,4 @@ TEST(HomeWorkSimulationObserverTest, CorrectValuesForObservations) {
 }
 
 }  // namespace
-}  // namespace pandemic
+}  // namespace abesim

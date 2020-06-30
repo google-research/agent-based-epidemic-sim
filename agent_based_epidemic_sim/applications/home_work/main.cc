@@ -25,7 +25,7 @@ ABSL_FLAG(std::string, simulation_config_pbtxt_path, "",
 ABSL_FLAG(int, num_workers, 1, "The number of thread workers to use.");
 ABSL_FLAG(std::string, output_file_path, "", "The output file path.");
 
-namespace pandemic {
+namespace abesim {
 
 int Main(int argc, char** argv) {
   std::string contents;
@@ -39,10 +39,10 @@ int Main(int argc, char** argv) {
   return 0;
 }
 
-}  // namespace pandemic
+}  // namespace abesim
 
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
   absl::ParseCommandLine(argc, argv);
-  return pandemic::Main(argc, argv);
+  return abesim::Main(argc, argv);
 }

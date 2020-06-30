@@ -19,7 +19,7 @@
 #include "absl/random/random.h"
 #include "agent_based_epidemic_sim/core/event.h"
 
-namespace pandemic {
+namespace abesim {
 
 namespace {
 
@@ -92,4 +92,4 @@ std::unique_ptr<Location> NewGraphLocation(
                                           std::move(graph));
 }
 
-}  // namespace pandemic
+}  // namespace abesim

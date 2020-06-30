@@ -29,7 +29,7 @@
 #include "agent_based_epidemic_sim/port/logging.h"
 #include "google/protobuf/any.pb.h"
 
-namespace pandemic {
+namespace abesim {
 
 // Creates a sampler based on non-uniform discrete distributions.
 // Assumes the number of buckets is relatively small.
@@ -117,6 +117,6 @@ inline auto DiscreteDistributionSampler<std::string>::ValueGetter() {
   };
 }
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_DISTRIBUTION_SAMPLER_H_

@@ -22,7 +22,7 @@
 #include "agent_based_epidemic_sim/core/integral_types.h"
 #include "agent_based_epidemic_sim/core/location.h"
 
-namespace pandemic {
+namespace abesim {
 
 // Create a new location that samples edges from the given graph of possible
 // agent  connections.  drop_probability indicates the probability that a given
@@ -31,6 +31,6 @@ std::unique_ptr<Location> NewGraphLocation(
     int64 uuid, float drop_probability,
     std::vector<std::pair<int64, int64>> graph);
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_APPLICATIONS_CONTACT_TRACING_GRAPH_LOCATION_H_

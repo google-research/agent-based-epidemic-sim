@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package pandemic;
+package abesim;
 
 enum Sex {
   SEX_UNKNOWN = 0;

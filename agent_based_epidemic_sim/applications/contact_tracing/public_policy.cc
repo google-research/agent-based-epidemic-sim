@@ -24,7 +24,7 @@
 #include "agent_based_epidemic_sim/core/public_policy.h"
 #include "agent_based_epidemic_sim/port/time_proto_util.h"
 
-namespace pandemic {
+namespace abesim {
 
 namespace {
 
@@ -160,4 +160,4 @@ StatusOr<std::unique_ptr<PublicPolicy>> CreateTracingPolicy(
   return absl::make_unique<TracingPolicy>(location_type, config);
 }
 
-}  // namespace pandemic
+}  // namespace abesim

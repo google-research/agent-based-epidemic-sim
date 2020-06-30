@@ -93,7 +93,7 @@
 // by multiple threads. Similarly ObserverFactory methods will not be called
 // concurrently by multiple threads.
 
-namespace pandemic {
+namespace abesim {
 
 class Agent;
 class Location;
@@ -222,6 +222,6 @@ void ObserverShard::RegisterObserver(Observer* observer) {
   }
 }
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_OBSERVER_H_

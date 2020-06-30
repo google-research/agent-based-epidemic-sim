@@ -23,7 +23,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-namespace pandemic {
+namespace abesim {
 namespace {
 
 using testing::Eq;
@@ -230,4 +230,4 @@ TEST_F(PublicPolicyTest, GetsContactRetentionDuration) {
 }
 
 }  // namespace
-}  // namespace pandemic
+}  // namespace abesim

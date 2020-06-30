@@ -16,11 +16,11 @@
 
 #include <atomic>
 
-namespace pandemic {
+namespace abesim {
 
 int64 ShardedGlobalIdUuidGenerator::GenerateUuid() const {
   static std::atomic<uint32> local_id = 0;
   return static_cast<int64>(uuid_shard_) << 48 | (local_id++);
 }
 
-}  // namespace pandemic
+}  // namespace abesim

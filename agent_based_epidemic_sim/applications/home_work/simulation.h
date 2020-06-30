@@ -22,7 +22,7 @@
 #include "agent_based_epidemic_sim/applications/home_work/location_type.h"
 #include "agent_based_epidemic_sim/core/public_policy.h"
 
-namespace pandemic {
+namespace abesim {
 
 // TODO: Encapsulate policy generator and location type context here.
 struct SimulationContext {
@@ -49,6 +49,6 @@ void RunSimulation(
         get_policy_generator,
     int num_workers, const SimulationContext& context);
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_APPLICATIONS_HOME_WORK_SIMULATION_H_

@@ -34,7 +34,7 @@
 #include "agent_based_epidemic_sim/port/deps/statusor.h"
 #include "agent_based_epidemic_sim/port/logging.h"
 
-namespace pandemic {
+namespace abesim {
 
 // Creates a status based on an original_status, but enriched with additional
 // information.  The builder implicitly converts to Status and StatusOr<T>
@@ -69,17 +69,17 @@ class ABSL_MUST_USE_RESULT StatusBuilder {
   // it will use `location` as the location from which the log message occurs.
   explicit StatusBuilder(
       absl::StatusCode code,
-      pandemic::SourceLocation location = SourceLocation::current());
+      abesim::SourceLocation location = SourceLocation::current());
 
   // Creates a `StatusBuilder` based on an original status.  If logging is
   // enabled, it will use `location` as the location from which the log message
   // occurs.
   explicit StatusBuilder(
       const absl::Status& original_status,
-      pandemic::SourceLocation location = SourceLocation::current());
+      abesim::SourceLocation location = SourceLocation::current());
   explicit StatusBuilder(
       absl::Status&& original_status,
-      pandemic::SourceLocation location = SourceLocation::current());
+      abesim::SourceLocation location = SourceLocation::current());
 
   StatusBuilder(const StatusBuilder& sb);
   StatusBuilder& operator=(const StatusBuilder& sb);
@@ -268,7 +268,7 @@ class ABSL_MUST_USE_RESULT StatusBuilder {
   operator StatusOr<T>() &&;  // NOLINT
 
   // Returns the source location used to create this builder.
-  pandemic::SourceLocation source_location() const;
+  abesim::SourceLocation source_location() const;
 
  private:
   // Specifies how to join the error message in the original status and any
@@ -331,7 +331,7 @@ class ABSL_MUST_USE_RESULT StatusBuilder {
   // The status that the result will be based on.  Can be modified by Attach().
   absl::Status status_;
 
-  pandemic::SourceLocation location_;
+  abesim::SourceLocation location_;
 
   // nullptr if the result status will be OK.  Extra fields moved to the heap to
   // minimize stack space.
@@ -341,48 +341,48 @@ class ABSL_MUST_USE_RESULT StatusBuilder {
 // Each of the functions below creates StatusBuilder with a canonical error.
 // The error code of the StatusBuilder matches the name of the function.
 StatusBuilder AbortedErrorBuilder(
-    pandemic::SourceLocation location = SourceLocation::current());
+    abesim::SourceLocation location = SourceLocation::current());
 StatusBuilder AlreadyExistsErrorBuilder(
-    pandemic::SourceLocation location = SourceLocation::current());
+    abesim::SourceLocation location = SourceLocation::current());
 StatusBuilder CancelledErrorBuilder(
-    pandemic::SourceLocation location = SourceLocation::current());
+    abesim::SourceLocation location = SourceLocation::current());
 StatusBuilder DataLossErrorBuilder(
-    pandemic::SourceLocation location = SourceLocation::current());
+    abesim::SourceLocation location = SourceLocation::current());
 StatusBuilder DeadlineExceededErrorBuilder(
-    pandemic::SourceLocation location = SourceLocation::current());
+    abesim::SourceLocation location = SourceLocation::current());
 StatusBuilder FailedPreconditionErrorBuilder(
-    pandemic::SourceLocation location = SourceLocation::current());
+    abesim::SourceLocation location = SourceLocation::current());
 StatusBuilder InternalErrorBuilder(
-    pandemic::SourceLocation location = SourceLocation::current());
+    abesim::SourceLocation location = SourceLocation::current());
 StatusBuilder InvalidArgumentErrorBuilder(
-    pandemic::SourceLocation location = SourceLocation::current());
+    abesim::SourceLocation location = SourceLocation::current());
 StatusBuilder NotFoundErrorBuilder(
-    pandemic::SourceLocation location = SourceLocation::current());
+    abesim::SourceLocation location = SourceLocation::current());
 StatusBuilder OutOfRangeErrorBuilder(
-    pandemic::SourceLocation location = SourceLocation::current());
+    abesim::SourceLocation location = SourceLocation::current());
 StatusBuilder PermissionDeniedErrorBuilder(
-    pandemic::SourceLocation location = SourceLocation::current());
+    abesim::SourceLocation location = SourceLocation::current());
 StatusBuilder UnauthenticatedErrorBuilder(
-    pandemic::SourceLocation location = SourceLocation::current());
+    abesim::SourceLocation location = SourceLocation::current());
 StatusBuilder ResourceExhaustedErrorBuilder(
-    pandemic::SourceLocation location = SourceLocation::current());
+    abesim::SourceLocation location = SourceLocation::current());
 StatusBuilder UnavailableErrorBuilder(
-    pandemic::SourceLocation location = SourceLocation::current());
+    abesim::SourceLocation location = SourceLocation::current());
 StatusBuilder UnimplementedErrorBuilder(
-    pandemic::SourceLocation location = SourceLocation::current());
+    abesim::SourceLocation location = SourceLocation::current());
 StatusBuilder UnknownErrorBuilder(
-    pandemic::SourceLocation location = SourceLocation::current());
+    abesim::SourceLocation location = SourceLocation::current());
 
 inline StatusBuilder::StatusBuilder(absl::StatusCode code,
-                                    pandemic::SourceLocation location)
+                                    abesim::SourceLocation location)
     : status_(code, ""), location_(location) {}
 
 inline StatusBuilder::StatusBuilder(const absl::Status& original_status,
-                                    pandemic::SourceLocation location)
+                                    abesim::SourceLocation location)
     : status_(original_status), location_(location) {}
 
 inline StatusBuilder::StatusBuilder(absl::Status&& original_status,
-                                    pandemic::SourceLocation location)
+                                    abesim::SourceLocation location)
     : status_(std::move(original_status)), location_(location) {}
 
 inline StatusBuilder::StatusBuilder(const StatusBuilder& sb)
@@ -489,7 +489,7 @@ inline StatusBuilder::operator StatusOr<T>() && {
   return std::move(*this).CreateStatusAndConditionallyLog();
 }
 
-inline pandemic::SourceLocation StatusBuilder::source_location() const {
+inline abesim::SourceLocation StatusBuilder::source_location() const {
   return location_;
 }
 
@@ -501,6 +501,6 @@ StatusBuilder& StatusBuilder::Attach(const T& data) {
   return *this;
 }
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_STATUS_BUILDER_H_

@@ -23,7 +23,7 @@
 #include "agent_based_epidemic_sim/core/public_policy.h"
 #include "agent_based_epidemic_sim/port/statusor.h"
 
-namespace pandemic {
+namespace abesim {
 
 class TogglePolicyGenerator : public PolicyGenerator {
  public:
@@ -57,6 +57,6 @@ class TogglePolicyGenerator : public PolicyGenerator {
 StatusOr<std::unique_ptr<TogglePolicyGenerator>> NewPolicyGenerator(
     const DistancingPolicy& config, LocationTypeFn location_type);
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_APPLICATIONS_HOME_WORK_PUBLIC_POLICY_H_

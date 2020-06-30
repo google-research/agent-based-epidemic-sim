@@ -18,7 +18,7 @@
 #define THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_STATUS_MATCHERS_H_
 
 // Testing utilities for working with ::absl::Status and
-// ::pandemic::StatusOr.
+// ::abesim::StatusOr.
 //
 //
 // Defines the following utilities:
@@ -68,9 +68,9 @@
 //     using ::testing::HasSubstr;
 //     using ::testing::MatchesRegex;
 //     using ::testing::Ne;
-//     using ::pandemic::testing::StatusIs;
+//     using ::abesim::testing::StatusIs;
 //     using ::testing::_;
-//     using ::pandemic::StatusOr;
+//     using ::abesim::StatusOr;
 //     StatusOr<std::string> GetName(int id);
 //     ...
 //
@@ -102,7 +102,7 @@
 //   IsOk()
 //   ===============
 //
-//   Matches a absl::Status or pandemic::StatusOr<T> value
+//   Matches a absl::Status or abesim::StatusOr<T> value
 //   whose status value is StatusCode::kOK.
 //   Equivalent to 'StatusIs(StatusCode::kOK)'.
 //   Example:
@@ -128,7 +128,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-namespace pandemic {
+namespace abesim {
 namespace internal_status {
 
 inline const absl::Status& GetStatus(const absl::Status& status) {
@@ -136,7 +136,7 @@ inline const absl::Status& GetStatus(const absl::Status& status) {
 }
 
 template <typename T>
-inline const absl::Status& GetStatus(const ::pandemic::StatusOr<T>& status) {
+inline const absl::Status& GetStatus(const ::abesim::StatusOr<T>& status) {
   return status.status();
 }
 
@@ -307,7 +307,7 @@ class IsOkMatcher {
 };
 
 void AddFatalFailure(absl::string_view expression,
-                     const ::pandemic::StatusBuilder& builder);
+                     const ::abesim::StatusBuilder& builder);
 
 }  // namespace internal_status
 
@@ -344,13 +344,11 @@ inline internal_status::IsOkMatcher IsOk() {
   return internal_status::IsOkMatcher();
 }
 
-}  // namespace pandemic
+}  // namespace abesim
 
 // Macros for testing the results of functions that return absl::Status or
-// pandemic::StatusOr<T> (for any type T).
-#define PANDEMIC_EXPECT_OK(expression) \
-  EXPECT_THAT(expression, ::pandemic::IsOk())
-#define PANDEMIC_ASSERT_OK(expression) \
-  ASSERT_THAT(expression, ::pandemic::IsOk())
+// abesim::StatusOr<T> (for any type T).
+#define PANDEMIC_EXPECT_OK(expression) EXPECT_THAT(expression, ::abesim::IsOk())
+#define PANDEMIC_ASSERT_OK(expression) ASSERT_THAT(expression, ::abesim::IsOk())
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_STATUS_MATCHERS_H_

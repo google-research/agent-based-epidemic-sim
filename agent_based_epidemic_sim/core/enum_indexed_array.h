@@ -21,7 +21,7 @@
 
 #include "absl/meta/type_traits.h"
 
-namespace pandemic {
+namespace abesim {
 
 // An std::array variant that can be indexed with enum class types.
 template <typename T, typename Enum, size_t kSize>
@@ -44,6 +44,6 @@ struct EnumIndexedArray : public std::array<T, kSize> {
   }
 };
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_ENUM_INDEXED_ARRAY_H_

@@ -77,7 +77,7 @@
 #include "agent_based_epidemic_sim/port/deps/statusor_internals.h"
 #include "agent_based_epidemic_sim/port/logging.h"
 
-namespace pandemic {
+namespace abesim {
 
 // Returned StatusOr objects may not be ignored.
 template <typename T>
@@ -533,6 +533,6 @@ void StatusOr<T>::IgnoreError() const {
   // no-op
 }
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_STATUSOR_H_

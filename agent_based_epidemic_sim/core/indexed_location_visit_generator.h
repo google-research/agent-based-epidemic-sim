@@ -24,7 +24,7 @@
 #include "agent_based_epidemic_sim/core/visit.h"
 #include "agent_based_epidemic_sim/core/visit_generator.h"
 
-namespace pandemic {
+namespace abesim {
 
 // Generates visits to a set of locations with a random duration.
 // All locations are covered in each call to GenerateVisit, with the total
@@ -45,6 +45,6 @@ class IndexedLocationVisitGenerator : public VisitGenerator {
   std::unique_ptr<VisitGenerator> visit_generator_;
 };
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_INDEXED_LOCATION_VISIT_GENERATOR_H_

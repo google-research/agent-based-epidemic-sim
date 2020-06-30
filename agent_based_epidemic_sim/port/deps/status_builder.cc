@@ -21,7 +21,7 @@
 #include "absl/strings/str_cat.h"
 #include "agent_based_epidemic_sim/port/logging.h"
 
-namespace pandemic {
+namespace abesim {
 
 static void CopyStatusPayloads(const absl::Status& from, absl::Status* to) {
   from.ForEachPayload([to](absl::string_view type_url, absl::Cord payload) {
@@ -91,69 +91,68 @@ absl::Status StatusBuilder::CreateStatusAndConditionallyLog() && {
   return result;
 }
 
-StatusBuilder AbortedErrorBuilder(pandemic::SourceLocation location) {
+StatusBuilder AbortedErrorBuilder(abesim::SourceLocation location) {
   return StatusBuilder(absl::StatusCode::kAborted, location);
 }
 
-StatusBuilder AlreadyExistsErrorBuilder(pandemic::SourceLocation location) {
+StatusBuilder AlreadyExistsErrorBuilder(abesim::SourceLocation location) {
   return StatusBuilder(absl::StatusCode::kAlreadyExists, location);
 }
 
-StatusBuilder CancelledErrorBuilder(pandemic::SourceLocation location) {
+StatusBuilder CancelledErrorBuilder(abesim::SourceLocation location) {
   return StatusBuilder(absl::StatusCode::kCancelled, location);
 }
 
-StatusBuilder DataLossErrorBuilder(pandemic::SourceLocation location) {
+StatusBuilder DataLossErrorBuilder(abesim::SourceLocation location) {
   return StatusBuilder(absl::StatusCode::kDataLoss, location);
 }
 
-StatusBuilder DeadlineExceededErrorBuilder(pandemic::SourceLocation location) {
+StatusBuilder DeadlineExceededErrorBuilder(abesim::SourceLocation location) {
   return StatusBuilder(absl::StatusCode::kDeadlineExceeded, location);
 }
 
-StatusBuilder FailedPreconditionErrorBuilder(
-    pandemic::SourceLocation location) {
+StatusBuilder FailedPreconditionErrorBuilder(abesim::SourceLocation location) {
   return StatusBuilder(absl::StatusCode::kFailedPrecondition, location);
 }
 
-StatusBuilder InternalErrorBuilder(pandemic::SourceLocation location) {
+StatusBuilder InternalErrorBuilder(abesim::SourceLocation location) {
   return StatusBuilder(absl::StatusCode::kInternal, location);
 }
 
-StatusBuilder InvalidArgumentErrorBuilder(pandemic::SourceLocation location) {
+StatusBuilder InvalidArgumentErrorBuilder(abesim::SourceLocation location) {
   return StatusBuilder(absl::StatusCode::kInvalidArgument, location);
 }
 
-StatusBuilder NotFoundErrorBuilder(pandemic::SourceLocation location) {
+StatusBuilder NotFoundErrorBuilder(abesim::SourceLocation location) {
   return StatusBuilder(absl::StatusCode::kNotFound, location);
 }
 
-StatusBuilder OutOfRangeErrorBuilder(pandemic::SourceLocation location) {
+StatusBuilder OutOfRangeErrorBuilder(abesim::SourceLocation location) {
   return StatusBuilder(absl::StatusCode::kOutOfRange, location);
 }
 
-StatusBuilder PermissionDeniedErrorBuilder(pandemic::SourceLocation location) {
+StatusBuilder PermissionDeniedErrorBuilder(abesim::SourceLocation location) {
   return StatusBuilder(absl::StatusCode::kPermissionDenied, location);
 }
 
-StatusBuilder UnauthenticatedErrorBuilder(pandemic::SourceLocation location) {
+StatusBuilder UnauthenticatedErrorBuilder(abesim::SourceLocation location) {
   return StatusBuilder(absl::StatusCode::kUnauthenticated, location);
 }
 
-StatusBuilder ResourceExhaustedErrorBuilder(pandemic::SourceLocation location) {
+StatusBuilder ResourceExhaustedErrorBuilder(abesim::SourceLocation location) {
   return StatusBuilder(absl::StatusCode::kResourceExhausted, location);
 }
 
-StatusBuilder UnavailableErrorBuilder(pandemic::SourceLocation location) {
+StatusBuilder UnavailableErrorBuilder(abesim::SourceLocation location) {
   return StatusBuilder(absl::StatusCode::kUnavailable, location);
 }
 
-StatusBuilder UnimplementedErrorBuilder(pandemic::SourceLocation location) {
+StatusBuilder UnimplementedErrorBuilder(abesim::SourceLocation location) {
   return StatusBuilder(absl::StatusCode::kUnimplemented, location);
 }
 
-StatusBuilder UnknownErrorBuilder(pandemic::SourceLocation location) {
+StatusBuilder UnknownErrorBuilder(abesim::SourceLocation location) {
   return StatusBuilder(absl::StatusCode::kUnknown, location);
 }
 
-}  // namespace pandemic
+}  // namespace abesim

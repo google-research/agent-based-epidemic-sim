@@ -16,7 +16,7 @@
 
 #include "absl/random/distributions.h"
 
-namespace pandemic {
+namespace abesim {
 namespace {
 // TODO: Move into the visit message about the visiting agent.
 constexpr float kSusceptibility = 1;
@@ -53,4 +53,4 @@ HealthTransition AggregatedTransmissionModel::GetInfectionOutcome(
   return health_transition;
 }
 
-}  // namespace pandemic
+}  // namespace abesim

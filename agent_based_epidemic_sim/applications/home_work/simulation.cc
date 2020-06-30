@@ -39,7 +39,7 @@
 #include "agent_based_epidemic_sim/port/logging.h"
 #include "agent_based_epidemic_sim/port/time_proto_util.h"
 
-namespace pandemic {
+namespace abesim {
 namespace {
 constexpr char kBusinessAlpha[] = "business_alpha";
 constexpr char kBusinessBeta[] = "business_beta";
@@ -301,4 +301,4 @@ void RunSimulation(const std::string& output_file_path,
                 context);
 }
 
-}  // namespace pandemic
+}  // namespace abesim

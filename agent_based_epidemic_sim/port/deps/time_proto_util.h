@@ -23,7 +23,7 @@
 #include "google/protobuf/duration.pb.h"
 #include "google/protobuf/timestamp.pb.h"
 
-namespace pandemic {
+namespace abesim {
 
 // Encodes an absl::Duration as a google::protobuf::Duration, following the
 // encoding rules specified at (broken link)
@@ -63,6 +63,6 @@ StatusOr<absl::Time> DecodeGoogleApiProto(
 StatusOr<absl::Duration> DecodeGoogleApiProto(
     const google::protobuf::Duration& proto);
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_TIME_PROTO_UTIL_H_

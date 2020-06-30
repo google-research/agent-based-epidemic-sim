@@ -27,7 +27,7 @@
 #include "google/protobuf/descriptor.h"
 #include "gtest/gtest.h"
 
-namespace pandemic {
+namespace abesim {
 namespace {
 
 using ::testing::Eq;
@@ -255,4 +255,4 @@ TEST(CanonicalErrorsTest, CreateAndClassify) {
 }
 
 }  // namespace
-}  // namespace pandemic
+}  // namespace abesim

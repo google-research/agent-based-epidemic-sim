@@ -21,7 +21,7 @@
 // Based on http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4519.pdf.
 //
 // To define a function that has access to the source location of the
-// callsite, define it with a parameter of type `pandemic::SourceLocation`.
+// callsite, define it with a parameter of type `abesim::SourceLocation`.
 // The caller can then invoke the function, passing `PANDEMIC_LOC` as the
 // argument.
 //
@@ -47,10 +47,10 @@
 
 #undef PANDEMIC_INTERNAL_HAS_KEYWORD
 
-namespace pandemic {
+namespace abesim {
 
 // Class representing a specific location in the source code of a program.
-// `pandemic::SourceLocation` is copyable.
+// `abesim::SourceLocation` is copyable.
 // copybara:strip_begin(source-location)
 // TODO: remove when absl::SourceLocation is available.
 // copybara:strip_end
@@ -115,7 +115,7 @@ class SourceLocation {
   // Do not invoke this constructor directly. Instead, use the `PANDEMIC_LOC`
   // macro below.
   //
-  // `file_name` must outlive all copies of the `pandemic::SourceLocation`
+  // `file_name` must outlive all copies of the `abesim::SourceLocation`
   // object, so in practice it should be a string literal.
   constexpr SourceLocation(std::uint_least32_t line, const char* file_name)
       : line_(line), file_name_(file_name) {}
@@ -134,11 +134,11 @@ class SourceLocation {
   const char* unused_function_name_ = nullptr;
 };
 
-}  // namespace pandemic
+}  // namespace abesim
 
-// If a function takes an `pandemic::SourceLocation` parameter, pass this as
+// If a function takes an `abesim::SourceLocation` parameter, pass this as
 // the argument.
 #define PANDEMIC_LOC \
-  ::pandemic::SourceLocation::DoNotInvokeDirectly(__LINE__, __FILE__)
+  ::abesim::SourceLocation::DoNotInvokeDirectly(__LINE__, __FILE__)
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_SOURCE_LOCATION_H_

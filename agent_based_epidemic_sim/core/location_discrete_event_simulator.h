@@ -24,7 +24,7 @@
 #include "agent_based_epidemic_sim/core/transmission_model.h"
 #include "agent_based_epidemic_sim/core/visit.h"
 
-namespace pandemic {
+namespace abesim {
 
 // Implements a sequential discrete event simulator for a Location.
 class LocationDiscreteEventSimulator : public Location {
@@ -40,6 +40,6 @@ class LocationDiscreteEventSimulator : public Location {
   const int64 uuid_;
 };
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_LOCATION_DISCRETE_EVENT_SIMULATOR_H_

@@ -100,11 +100,11 @@ home_work_config {
     }
     initial_health_state_distribution {
       buckets {
-        proto_value { [type.googleapis.com/pandemic.HealthState] { state: SUSCEPTIBLE } }
+        proto_value { [type.googleapis.com/abesim.HealthState] { state: SUSCEPTIBLE } }
         count: .9
       }
       buckets {
-        proto_value { [type.googleapis.com/pandemic.HealthState] { state: INFECTIOUS } }
+        proto_value { [type.googleapis.com/abesim.HealthState] { state: INFECTIOUS } }
         count: .1
       }
     }

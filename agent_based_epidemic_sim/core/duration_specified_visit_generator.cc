@@ -19,7 +19,7 @@
 #include "agent_based_epidemic_sim/core/public_policy.h"
 #include "agent_based_epidemic_sim/port/logging.h"
 
-namespace pandemic {
+namespace abesim {
 
 void DurationSpecifiedVisitGenerator::GenerateVisits(
     const Timestep& timestep, const PublicPolicy* const policy,
@@ -64,4 +64,4 @@ void DurationSpecifiedVisitGenerator::GenerateVisits(
   }
 }
 
-}  // namespace pandemic
+}  // namespace abesim

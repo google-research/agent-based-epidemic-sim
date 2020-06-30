@@ -20,7 +20,7 @@
 #include "absl/base/attributes.h"
 #include "absl/base/log_severity.h"
 
-namespace pandemic {
+namespace abesim {
 namespace logging_internal {
 
 // Class representing a log message created by a log macro.
@@ -110,6 +110,6 @@ class LogMessageFatal : public LogMessage {
 
 }  // namespace logging_internal
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_LOGGING_H_

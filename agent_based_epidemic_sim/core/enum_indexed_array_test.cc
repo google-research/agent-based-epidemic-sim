@@ -17,7 +17,7 @@
 #include "agent_based_epidemic_sim/core/integral_types.h"
 #include "gtest/gtest.h"
 
-namespace pandemic {
+namespace abesim {
 namespace {
 
 enum class TestEnum {
@@ -53,4 +53,4 @@ TEST(EnumIndexedArray, BracketOperatorConst) {
 }
 
 }  // namespace
-}  // namespace pandemic
+}  // namespace abesim

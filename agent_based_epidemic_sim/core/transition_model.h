@@ -20,7 +20,7 @@
 #include "agent_based_epidemic_sim/core/event.h"
 #include "agent_based_epidemic_sim/core/visit.h"
 
-namespace pandemic {
+namespace abesim {
 
 // Models transition between health states for a given disease.
 class TransitionModel {
@@ -32,6 +32,6 @@ class TransitionModel {
   virtual ~TransitionModel() = default;
 };
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_TRANSITION_MODEL_H_

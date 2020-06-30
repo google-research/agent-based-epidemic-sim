@@ -22,7 +22,7 @@
 #include "agent_based_epidemic_sim/core/integral_types.h"
 #include "agent_based_epidemic_sim/core/pandemic.pb.h"
 
-namespace pandemic {
+namespace abesim {
 
 // A duration of time for which an agent is in a health state.
 struct HealthInterval {
@@ -76,6 +76,6 @@ struct Visit {
 static_assert(absl::is_trivially_copy_constructible<Visit>::value,
               "Event must be trivially copyable.");
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_VISIT_H_

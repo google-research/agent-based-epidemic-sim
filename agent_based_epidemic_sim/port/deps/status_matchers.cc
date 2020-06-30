@@ -16,7 +16,7 @@
 
 #include "absl/strings/str_cat.h"
 
-namespace pandemic {
+namespace abesim {
 namespace internal_status {
 
 void StatusIsMatcherCommonImpl::DescribeTo(std::ostream* os) const {
@@ -56,7 +56,7 @@ bool StatusIsMatcherCommonImpl::MatchAndExplain(
 }
 
 void AddFatalFailure(absl::string_view expression,
-                     const ::pandemic::StatusBuilder& builder) {
+                     const ::abesim::StatusBuilder& builder) {
   GTEST_MESSAGE_AT_(
       builder.source_location().file_name(), builder.source_location().line(),
       ::absl::StrCat(expression,
@@ -66,4 +66,4 @@ void AddFatalFailure(absl::string_view expression,
 }
 
 }  // namespace internal_status
-}  // namespace pandemic
+}  // namespace abesim

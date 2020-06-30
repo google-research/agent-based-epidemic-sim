@@ -14,7 +14,7 @@
 
 syntax = "proto2";
 
-package pandemic;
+package abesim;
 
 // A test-only payload message for Status values.
 message TestPayload {

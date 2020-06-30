@@ -19,7 +19,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-namespace pandemic {
+namespace abesim {
 namespace {
 
 using testing::Eq;
@@ -50,4 +50,4 @@ TEST(AggregatedTransmissionModelTest, GetsInfectionOutcomes) {
 }
 
 }  // namespace
-}  // namespace pandemic
+}  // namespace abesim

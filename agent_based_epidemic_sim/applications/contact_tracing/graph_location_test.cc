@@ -19,7 +19,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-namespace pandemic {
+namespace abesim {
 namespace {
 
 class FakeBroker : public Broker<InfectionOutcome> {
@@ -99,4 +99,4 @@ TEST(GraphLocationTest, AllSamplesDropped) {
 }
 
 }  // namespace
-}  // namespace pandemic
+}  // namespace abesim

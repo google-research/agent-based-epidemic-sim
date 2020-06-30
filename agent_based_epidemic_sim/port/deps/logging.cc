@@ -31,7 +31,7 @@
 
 #include "absl/base/attributes.h"
 
-namespace pandemic {
+namespace abesim {
 
 constexpr char kDefaultDirectory[] = "/tmp/";
 
@@ -142,4 +142,4 @@ LogMessageFatal::~LogMessageFatal() {
 
 }  // namespace logging_internal
 
-}  // namespace pandemic
+}  // namespace abesim

@@ -22,7 +22,7 @@
 #include "absl/types/span.h"
 #include "agent_based_epidemic_sim/core/broker.h"
 
-namespace pandemic {
+namespace abesim {
 
 // A DistributedMessenger represents the bidirectional messages stream of a
 // given type between the local node and all remote participants.  It acts as a
@@ -91,6 +91,6 @@ class DistributingBroker : public Broker<Msg> {
   BufferingBroker<Msg> buffering_local_;
 };
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_DISTRIBUTED_H_

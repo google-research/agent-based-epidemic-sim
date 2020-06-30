@@ -22,7 +22,7 @@
 #include "agent_based_epidemic_sim/core/timestep.h"
 #include "agent_based_epidemic_sim/core/visit.h"
 
-namespace pandemic {
+namespace abesim {
 
 // Generates visits to locations.
 class VisitGenerator {
@@ -35,6 +35,6 @@ class VisitGenerator {
   virtual ~VisitGenerator() = default;
 };
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_VISIT_GENERATOR_H_

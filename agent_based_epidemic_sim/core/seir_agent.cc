@@ -17,7 +17,7 @@
 #include "absl/time/time.h"
 #include "agent_based_epidemic_sim/port/logging.h"
 
-namespace pandemic {
+namespace abesim {
 namespace {
 bool ContactFromBefore(const Contact& contact, const absl::Time time) {
   return contact.exposure.start_time + contact.exposure.duration < time;
@@ -234,4 +234,4 @@ void SEIRAgent::ProcessInfectionOutcomes(
   MaybeUpdateHealthTransitions(timestep);
 }
 
-}  // namespace pandemic
+}  // namespace abesim

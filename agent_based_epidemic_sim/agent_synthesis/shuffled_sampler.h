@@ -25,7 +25,7 @@
 #include "agent_based_epidemic_sim/core/parameter_distribution.pb.h"
 #include "agent_based_epidemic_sim/core/uuid_generator.h"
 
-namespace pandemic {
+namespace abesim {
 
 class ShuffledSampler {
  public:
@@ -53,6 +53,6 @@ std::unique_ptr<ShuffledSampler> MakeHouseholdSampler(
     const int64 population_size, const UuidGenerator& uuid_generator,
     std::vector<LocationProto>* locations);
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_AGENT_SYNTHESIS_SHUFFLED_SAMPLER_H_

@@ -23,7 +23,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-namespace pandemic {
+namespace abesim {
 namespace {
 
 using testing::Return;
@@ -206,4 +206,4 @@ TEST(DurationSpecifiedVisitGeneratorTest, GeneratesDurationAdjustedVisits) {
 }
 
 }  // namespace
-}  // namespace pandemic
+}  // namespace abesim

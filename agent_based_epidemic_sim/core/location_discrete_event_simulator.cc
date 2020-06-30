@@ -19,7 +19,7 @@
 #include "absl/time/time.h"
 #include "agent_based_epidemic_sim/port/logging.h"
 
-namespace pandemic {
+namespace abesim {
 namespace {
 
 // TODO: Move  into an event message about visiting infectious agents.
@@ -141,4 +141,4 @@ void LocationDiscreteEventSimulator::ProcessVisits(
   }
 }
 
-}  // namespace pandemic
+}  // namespace abesim

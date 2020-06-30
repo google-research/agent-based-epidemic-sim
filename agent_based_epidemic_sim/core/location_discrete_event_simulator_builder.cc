@@ -16,11 +16,11 @@
 
 #include "agent_based_epidemic_sim/core/location_discrete_event_simulator.h"
 
-namespace pandemic {
+namespace abesim {
 
 std::unique_ptr<Location> LocationDiscreteEventSimulatorBuilder::Build() const {
   return absl::make_unique<LocationDiscreteEventSimulator>(
       uuid_generator_->GenerateUuid());
 }
 
-}  // namespace pandemic
+}  // namespace abesim

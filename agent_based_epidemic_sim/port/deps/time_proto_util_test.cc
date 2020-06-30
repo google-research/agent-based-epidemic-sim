@@ -24,7 +24,7 @@
 #include "google/protobuf/util/message_differencer.h"
 #include "gtest/gtest.h"
 
-namespace pandemic {
+namespace abesim {
 
 google::protobuf::Duration MakeGoogleApiDuration(int64 s, int32 ns) {
   google::protobuf::Duration proto;
@@ -258,8 +258,7 @@ TEST(ProtoUtilGoogleApi, DecodeTimeError) {
 TEST(ProtoUtilGoogleApi, TimestampProtoMax) {
   const auto proto_max = MakeGoogleApiTimestampProtoMax();
   const absl::Time time_max = MakeGoogleApiTimeMax();
-  EXPECT_THAT(DecodeGoogleApiProto(proto_max),
-              pandemic::IsOkAndHolds(time_max));
+  EXPECT_THAT(DecodeGoogleApiProto(proto_max), abesim::IsOkAndHolds(time_max));
   google::protobuf::Timestamp proto;
   PANDEMIC_EXPECT_OK(EncodeGoogleApiProto(time_max, &proto));
   EXPECT_TRUE(
@@ -279,15 +278,14 @@ TEST(ProtoUtilGoogleApi, TimeMaxIsMax) {
   const absl::Time time_max = MakeGoogleApiTimeMax();
   google::protobuf::Timestamp proto;
   EXPECT_THAT(EncodeGoogleApiProto(time_max + absl::Nanoseconds(1), &proto),
-              pandemic::StatusIs(absl::StatusCode::kInvalidArgument));
+              abesim::StatusIs(absl::StatusCode::kInvalidArgument));
 }
 
 TEST(ProtoUtilGoogleApi, TimestampProtoMin) {
   const auto proto_min = MakeGoogleApiTimestampProtoMin();
   const absl::Time time_min = MakeGoogleApiTimeMin();
 
-  EXPECT_THAT(DecodeGoogleApiProto(proto_min),
-              pandemic::IsOkAndHolds(time_min));
+  EXPECT_THAT(DecodeGoogleApiProto(proto_min), abesim::IsOkAndHolds(time_min));
   google::protobuf::Timestamp proto;
   PANDEMIC_EXPECT_OK(EncodeGoogleApiProto(time_min, &proto));
   EXPECT_TRUE(
@@ -305,7 +303,7 @@ TEST(ProtoUtilGoogleApi, TimeMinIsMin) {
   const absl::Time time_min = MakeGoogleApiTimeMin();
   google::protobuf::Timestamp proto;
   EXPECT_THAT(EncodeGoogleApiProto(time_min - absl::Nanoseconds(1), &proto),
-              pandemic::StatusIs(absl::StatusCode::kInvalidArgument));
+              abesim::StatusIs(absl::StatusCode::kInvalidArgument));
 }
 
-}  // namespace pandemic
+}  // namespace abesim

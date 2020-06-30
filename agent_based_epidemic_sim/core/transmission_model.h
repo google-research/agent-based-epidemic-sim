@@ -21,7 +21,7 @@
 #include "agent_based_epidemic_sim/core/event.h"
 #include "agent_based_epidemic_sim/core/visit.h"
 
-namespace pandemic {
+namespace abesim {
 
 // Models transmission between hosts.
 class TransmissionModel {
@@ -32,6 +32,6 @@ class TransmissionModel {
   virtual ~TransmissionModel() = default;
 };
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_TRANSMISSION_MODEL_H_

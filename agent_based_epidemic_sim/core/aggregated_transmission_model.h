@@ -23,7 +23,7 @@
 #include "agent_based_epidemic_sim/core/transmission_model.h"
 #include "agent_based_epidemic_sim/core/visit.h"
 
-namespace pandemic {
+namespace abesim {
 
 // Models transmission between hosts as an exponential of sum of logs
 // of visit infectivity/susceptibility.
@@ -41,6 +41,6 @@ class AggregatedTransmissionModel : public TransmissionModel {
   absl::BitGen gen_;
 };
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_AGGREGATED_TRANSMISSION_MODEL_H_

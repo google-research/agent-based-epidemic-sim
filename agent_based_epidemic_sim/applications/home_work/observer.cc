@@ -22,7 +22,7 @@
 #include "agent_based_epidemic_sim/core/enum_indexed_array.h"
 #include "agent_based_epidemic_sim/port/proto_enum_utils.h"
 
-namespace pandemic {
+namespace abesim {
 
 namespace {
 
@@ -164,4 +164,4 @@ HomeWorkSimulationObserverFactory::MakeObserver() const {
   return absl::make_unique<HomeWorkSimulationObserver>(location_type_);
 }
 
-}  // namespace pandemic
+}  // namespace abesim

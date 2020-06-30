@@ -22,9 +22,9 @@
 
 namespace {
 
+using abesim::IsOkAndHolds;
+using abesim::StatusIs;
 using absl::OkStatus;
-using pandemic::IsOkAndHolds;
-using pandemic::StatusIs;
 using testing::_;
 using testing::Not;
 
@@ -32,9 +32,9 @@ absl::Status AbortedStatus() {
   return absl::Status(absl::StatusCode::kAborted, "aborted");
 }
 
-pandemic::StatusOr<int> OkStatusOr(int n) { return n; }
+abesim::StatusOr<int> OkStatusOr(int n) { return n; }
 
-pandemic::StatusOr<int> AbortedStatusOr() { return AbortedStatus(); }
+abesim::StatusOr<int> AbortedStatusOr() { return AbortedStatus(); }
 
 TEST(StatusMatcher, Macros) {
   PANDEMIC_EXPECT_OK(OkStatus());

@@ -29,10 +29,10 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-namespace pandemic {
+namespace abesim {
 namespace {
 
-using ::pandemic::StatusIs;
+using ::abesim::StatusIs;
 using ::testing::HasSubstr;
 
 class Base1 {
@@ -702,4 +702,4 @@ static StatusOr<int> MakeStatus() { return 100; }
 TEST(StatusOr, TestIgnoreError) { MakeStatus().IgnoreError(); }
 
 }  // namespace
-}  // namespace pandemic
+}  // namespace abesim

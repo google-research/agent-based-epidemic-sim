@@ -19,7 +19,7 @@
 
 #include "agent_based_epidemic_sim/core/integral_types.h"
 
-namespace pandemic {
+namespace abesim {
 
 class UuidGenerator {
  public:
@@ -36,6 +36,6 @@ class ShardedGlobalIdUuidGenerator : public UuidGenerator {
  private:
   const int16 uuid_shard_;
 };
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_UUID_GENERATOR_H_

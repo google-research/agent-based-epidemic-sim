@@ -19,7 +19,7 @@
 #include "absl/memory/memory.h"
 #include "absl/synchronization/mutex.h"
 
-namespace pandemic {
+namespace abesim {
 namespace {
 
 class StdThreadExecutor : public Executor {
@@ -117,4 +117,4 @@ std::unique_ptr<Executor> NewExecutor(int max_parallelism) {
   return absl::make_unique<StdThreadExecutor>(max_parallelism);
 }
 
-}  // namespace pandemic
+}  // namespace abesim

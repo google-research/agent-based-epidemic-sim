@@ -19,7 +19,7 @@
 #include "agent_based_epidemic_sim/applications/home_work/simulation.h"
 #include "agent_based_epidemic_sim/core/public_policy.h"
 
-namespace pandemic {
+namespace abesim {
 namespace {
 
 class TracingPolicyGenerator : public PolicyGenerator {
@@ -47,4 +47,4 @@ void RunSimulation(const std::string& output_file_path,
                 get_policy_generator, num_workers, context);
 }
 
-}  // namespace pandemic
+}  // namespace abesim

@@ -17,9 +17,9 @@
 #include "absl/base/attributes.h"
 #include "absl/strings/string_view.h"
 
-namespace pandemic {
+namespace abesim {
 
 ABSL_CONST_INIT const absl::string_view kPandemicTypeUrlPrefix =
     "type.googleapis.com/";
 
-}  // namespace pandemic
+}  // namespace abesim

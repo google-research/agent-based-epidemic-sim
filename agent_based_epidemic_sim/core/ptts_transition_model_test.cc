@@ -19,7 +19,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-namespace pandemic {
+namespace abesim {
 namespace {
 
 TEST(PTTSTransitionModelTest, UpdatesTransitionModel) {
@@ -47,4 +47,4 @@ TEST(PTTSTransitionModelTest, UpdatesTransitionModel) {
 }
 
 }  // namespace
-}  // namespace pandemic
+}  // namespace abesim

@@ -21,7 +21,7 @@
 #include "absl/strings/str_cat.h"
 #include "agent_based_epidemic_sim/port/logging.h"
 
-namespace pandemic {
+namespace abesim {
 namespace file {
 namespace {
 class FileWriterImpl : public FileWriter {
@@ -73,4 +73,4 @@ absl::Status GetContents(absl::string_view file_name, std::string* output) {
 }
 
 }  // namespace file
-}  // namespace pandemic
+}  // namespace abesim

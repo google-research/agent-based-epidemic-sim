@@ -25,7 +25,7 @@
 #include "absl/meta/type_traits.h"
 #include "absl/status/status.h"
 
-namespace pandemic {
+namespace abesim {
 
 template <typename T>
 class ABSL_MUST_USE_RESULT StatusOr;
@@ -306,6 +306,6 @@ struct TraitsBase<false, false> {
 
 }  // namespace statusor_internal
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_STATUSOR_INTERNALS_H_

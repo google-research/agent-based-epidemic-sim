@@ -22,7 +22,7 @@
 #include "agent_based_epidemic_sim/core/observer.h"
 #include "agent_based_epidemic_sim/core/visit.h"
 
-namespace pandemic {
+namespace abesim {
 
 // Simulates a location during a timestep.
 class Location {
@@ -37,6 +37,6 @@ class Location {
   virtual ~Location() = default;
 };
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_LOCATION_H_

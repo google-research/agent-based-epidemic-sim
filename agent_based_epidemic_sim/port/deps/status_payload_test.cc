@@ -23,7 +23,7 @@
 #include "google/protobuf/util/message_differencer.h"
 #include "gtest/gtest.h"
 
-namespace pandemic {
+namespace abesim {
 
 std::vector<std::pair<std::string, absl::Cord>> GetEntries(
     const absl::Status& status) {
@@ -61,7 +61,7 @@ TEST(StatusPayload, AttachPayload) {
   std::vector<std::pair<std::string, absl::Cord>> entries = GetEntries(status);
   ASSERT_EQ(entries.size(), 1);
 
-  EXPECT_EQ(entries[0].first, "type.googleapis.com/pandemic.TestPayload");
+  EXPECT_EQ(entries[0].first, "type.googleapis.com/abesim.TestPayload");
   TestPayload actual_payload;
   EXPECT_TRUE(actual_payload.ParseFromString(std::string(entries[0].second)));
   EXPECT_TRUE(google::protobuf::util::MessageDifferencer::Equals(actual_payload,
@@ -84,9 +84,9 @@ TEST(StatusPayload, AttachPayload_OverwriteSameType) {
   TestPayload actual_payload;
   EXPECT_TRUE(actual_payload.ParseFromString(std::string(entries[0].second)));
 
-  EXPECT_EQ(entries[0].first, "type.googleapis.com/pandemic.TestPayload");
+  EXPECT_EQ(entries[0].first, "type.googleapis.com/abesim.TestPayload");
   EXPECT_TRUE(google::protobuf::util::MessageDifferencer::Equals(actual_payload,
                                                                  payload2));
 }
 
-}  // namespace pandemic
+}  // namespace abesim

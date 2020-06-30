@@ -26,7 +26,7 @@
 #include "agent_based_epidemic_sim/core/observer.h"
 #include "agent_based_epidemic_sim/port/file_utils.h"
 
-namespace pandemic {
+namespace abesim {
 
 template <typename T>
 using HealthArray =
@@ -89,6 +89,6 @@ class HomeWorkSimulationObserverFactory
   absl::flat_hash_map<int64, absl::flat_hash_set<int64>> contacts_;
 };
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_APPLICATIONS_HOME_WORK_OBSERVER_H_

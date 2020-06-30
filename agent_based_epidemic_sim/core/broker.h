@@ -21,7 +21,7 @@
 #include "absl/types/span.h"
 #include "agent_based_epidemic_sim/core/event.h"
 
-namespace pandemic {
+namespace abesim {
 
 // The Broker interface allows Agents and Locations to send messages to one
 // another.
@@ -58,6 +58,6 @@ class BufferingBroker : public Broker<Msg> {
   Broker<Msg>* receiver_;
 };
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_BROKER_H_

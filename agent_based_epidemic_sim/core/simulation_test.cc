@@ -23,7 +23,7 @@
 #include "agent_based_epidemic_sim/core/timestep.h"
 #include "gtest/gtest.h"
 
-namespace pandemic {
+namespace abesim {
 namespace {
 using OutcomeMap = absl::flat_hash_map<int, int>;
 using VisitMap = absl::flat_hash_map<std::pair<int, int>, int>;
@@ -328,4 +328,4 @@ TEST(SimulationTest, AllAgentsAndLocationsAreProcessedInParallelWithObserver) {
 // DistributedManager.  Currently I'm relying on the stubby test.
 
 }  // namespace
-}  // namespace pandemic
+}  // namespace abesim

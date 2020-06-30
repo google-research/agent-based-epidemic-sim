@@ -20,7 +20,7 @@
 #include "agent_based_epidemic_sim/port/logging.h"
 #include "google/protobuf/text_format.h"
 
-namespace pandemic {
+namespace abesim {
 
 template <typename T>
 T ParseTextProtoOrDie(const std::string& input) {
@@ -29,6 +29,6 @@ T ParseTextProtoOrDie(const std::string& input) {
   return result;
 }
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_PARSE_TEXT_PROTO_H_

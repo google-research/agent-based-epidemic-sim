@@ -23,7 +23,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
-namespace pandemic {
+namespace abesim {
 
 extern const absl::string_view kPandemicTypeUrlPrefix;
 
@@ -41,6 +41,6 @@ void AttachPayload(absl::Status* status, const T& payload) {
   status->SetPayload(GetTypeUrl<T>(), serialized);
 }
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_STATUS_PAYLOAD_H_

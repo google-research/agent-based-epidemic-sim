@@ -14,7 +14,7 @@
 
 #include "agent_based_epidemic_sim/agent_synthesis/agent_sampler.h"
 
-namespace pandemic {
+namespace abesim {
 namespace {
 constexpr int64 kPopulationProfileId = 0;
 }  // namespace
@@ -36,4 +36,4 @@ AgentProto ShuffledLocationAgentSampler::Next() {
   return agent;
 }
 
-}  // namespace pandemic
+}  // namespace abesim

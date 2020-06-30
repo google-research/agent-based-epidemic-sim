@@ -24,7 +24,7 @@
 #include "agent_based_epidemic_sim/core/timestep.h"
 #include "agent_based_epidemic_sim/core/visit.h"
 
-namespace pandemic {
+namespace abesim {
 
 // A simulated agent. Represents an individual that travels to locations and
 // has a health state.
@@ -80,6 +80,6 @@ class Agent {
   virtual ~Agent() = default;
 };
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_AGENT_H_

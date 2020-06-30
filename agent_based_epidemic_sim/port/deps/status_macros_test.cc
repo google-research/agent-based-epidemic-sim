@@ -34,26 +34,26 @@ using ::testing::HasSubstr;
 
 absl::Status ReturnOk() { return absl::OkStatus(); }
 
-pandemic::StatusBuilder ReturnOkBuilder() {
-  return pandemic::StatusBuilder(absl::OkStatus(), PANDEMIC_LOC);
+abesim::StatusBuilder ReturnOkBuilder() {
+  return abesim::StatusBuilder(absl::OkStatus(), PANDEMIC_LOC);
 }
 
 absl::Status ReturnError(absl::string_view msg) {
   return absl::Status(absl::StatusCode::kUnknown, msg);
 }
 
-pandemic::StatusBuilder ReturnErrorBuilder(absl::string_view msg) {
-  return pandemic::StatusBuilder(absl::Status(absl::StatusCode::kUnknown, msg),
-                                 PANDEMIC_LOC);
+abesim::StatusBuilder ReturnErrorBuilder(absl::string_view msg) {
+  return abesim::StatusBuilder(absl::Status(absl::StatusCode::kUnknown, msg),
+                               PANDEMIC_LOC);
 }
 
-pandemic::StatusOr<int> ReturnStatusOrValue(int v) { return v; }
+abesim::StatusOr<int> ReturnStatusOrValue(int v) { return v; }
 
-pandemic::StatusOr<int> ReturnStatusOrError(absl::string_view msg) {
+abesim::StatusOr<int> ReturnStatusOrError(absl::string_view msg) {
   return absl::Status(absl::StatusCode::kUnknown, msg);
 }
 
-pandemic::StatusOr<std::unique_ptr<int>> ReturnStatusOrPtrValue(int v) {
+abesim::StatusOr<std::unique_ptr<int>> ReturnStatusOrPtrValue(int v) {
   return absl::make_unique<int>(v);
 }
 
@@ -92,11 +92,11 @@ TEST(AssignOrReturn, WorksWithAppend) {
 }
 
 TEST(AssignOrReturn, WorksWithAdaptorFunc) {
-  auto fail_test_if_called = [](pandemic::StatusBuilder builder) {
+  auto fail_test_if_called = [](abesim::StatusBuilder builder) {
     ADD_FAILURE();
     return builder;
   };
-  auto adaptor = [](pandemic::StatusBuilder builder) {
+  auto adaptor = [](abesim::StatusBuilder builder) {
     return builder << "EXPECTED B";
   };
   auto func = [&]() -> absl::Status {

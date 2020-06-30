@@ -19,7 +19,7 @@
 
 namespace {
 
-using ::pandemic::SourceLocation;
+using ::abesim::SourceLocation;
 using ::testing::EndsWith;
 
 TEST(SourceLocationTest, CopyConstructionWorks) {

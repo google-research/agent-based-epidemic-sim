@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package pandemic;
+package abesim;
 
 import "agent_based_epidemic_sim/core/pandemic.proto";
 import "agent_based_epidemic_sim/core/parameter_distribution.proto";

@@ -31,7 +31,7 @@
 #include "agent_based_epidemic_sim/port/executor.h"
 #include "agent_based_epidemic_sim/port/logging.h"
 
-namespace pandemic {
+namespace abesim {
 
 namespace {
 
@@ -577,4 +577,4 @@ std::unique_ptr<Simulation> ParallelDistributedSimulation(
       distributed_manager);
 }
 
-}  // namespace pandemic
+}  // namespace abesim

@@ -25,7 +25,7 @@
 #include "agent_based_epidemic_sim/core/visit.h"
 #include "agent_based_epidemic_sim/core/visit_generator.h"
 
-namespace pandemic {
+namespace abesim {
 
 // Generates visits to the given set of locations with durations using the
 // given sampler.
@@ -55,6 +55,6 @@ class DurationSpecifiedVisitGenerator : public VisitGenerator {
   absl::BitGen gen_;
 };
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_DURATION_SPECIFIED_VISIT_GENERATOR_H_

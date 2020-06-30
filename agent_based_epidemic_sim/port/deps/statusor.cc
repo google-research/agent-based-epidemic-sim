@@ -19,7 +19,7 @@
 #include "absl/status/status.h"
 #include "agent_based_epidemic_sim/port/logging.h"
 
-namespace pandemic {
+namespace abesim {
 
 namespace statusor_internal {
 
@@ -39,4 +39,4 @@ void Helper::Crash(const absl::Status& status) {
 
 }  // namespace statusor_internal
 
-}  // namespace pandemic
+}  // namespace abesim

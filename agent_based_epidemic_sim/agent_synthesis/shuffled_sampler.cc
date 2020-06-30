@@ -17,7 +17,7 @@
 #include "agent_based_epidemic_sim/core/distribution_sampler.h"
 #include "agent_based_epidemic_sim/port/logging.h"
 
-namespace pandemic {
+namespace abesim {
 
 ShuffledSampler::ShuffledSampler(
     const absl::flat_hash_map<int64, int>& uuids_to_sizes) {
@@ -77,4 +77,4 @@ std::unique_ptr<ShuffledSampler> MakeHouseholdSampler(
   return absl::make_unique<ShuffledSampler>(uuid_to_sizes);
 }
 
-}  // namespace pandemic
+}  // namespace abesim

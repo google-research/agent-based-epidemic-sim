@@ -19,7 +19,7 @@
 
 #include "absl/time/time.h"
 
-namespace pandemic {
+namespace abesim {
 
 // Timestep represents the simulation window for a single step.
 class Timestep {
@@ -43,6 +43,6 @@ class Timestep {
   absl::Time end_;
 };
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_TIMESTEP_H_

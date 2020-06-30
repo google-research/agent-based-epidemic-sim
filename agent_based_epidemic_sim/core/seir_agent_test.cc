@@ -25,7 +25,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-namespace pandemic {
+namespace abesim {
 namespace {
 
 using testing::_;
@@ -818,4 +818,4 @@ TEST(SEIRAgentTest, UpdateContactReportsRejectsWrongUuid) {
 }
 
 }  // namespace
-}  // namespace pandemic
+}  // namespace abesim

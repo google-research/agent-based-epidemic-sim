@@ -22,7 +22,7 @@
 
 #include "agent_based_epidemic_sim/core/integral_types.h"
 
-namespace pandemic {
+namespace abesim {
 
 enum class LocationType : uint8 { kHome, kWork };
 
@@ -31,6 +31,6 @@ constexpr std::initializer_list<LocationType> kAllLocationTypes = {
 
 using LocationTypeFn = std::function<LocationType(int64 uuid)>;
 
-}  // namespace pandemic
+}  // namespace abesim
 
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_APPLICATIONS_HOME_WORK_LOCATION_TYPE_H_

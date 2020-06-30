@@ -34,7 +34,7 @@
 #include "absl/types/span.h"
 #include "google/protobuf/descriptor.pb.h"
 
-namespace pandemic {
+namespace abesim {
 
 using google::protobuf::GetEnumDescriptor;
 using google::protobuf::RepeatedField;
@@ -164,7 +164,7 @@ EnumeratedProtoEnumView<E> EnumerateEnumValues() {
 // same behavior as iterating over the RepeatedField<int> directly).
 //
 #define REPEATED_ENUM_ADAPTER(var, field) \
-  pandemic::internal::RepeatedEnumView<decltype(var.field(0))>(var.field())
+  abesim::internal::RepeatedEnumView<decltype(var.field(0))>(var.field())
 
 // ==== WARNING TO USERS ====
 // Below are internal implementations, not public API, and may change without
@@ -205,5 +205,5 @@ class RepeatedEnumView {
 
 }  // namespace internal
 
-}  // namespace pandemic
+}  // namespace abesim
 #endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_PROTO_ENUM_UTILS_H_
