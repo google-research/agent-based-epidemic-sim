@@ -29,7 +29,7 @@ addons:
   apt:
     packages:
     - g++
-    - clang
+    - clang-9
     update: true
   # homebrew:
   #   packages:
