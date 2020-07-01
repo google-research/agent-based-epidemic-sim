@@ -1,32 +1,42 @@
-language: cpp
-dist: xenial
-sudo: required
+# Build matrix / environment variable are explained on:
+# https://docs.travis-ci.com/user/customizing-the-build/
+# This file can be validated on:
+# http://lint.travis-ci.org/
 
+language: cpp
+
+# Define the matrix explicitly, manually expanding the combinations of (os, compiler, env).
+# It is more tedious, but grants us far more flexibility.
+matrix:
+  include:
+    - os: linux
+      dist: bionic
+      compiler: clang
+      install: ./ci/install-linux.sh && ./ci/log-config.sh
+      script: ./ci/build-linux-bazel.sh
+
+# # These are the install and build (script) phases for the most common entries in the matrix.  They could be included
+# # in each entry in the matrix, but that is just repetitive.
+# install:
+#   - ./ci/install-${TRAVIS_OS_NAME}.sh
+#   - . ./ci/env-${TRAVIS_OS_NAME}.sh
+#   - ./ci/log-config.sh
+
+# script: ./ci/travis.sh
+
+# This section installs the necessary dependencies.
 addons:
   apt:
-    sources:
-    - sourceline: 'deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8'
-      key_url: 'https://bazel.build/bazel-release.pub.gpg'
     packages:
-    - bazel
+    # - g++
+    - clang
+    update: true
+  # homebrew:
+  #   packages:
+  #   - ccache
+  #   - gcc@4.9
+  #   - llvm@4
+  #   update: true
 
-before_install:
-  - sudo apt-get -qq update
-  - sudo apt-get install -y libelf-dev libssl-dev libcap-dev linux-tools-`uname -r`
-  - git submodule update --init --recursive
-
-install:
-  # install gcc-4.8 with c++11 support: https://github.com/travis-ci-tester/travis-test-gcc-cxx-11
-  - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
-  - sudo apt-get update
-  # - sudo apt-get install g++-4.8
-  # - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 90
-  # - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 90
-
-compiler:
-  - clang
-  - gcc
-
-script:
-  - bazel build //agent_based_epidemic_sim/...
-  - bazel test //agent_based_epidemic_sim/...
+notifications:
+  email: false
