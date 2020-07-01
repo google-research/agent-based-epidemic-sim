@@ -11,7 +11,11 @@ matrix:
   include:
     - os: linux
       dist: bionic
-      compiler: clang
+      compiler: clang-9
+      env:
+        - MATRIX_EVAL="CC=clang-9 CXX=clang++-9"
+      before_install:
+        - eval "${MATRIX_EVAL}"
       install: ./ci/install-linux.sh && ./ci/log-config.sh
       script: ./ci/build-linux-bazel.sh
 
