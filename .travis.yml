@@ -28,8 +28,8 @@ matrix:
 addons:
   apt:
     packages:
-    # - g++
-    - clang
+    - g++
+    # - clang
     update: true
   # homebrew:
   #   packages:
