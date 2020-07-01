@@ -787,8 +787,8 @@ TEST(SEIRAgentTest, ComputesContactSummary) {
   {
     contacts = {{
         .other_uuid = 314LL,
-        .exposure{.start_time = absl::FromUnixSeconds(178200LL),
-                  .duration = absl::Hours(1LL)},
+        .exposure = {.start_time = absl::FromUnixSeconds(178200LL),
+                     .duration = absl::Hours(1LL)},
     }};
     const Timestep timestep(absl::FromUnixSeconds(180000LL), absl::Hours(22));
     agent->ProcessInfectionOutcomes(
