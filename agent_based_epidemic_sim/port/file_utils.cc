@@ -14,7 +14,7 @@
 
 #include "agent_based_epidemic_sim/port/file_utils.h"
 
-#include <filesystem>
+#include <experimental/filesystem>
 #include <fstream>
 #include <sstream>
 
@@ -51,7 +51,7 @@ class FileWriterImpl : public FileWriter {
 }  // namespace
 
 std::unique_ptr<FileWriter> OpenOrDie(absl::string_view file_name) {
-  CHECK(!std::filesystem::exists(file_name))
+  CHECK(!std::experimental::filesystem::exists(file_name))
       << "File already exists: " << file_name;
   std::ofstream ofstream((std::string(file_name)));
   return absl::make_unique<FileWriterImpl>(std::move(ofstream));

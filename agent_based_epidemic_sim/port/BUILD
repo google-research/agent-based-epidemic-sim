@@ -14,6 +14,9 @@ cc_library(
     hdrs = [
         "file_utils.h",
     ],
+    linkopts = [
+        "-lstdc++fs",
+    ],
     deps = [
         "//agent_based_epidemic_sim/port:logging",
         "@com_google_absl//absl/status",
