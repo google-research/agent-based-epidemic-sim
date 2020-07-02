@@ -32,5 +32,5 @@
 set -e
 
 bazel version
-bazel build -s -k --copt=-std=c++17 //...:all
-bazel test -s -k --copt=-std=c++17 //...:all
+bazel build -s -k --cxxopt=-std=c++17 --host_cxxopt=-std=c++17 //...:all
+bazel test -s -k --cxxopt=-std=c++17 --host_cxxopt=-std=c++17 //...:all
