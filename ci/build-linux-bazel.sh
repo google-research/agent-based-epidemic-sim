@@ -32,5 +32,5 @@
 set -e
 
 bazel version
-bazel build -s --copt=-std=c++17 //...:all
-bazel test -s --copt=-std=c++17 //...:all
+bazel build -s -k --copt=-std=c++17 //...:all
+bazel test -s -k --copt=-std=c++17 //...:all
