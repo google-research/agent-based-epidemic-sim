@@ -32,5 +32,7 @@
 set -e
 
 bazel version
-bazel build -s -k --cxxopt=-std=c++17 --host_cxxopt=-std=c++17 --repo_env=CC=clang --repo_env=CXX=clang++ //...:all
-bazel test -s -k --cxxopt=-std=c++17 --host_cxxopt=-std=c++17 --repo_env=CC=clang --repo_env=CXX=clang++ //...:all
+bazel build -s -k --cxxopt=-std=c++17 //...:all
+bazel test -s -k --cxxopt=-std=c++17 //...:all
+# bazel build -s -k --cxxopt=-std=c++17 --host_cxxopt=-std=c++17 --repo_env=CC=clang --repo_env=CXX=clang++ //...:all
+# bazel test -s -k --cxxopt=-std=c++17 --host_cxxopt=-std=c++17 --repo_env=CC=clang --repo_env=CXX=clang++ //...:all
