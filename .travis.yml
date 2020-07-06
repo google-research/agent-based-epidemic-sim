@@ -1,0 +1,10 @@
+language: minimal
+
+services:
+    - docker
+
+install:
+    - docker build -t abesim .
+
+script:
+    - docker run -v $PWD:/root/agent_based_epidemic_sim abesim bazel test agent_based_epidemic_sim/...
