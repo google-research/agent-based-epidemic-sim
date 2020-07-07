@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_APPLICATIONS_CONTACT_TRACING_SIMULATION_H_
-#define THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_APPLICATIONS_CONTACT_TRACING_SIMULATION_H_
+#ifndef AGENT_BASED_EPIDEMIC_SIM_APPLICATIONS_CONTACT_TRACING_SIMULATION_H_
+#define AGENT_BASED_EPIDEMIC_SIM_APPLICATIONS_CONTACT_TRACING_SIMULATION_H_
 
 #include "agent_based_epidemic_sim/applications/contact_tracing/config.pb.h"
 #include "agent_based_epidemic_sim/applications/home_work/location_type.h"
@@ -30,4 +30,4 @@ void RunSimulation(const std::string& output_file_path,
 
 }  // namespace abesim
 
-#endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_APPLICATIONS_CONTACT_TRACING_SIMULATION_H_
+#endif  // AGENT_BASED_EPIDEMIC_SIM_APPLICATIONS_CONTACT_TRACING_SIMULATION_H_

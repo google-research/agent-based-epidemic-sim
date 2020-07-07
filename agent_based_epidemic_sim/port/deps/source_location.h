@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_SOURCE_LOCATION_H_
-#define THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_SOURCE_LOCATION_H_
+#ifndef AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_SOURCE_LOCATION_H_
+#define AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_SOURCE_LOCATION_H_
 
 // API for capturing source-code location information.
 // Based on http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4519.pdf.
@@ -141,4 +141,4 @@ class SourceLocation {
 #define PANDEMIC_LOC \
   ::abesim::SourceLocation::DoNotInvokeDirectly(__LINE__, __FILE__)
 
-#endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_SOURCE_LOCATION_H_
+#endif  // AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_SOURCE_LOCATION_H_

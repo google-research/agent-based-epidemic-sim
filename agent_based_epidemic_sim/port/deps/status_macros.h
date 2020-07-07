@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_STATUS_MACROS_H_
-#define THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_STATUS_MACROS_H_
+#ifndef AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_STATUS_MACROS_H_
+#define AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_STATUS_MACROS_H_
 
 // Helper macros and methods to return and propagate errors with
 // `absl::Status`.
@@ -192,4 +192,4 @@ class StatusAdaptorForMacros {
 }  // namespace status_macro_internal
 }  // namespace abesim
 
-#endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_STATUS_MACROS_H_
+#endif  // AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_STATUS_MACROS_H_

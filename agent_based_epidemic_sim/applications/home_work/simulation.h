@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_APPLICATIONS_HOME_WORK_SIMULATION_H_
-#define THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_APPLICATIONS_HOME_WORK_SIMULATION_H_
+#ifndef AGENT_BASED_EPIDEMIC_SIM_APPLICATIONS_HOME_WORK_SIMULATION_H_
+#define AGENT_BASED_EPIDEMIC_SIM_APPLICATIONS_HOME_WORK_SIMULATION_H_
 
 #include "agent_based_epidemic_sim/agent_synthesis/population_profile.pb.h"
 #include "agent_based_epidemic_sim/applications/home_work/config.pb.h"
@@ -51,4 +51,4 @@ void RunSimulation(
 
 }  // namespace abesim
 
-#endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_APPLICATIONS_HOME_WORK_SIMULATION_H_
+#endif  // AGENT_BASED_EPIDEMIC_SIM_APPLICATIONS_HOME_WORK_SIMULATION_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_STATUS_PAYLOAD_H_
-#define THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_STATUS_PAYLOAD_H_
+#ifndef AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_STATUS_PAYLOAD_H_
+#define AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_STATUS_PAYLOAD_H_
 
 #include "absl/base/attributes.h"
 #include "absl/status/status.h"
@@ -43,4 +43,4 @@ void AttachPayload(absl::Status* status, const T& payload) {
 
 }  // namespace abesim
 
-#endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_STATUS_PAYLOAD_H_
+#endif  // AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_STATUS_PAYLOAD_H_

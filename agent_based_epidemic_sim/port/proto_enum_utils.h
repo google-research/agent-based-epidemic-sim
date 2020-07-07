@@ -25,8 +25,8 @@
 //    ...
 // }
 //
-#ifndef THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_PROTO_ENUM_UTILS_H_
-#define THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_PROTO_ENUM_UTILS_H_
+#ifndef AGENT_BASED_EPIDEMIC_SIM_PORT_PROTO_ENUM_UTILS_H_
+#define AGENT_BASED_EPIDEMIC_SIM_PORT_PROTO_ENUM_UTILS_H_
 
 #include <iterator>
 #include <type_traits>
@@ -206,4 +206,4 @@ class RepeatedEnumView {
 }  // namespace internal
 
 }  // namespace abesim
-#endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_PROTO_ENUM_UTILS_H_
+#endif  // AGENT_BASED_EPIDEMIC_SIM_PORT_PROTO_ENUM_UTILS_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_BROKER_H_
-#define THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_BROKER_H_
+#ifndef AGENT_BASED_EPIDEMIC_SIM_CORE_BROKER_H_
+#define AGENT_BASED_EPIDEMIC_SIM_CORE_BROKER_H_
 
 #include "absl/synchronization/mutex.h"
 #include "absl/types/span.h"
@@ -60,4 +60,4 @@ class BufferingBroker : public Broker<Msg> {
 
 }  // namespace abesim
 
-#endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_BROKER_H_
+#endif  // AGENT_BASED_EPIDEMIC_SIM_CORE_BROKER_H_

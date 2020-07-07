@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_AGENT_SYNTHESIS_AGENT_SAMPLER_H_
-#define THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_AGENT_SYNTHESIS_AGENT_SAMPLER_H_
+#ifndef AGENT_BASED_EPIDEMIC_SIM_AGENT_SYNTHESIS_AGENT_SAMPLER_H_
+#define AGENT_BASED_EPIDEMIC_SIM_AGENT_SYNTHESIS_AGENT_SAMPLER_H_
 
 #include "absl/random/random.h"
 #include "agent_based_epidemic_sim/agent_synthesis/population_profile.pb.h"
@@ -61,4 +61,4 @@ class ShuffledLocationAgentSampler : public AgentSampler {
 
 }  // namespace abesim
 
-#endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_AGENT_SYNTHESIS_AGENT_SAMPLER_H_
+#endif  // AGENT_BASED_EPIDEMIC_SIM_AGENT_SYNTHESIS_AGENT_SAMPLER_H_

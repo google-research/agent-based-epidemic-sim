@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_LOGGING_H_
-#define THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_LOGGING_H_
+#ifndef AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_LOGGING_H_
+#define AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_LOGGING_H_
 
 #include <sstream>
 
@@ -112,4 +112,4 @@ class LogMessageFatal : public LogMessage {
 
 }  // namespace abesim
 
-#endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_LOGGING_H_
+#endif  // AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_LOGGING_H_

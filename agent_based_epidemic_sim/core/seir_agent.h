@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_SEIR_AGENT_H_
-#define THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_SEIR_AGENT_H_
+#ifndef AGENT_BASED_EPIDEMIC_SIM_CORE_SEIR_AGENT_H_
+#define AGENT_BASED_EPIDEMIC_SIM_CORE_SEIR_AGENT_H_
 
 #include "absl/container/flat_hash_set.h"
 #include "absl/time/time.h"
@@ -169,4 +169,4 @@ class SEIRAgent : public Agent {
 
 }  // namespace abesim
 
-#endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_SEIR_AGENT_H_
+#endif  // AGENT_BASED_EPIDEMIC_SIM_CORE_SEIR_AGENT_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_FILE_UTILS_H_
-#define THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_FILE_UTILS_H_
+#ifndef AGENT_BASED_EPIDEMIC_SIM_PORT_FILE_UTILS_H_
+#define AGENT_BASED_EPIDEMIC_SIM_PORT_FILE_UTILS_H_
 
 #include "absl/status/status.h"
 #include "absl/strings/match.h"
@@ -43,4 +43,4 @@ absl::Status GetContents(absl::string_view file_name, std::string* output);
 }  // namespace file
 }  // namespace abesim
 
-#endif  //  THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_FILE_UTILS_H_
+#endif  //  AGENT_BASED_EPIDEMIC_SIM_PORT_FILE_UTILS_H_

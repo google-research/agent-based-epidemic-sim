@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_AGENT_H_
-#define THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_AGENT_H_
+#ifndef AGENT_BASED_EPIDEMIC_SIM_CORE_AGENT_H_
+#define AGENT_BASED_EPIDEMIC_SIM_CORE_AGENT_H_
 
 #include "absl/time/time.h"
 #include "absl/types/span.h"
@@ -82,4 +82,4 @@ class Agent {
 
 }  // namespace abesim
 
-#endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_AGENT_H_
+#endif  // AGENT_BASED_EPIDEMIC_SIM_CORE_AGENT_H_

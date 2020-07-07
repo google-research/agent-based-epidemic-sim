@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_PTTS_TRANSITION_MODEL_H_
-#define THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_PTTS_TRANSITION_MODEL_H_
+#ifndef AGENT_BASED_EPIDEMIC_SIM_CORE_PTTS_TRANSITION_MODEL_H_
+#define AGENT_BASED_EPIDEMIC_SIM_CORE_PTTS_TRANSITION_MODEL_H_
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/random/discrete_distribution.h"
@@ -80,4 +80,4 @@ class PTTSTransitionModel : public TransitionModel {
 
 }  // namespace abesim
 
-#endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_PTTS_TRANSITION_MODEL_H_
+#endif  // AGENT_BASED_EPIDEMIC_SIM_CORE_PTTS_TRANSITION_MODEL_H_

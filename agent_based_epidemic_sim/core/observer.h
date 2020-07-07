@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_OBSERVER_H_
-#define THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_OBSERVER_H_
+#ifndef AGENT_BASED_EPIDEMIC_SIM_CORE_OBSERVER_H_
+#define AGENT_BASED_EPIDEMIC_SIM_CORE_OBSERVER_H_
 
 #include <memory>
 
@@ -224,4 +224,4 @@ void ObserverShard::RegisterObserver(Observer* observer) {
 
 }  // namespace abesim
 
-#endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_OBSERVER_H_
+#endif  // AGENT_BASED_EPIDEMIC_SIM_CORE_OBSERVER_H_

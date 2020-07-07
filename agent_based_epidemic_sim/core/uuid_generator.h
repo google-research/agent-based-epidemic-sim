@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_UUID_GENERATOR_H_
-#define THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_UUID_GENERATOR_H_
+#ifndef AGENT_BASED_EPIDEMIC_SIM_CORE_UUID_GENERATOR_H_
+#define AGENT_BASED_EPIDEMIC_SIM_CORE_UUID_GENERATOR_H_
 
 #include "agent_based_epidemic_sim/core/integral_types.h"
 
@@ -38,4 +38,4 @@ class ShardedGlobalIdUuidGenerator : public UuidGenerator {
 };
 }  // namespace abesim
 
-#endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_UUID_GENERATOR_H_
+#endif  // AGENT_BASED_EPIDEMIC_SIM_CORE_UUID_GENERATOR_H_

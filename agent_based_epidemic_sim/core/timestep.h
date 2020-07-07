@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_TIMESTEP_H_
-#define THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_TIMESTEP_H_
+#ifndef AGENT_BASED_EPIDEMIC_SIM_CORE_TIMESTEP_H_
+#define AGENT_BASED_EPIDEMIC_SIM_CORE_TIMESTEP_H_
 
 #include "absl/time/time.h"
 
@@ -45,4 +45,4 @@ class Timestep {
 
 }  // namespace abesim
 
-#endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_TIMESTEP_H_
+#endif  // AGENT_BASED_EPIDEMIC_SIM_CORE_TIMESTEP_H_

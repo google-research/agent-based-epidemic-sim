@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_PARSE_TEXT_PROTO_H_
-#define THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_PARSE_TEXT_PROTO_H_
+#ifndef AGENT_BASED_EPIDEMIC_SIM_CORE_PARSE_TEXT_PROTO_H_
+#define AGENT_BASED_EPIDEMIC_SIM_CORE_PARSE_TEXT_PROTO_H_
 
 #include "agent_based_epidemic_sim/port/logging.h"
 #include "google/protobuf/text_format.h"
@@ -31,4 +31,4 @@ T ParseTextProtoOrDie(const std::string& input) {
 
 }  // namespace abesim
 
-#endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_PARSE_TEXT_PROTO_H_
+#endif  // AGENT_BASED_EPIDEMIC_SIM_CORE_PARSE_TEXT_PROTO_H_

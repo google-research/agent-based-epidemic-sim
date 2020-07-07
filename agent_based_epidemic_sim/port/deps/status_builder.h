@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_STATUS_BUILDER_H_
-#define THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_STATUS_BUILDER_H_
+#ifndef AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_STATUS_BUILDER_H_
+#define AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_STATUS_BUILDER_H_
 
 #include <iostream>
 #include <limits>
@@ -503,4 +503,4 @@ StatusBuilder& StatusBuilder::Attach(const T& data) {
 
 }  // namespace abesim
 
-#endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_STATUS_BUILDER_H_
+#endif  // AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_STATUS_BUILDER_H_

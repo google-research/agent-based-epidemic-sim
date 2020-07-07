@@ -15,8 +15,8 @@
  */
 
 // TODO: Rename this file to infection_outcome.h or similar.
-#ifndef THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_EVENT_H_
-#define THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_EVENT_H_
+#ifndef AGENT_BASED_EPIDEMIC_SIM_CORE_EVENT_H_
+#define AGENT_BASED_EPIDEMIC_SIM_CORE_EVENT_H_
 
 #include "absl/meta/type_traits.h"
 #include "absl/time/time.h"
@@ -235,4 +235,4 @@ static_assert(absl::is_trivially_copy_constructible<ContactReport>::value,
 
 }  // namespace abesim
 
-#endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_EVENT_H_
+#endif  // AGENT_BASED_EPIDEMIC_SIM_CORE_EVENT_H_

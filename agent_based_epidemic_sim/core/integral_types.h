@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_INTEGRAL_TYPES_H_
-#define THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_INTEGRAL_TYPES_H_
+#ifndef AGENT_BASED_EPIDEMIC_SIM_CORE_INTEGRAL_TYPES_H_
+#define AGENT_BASED_EPIDEMIC_SIM_CORE_INTEGRAL_TYPES_H_
 
 // TODO: <sys/types.h> is not portable C. Take a close look at this when we add
 // mobile support.
@@ -59,4 +59,4 @@ typedef uint64 Fprint;
 static const Fprint kIllegalFprint = 0;
 static const Fprint kMaxFprint = GG_ULONGLONG(0xFFFFFFFFFFFFFFFF);
 
-#endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_CORE_INTEGRAL_TYPES_H_
+#endif  // AGENT_BASED_EPIDEMIC_SIM_CORE_INTEGRAL_TYPES_H_

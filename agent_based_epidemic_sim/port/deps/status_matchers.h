@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_STATUS_MATCHERS_H_
-#define THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_STATUS_MATCHERS_H_
+#ifndef AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_STATUS_MATCHERS_H_
+#define AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_STATUS_MATCHERS_H_
 
 // Testing utilities for working with ::absl::Status and
 // ::abesim::StatusOr.
@@ -351,4 +351,4 @@ inline internal_status::IsOkMatcher IsOk() {
 #define PANDEMIC_EXPECT_OK(expression) EXPECT_THAT(expression, ::abesim::IsOk())
 #define PANDEMIC_ASSERT_OK(expression) ASSERT_THAT(expression, ::abesim::IsOk())
 
-#endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_STATUS_MATCHERS_H_
+#endif  // AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_STATUS_MATCHERS_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_STATUSOR_H_
-#define THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_STATUSOR_H_
+#ifndef AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_STATUSOR_H_
+#define AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_STATUSOR_H_
 
 // StatusOr<T> is the union of a absl::Status object and a T
 // object. StatusOr models the concept of an object that is either a
@@ -535,4 +535,4 @@ void StatusOr<T>::IgnoreError() const {
 
 }  // namespace abesim
 
-#endif  // THIRD_PARTY_AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_STATUSOR_H_
+#endif  // AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_STATUSOR_H_
