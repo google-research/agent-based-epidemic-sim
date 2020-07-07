@@ -57,16 +57,16 @@ message Person {
   string pums_jwtr = 18;
 
   // Industry recode.
-  string pums_indp07 = 19;
+  string pums_indp = 19;
 
   // NAICS Industry code.
-  string pums_naicsp07 = 20;
+  string pums_naicsp = 20;
 
   // Occupation recode 2010.
-  string pums_occp10 = 21;
+  string pums_occp = 21;
 
   // SOC Occupation code 2010.
-  string pums_socp10 = 22;
+  string pums_socp = 22;
 }
 
 message Household {
