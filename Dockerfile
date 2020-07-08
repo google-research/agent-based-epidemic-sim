@@ -1,7 +1,7 @@
 # This file defines a docker container that can be used to build and test the simulator.
 # If your current directory is the one containing this Dockerfile you can run:
 # docker build -t "abesim" .
-# docker run -t -rm \
+# docker run -t --rm \
 #   -v $PWD:/root/agent_based_epidemic_sim  \
 #   -v /tmp/bazel_output:/tmp/bazel_output \
 #   abesim bazel test agent_based_epidemic_sim/...

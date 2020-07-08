@@ -1,5 +1,7 @@
 # Agent Based Epidemic Simulator
 
+[![Build Status](https://travis-ci.org/google-research/agent-based-epidemic-sim.svg)](https://travis-ci.org/google-research/agent-based-epidemic-sim)
+
 This repository hosts an open source agent-based simulator for modeling
 epidemics at large scale (nation-scale) using parallel and distributed
 computation.
@@ -34,7 +36,9 @@ This is a simple application where communities are created from pre-specified
 distributions. The individual agents in these communities spend some portion of
 every day at their places of work interacting with colleagues, and the rest of
 their day at home interacting with household members. You can build and run the
-example as follows:
+example as follows.
+
+### Native build (Linux)
 
 ```shell
 bazel build -c opt agent_based_epidemic_sim/applications/home_work:main
@@ -42,6 +46,19 @@ bazel build -c opt agent_based_epidemic_sim/applications/home_work:main
 bazel-bin/agent_based_epidemic_sim/applications/home_work/main \
   --simulation_config_pbtxt_path=agent_based_epidemic_sim/applications/home_work/config.pbtxt \
   --output_file_path=$HOME/output.csv
+```
+
+### Docker
+
+```shell
+docker build -t $USER/abesim .
+
+docker run -t --rm -v $PWD:/root/agent_based_epidemic_sim \
+  -v /tmp/output:/tmp/output -v /tmp/bazel_output:/tmp/bazel_output \
+  $USER/abesim \
+  bazel run -c opt agent_based_epidemic_sim/applications/home_work/main -- \
+  --simulation_config_pbtxt_path=/root/agent_based_epidemic_sim/agent_based_epidemic_sim/applications/home_work/config.pbtxt \
+  --output_file_path=/tmp/output/output.csv
 ```
 
 ## Contact Tracing
@@ -53,10 +70,19 @@ not yet ready to run.
 
 ## Tests
 
-To run tests:
-
+### Native build (Linux)
 ```shell
 bazel test agent_based_epidemic_sim/...
+```
+
+### Docker
+```shell
+docker build -t $USER/abesim .
+
+docker run -t --rm \
+  -v $PWD:/root/agent_based_epidemic_sim  \
+  -v /tmp/bazel_output:/tmp/bazel_output \
+  $USER/abesim bazel test agent_based_epidemic_sim/...
 ```
 
 ## Acknowledgements
