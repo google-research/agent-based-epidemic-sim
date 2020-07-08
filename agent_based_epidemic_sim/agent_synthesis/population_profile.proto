@@ -56,6 +56,8 @@ message LocationProto {
   int32 size = 3;
 }
 
+message ActivityTemplate {}
+
 // Representation of an agent.
 // TODO: Move essentialness fraction here.
 message AgentProto {
