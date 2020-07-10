@@ -36,16 +36,24 @@ std::vector<const Exposure*> MakePointers(const std::vector<Exposure>& v) {
 TEST(AggregatedTransmissionModelTest, GetsInfectionOutcomes) {
   const float kTransmissibility = 1;
   std::vector<Exposure> exposures{
-      {.duration = absl::Seconds(1), .infectivity = 1},
-      {.duration = absl::Seconds(86400), .infectivity = 1}};
+      {.duration = absl::Seconds(1), .proximity = 0, .infectivity = 1},
+      {.duration = absl::Seconds(86400), .proximity = 0, .infectivity = 1}};
   AggregatedTransmissionModel transmission_model(kTransmissibility);
   EXPECT_THAT(transmission_model.GetInfectionOutcome(MakePointers(exposures)),
               Eq(HealthTransition{.time = absl::FromUnixSeconds(86400LL),
                                   .health_state = HealthState::EXPOSED}));
 
-  exposures = {{.duration = absl::Seconds(1), .infectivity = 1}};
+  exposures = {
+      {.duration = absl::Seconds(1), .proximity = 0, .infectivity = 1}};
   EXPECT_THAT(transmission_model.GetInfectionOutcome(MakePointers(exposures)),
               Eq(HealthTransition{.time = absl::FromUnixSeconds(1LL),
+                                  .health_state = HealthState::SUSCEPTIBLE}));
+
+  exposures = {
+      {.duration = absl::Seconds(1), .proximity = 1000, .infectivity = 1},
+      {.duration = absl::Seconds(86400), .proximity = 1000, .infectivity = 1}};
+  EXPECT_THAT(transmission_model.GetInfectionOutcome(MakePointers(exposures)),
+              Eq(HealthTransition{.time = absl::FromUnixSeconds(86400LL),
                                   .health_state = HealthState::SUSCEPTIBLE}));
 }
 

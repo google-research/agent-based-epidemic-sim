@@ -54,6 +54,7 @@ static_assert(absl::is_trivially_copy_constructible<HealthTransition>::value,
 struct Exposure {
   absl::Time start_time;
   absl::Duration duration;
+  float proximity;
   float infectivity;
 
   friend bool operator==(const Exposure& a, const Exposure& b) {

@@ -16,6 +16,7 @@
 
 #include <queue>
 
+#include "absl/random/random.h"
 #include "absl/time/time.h"
 #include "agent_based_epidemic_sim/port/logging.h"
 
@@ -24,6 +25,7 @@ namespace {
 
 // TODO: Move  into an event message about visiting infectious agents.
 constexpr float kInfectivity = 1;
+absl::BitGen bitgen;
 
 // Corresponds to the record of a visiting agent in a location.
 struct VisitNode {
@@ -77,11 +79,13 @@ absl::Duration Overlap(const Visit& a, const Visit& b) {
 
 void RecordContact(VisitNode* a, VisitNode* b) {
   absl::Duration overlap = Overlap(*a->visit, *b->visit);
+  float proximity = absl::Uniform(bitgen, 0.0, 100.0);
   a->contacts.push_back(
       {.other_uuid = b->visit->agent_uuid,
        .other_state = b->visit->health_state,
        .exposure = {
            .duration = overlap,
+           .proximity = proximity,
            .infectivity = b->visit->health_state == HealthState::INFECTIOUS
                               ? kInfectivity
                               : 0.0f}});
@@ -90,6 +94,7 @@ void RecordContact(VisitNode* a, VisitNode* b) {
        .other_state = a->visit->health_state,
        .exposure = {
            .duration = overlap,
+           .proximity = proximity,
            .infectivity = a->visit->health_state == HealthState::INFECTIOUS
                               ? kInfectivity
                               : 0.0f}});

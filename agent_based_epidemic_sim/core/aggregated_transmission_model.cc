@@ -22,9 +22,25 @@ namespace {
 constexpr float kSusceptibility = 1;
 constexpr double kEpsilon = 1e-8;
 
+// For now this regularizes proximity [0, 100] to distance [0, 10]. According to
+// https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0100915
+// bluetooth signal strength has a range of up to 10m.
+float ProximityToDistance(float proximity) { return proximity / 10; }
+
+// As noted in (broken link).
+float DistanceToInfectionProbability(float distance) {
+  float denominator = 1 + std::exp(-1.5 * distance + 6.6);
+  return 1 - (1 / denominator);
+}
+
 float ProbabilityExposureInfects(const Exposure& exposure,
                                  const float transmissibility) {
-  return std::log(1 -
+  float distance = ProximityToDistance(exposure.proximity);
+  float distance_infection_probability =
+      DistanceToInfectionProbability(distance);
+
+  return distance_infection_probability *
+         std::log(1 -
                   exposure.infectivity *
                       absl::ToDoubleHours(exposure.duration) / 24.0f *
                       kSusceptibility * transmissibility +
