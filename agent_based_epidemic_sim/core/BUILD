@@ -69,11 +69,13 @@ cc_library(
         "aggregated_transmission_model.h",
     ],
     deps = [
+        ":constants",
         ":event",
         ":transmission_model",
         ":visit",
         "@com_google_absl//absl/random",
         "@com_google_absl//absl/random:distributions",
+        "@com_google_absl//absl/time",
         "@com_google_absl//absl/types:span",
     ],
 )
@@ -145,6 +147,7 @@ cc_library(
     deps = [
         ":integral_types",
         ":visit",
+        "//agent_based_epidemic_sim/util:ostream_overload",
         "@com_google_absl//absl/meta:type_traits",
         "@com_google_absl//absl/time",
         "@com_google_absl//absl/types:variant",
@@ -311,6 +314,15 @@ cc_test(
 )
 
 cc_library(
+    name = "constants",
+    hdrs = ["constants.h"],
+    deps = [
+        ":event",
+        ":integral_types",
+    ],
+)
+
+cc_library(
     name = "seir_agent",
     srcs = [
         "seir_agent.cc",
@@ -321,6 +333,8 @@ cc_library(
     deps = [
         ":agent",
         ":broker",
+        ":constants",
+        ":enum_indexed_array",
         ":event",
         ":integral_types",
         ":public_policy",
@@ -329,6 +343,7 @@ cc_library(
         ":visit",
         ":visit_generator",
         "//agent_based_epidemic_sim/port:logging",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/time",
         "@com_google_absl//absl/types:span",
@@ -340,6 +355,7 @@ cc_test(
     srcs = ["seir_agent_test.cc"],
     deps = [
         ":broker",
+        ":constants",
         ":integral_types",
         ":public_policy",
         ":seir_agent",

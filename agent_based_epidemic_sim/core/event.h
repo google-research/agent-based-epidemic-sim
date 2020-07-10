@@ -23,8 +23,24 @@
 #include "absl/types/variant.h"
 #include "agent_based_epidemic_sim/core/integral_types.h"
 #include "agent_based_epidemic_sim/core/visit.h"
+#include "agent_based_epidemic_sim/util/ostream_overload.h"
 
 namespace abesim {
+
+inline constexpr uint8 kNumberMicroExposureBuckets = 10;
+
+// Convenience method to easily output contents of array to ostream rather than
+// constructing output string manually.
+template <typename T, size_t N>
+std::ostream& operator<<(std::ostream& os, const std::array<T, N>& a) {
+  os << "[";
+  for (int i = 0; i < a.size(); i++) {
+    os << a[i];
+    if (i != a.size() - 1) os << ", ";
+  }
+  os << "]";
+  return os;
+}
 
 // An event representing a HealthState transition.
 struct HealthTransition {
@@ -49,17 +65,21 @@ struct HealthTransition {
 static_assert(absl::is_trivially_copy_constructible<HealthTransition>::value,
               "HealthTransition must be trivially copyable.");
 
-// Represents an exposure of a SUSCEPTIBLE to an INFECTIOUS entity (contact,
-// fomite, location etc.) with a given infectivity.
+// Represents multiple "micro" exposures between a SUSCEPTIBLE and an INFECTIOUS
+// entity at different durations and distances (contact, fomite, location etc.)
+// with a constant infectivity and symptom_factor representing the infectivity
+// and symptom_factor of the infected individual.
 struct Exposure {
   absl::Time start_time;
   absl::Duration duration;
-  float proximity;
+  std::array<uint8, kNumberMicroExposureBuckets> micro_exposure_counts = {};
   float infectivity;
+  float symptom_factor;
 
   friend bool operator==(const Exposure& a, const Exposure& b) {
     return (a.start_time == b.start_time && a.duration == b.duration &&
-            a.infectivity == b.infectivity);
+            a.infectivity == b.infectivity &&
+            a.micro_exposure_counts == b.micro_exposure_counts);
   }
 
   friend bool operator!=(const Exposure& a, const Exposure& b) {
@@ -69,7 +89,8 @@ struct Exposure {
   friend std::ostream& operator<<(std::ostream& strm,
                                   const Exposure& exposure) {
     return strm << "{" << exposure.start_time << ", " << exposure.duration
-                << ", " << exposure.infectivity << "}";
+                << ", " << exposure.infectivity << ", "
+                << exposure.micro_exposure_counts << "}";
   }
 };
 

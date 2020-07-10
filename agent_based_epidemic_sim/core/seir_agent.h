@@ -17,6 +17,8 @@
 #ifndef AGENT_BASED_EPIDEMIC_SIM_CORE_SEIR_AGENT_H_
 #define AGENT_BASED_EPIDEMIC_SIM_CORE_SEIR_AGENT_H_
 
+#include <algorithm>
+
 #include "absl/container/flat_hash_set.h"
 #include "absl/time/time.h"
 #include "absl/types/span.h"
@@ -31,6 +33,15 @@
 #include "agent_based_epidemic_sim/core/visit_generator.h"
 
 namespace abesim {
+
+constexpr std::array<HealthState::State, 2> kNotInfectedHealthStates = {
+    HealthState::SUSCEPTIBLE, HealthState::REMOVED};
+
+inline bool IsInfectedState(const HealthState::State& subject_health_state) {
+  return std::find(kNotInfectedHealthStates.begin(),
+                   kNotInfectedHealthStates.end(),
+                   subject_health_state) == kNotInfectedHealthStates.end();
+}
 
 // An agent that implements a stochastic SEIR model.
 class SEIRAgent : public Agent {
@@ -110,6 +121,9 @@ class SEIRAgent : public Agent {
                                    .health_state = HealthState::SUSCEPTIBLE});
   }
 
+  // Computes infectivity of agent at a given time.
+  float CurrentInfectivity(const absl::Time& current_time) const;
+
   // Advances the health state transitions.
   void MaybeUpdateHealthTransitions(const Timestep& timestep);
   // Splits visits on HealthTransition boundaries so that a unique HealthState
@@ -126,6 +140,9 @@ class SEIRAgent : public Agent {
       absl::Span<const ContactReport> received_reports,
       Broker<ContactReport>* broker) const;
 
+  absl::Duration DurationSinceFirstInfection(
+      const absl::Time& current_time) const;
+
   const int64 uuid_;
   // The health state changes this agent has observed. Ordered in chronological
   // order. Note that the next pending state transition is stored in
@@ -133,6 +150,7 @@ class SEIRAgent : public Agent {
   // TODO: Implement state persistence and clean up.
   std::vector<HealthTransition> health_transitions_;
   HealthTransition next_health_transition_;
+  absl::optional<absl::Time> initial_infection_time_;
 
   ContactSummary contact_summary_;
   TestResult test_result_;
