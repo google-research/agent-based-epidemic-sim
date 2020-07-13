@@ -52,6 +52,9 @@ class GraphLocation : public Location {
       auto second_infectivity = infectivity.find(edge.second);
       if (second_infectivity == infectivity.end()) continue;
 
+      // Generate a random proximity measure.
+      float proximity = absl::Uniform(gen_, 0.0, 100.0);
+
       // Note that we do not report times or durations.  A visit either occurs
       // on a given day or not.
       infection_broker->Send(
@@ -59,6 +62,7 @@ class GraphLocation : public Location {
                .agent_uuid = edge.first,
                .exposure =
                    {
+                       .proximity = proximity,
                        .infectivity = second_infectivity->second,
                    },
                .exposure_type = InfectionOutcomeProto::CONTACT,
@@ -68,6 +72,7 @@ class GraphLocation : public Location {
                .agent_uuid = edge.second,
                .exposure =
                    {
+                       .proximity = proximity,
                        .infectivity = first_infectivity->second,
                    },
                .exposure_type = InfectionOutcomeProto::CONTACT,

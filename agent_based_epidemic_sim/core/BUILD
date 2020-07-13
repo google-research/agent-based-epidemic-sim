@@ -222,6 +222,7 @@ cc_library(
         ":transmission_model",
         ":visit",
         "//agent_based_epidemic_sim/port:logging",
+        "@com_google_absl//absl/random",
         "@com_google_absl//absl/time",
     ],
 )
