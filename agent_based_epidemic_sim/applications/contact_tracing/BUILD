@@ -41,6 +41,7 @@ cc_library(
         ":public_policy",
         "//agent_based_epidemic_sim/applications/home_work:simulation",
         "//agent_based_epidemic_sim/core:public_policy",
+        "@com_google_absl//absl/strings",
     ],
 )
 

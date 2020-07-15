@@ -14,6 +14,7 @@
 
 #include "agent_based_epidemic_sim/applications/contact_tracing/simulation.h"
 
+#include "absl/strings/string_view.h"
 #include "agent_based_epidemic_sim/applications/contact_tracing/public_policy.h"
 #include "agent_based_epidemic_sim/applications/home_work/location_type.h"
 #include "agent_based_epidemic_sim/applications/home_work/simulation.h"
@@ -35,7 +36,8 @@ class TracingPolicyGenerator : public PolicyGenerator {
 
 }  // namespace
 
-void RunSimulation(const std::string& output_file_path,
+void RunSimulation(absl::string_view output_file_path,
+                   absl::string_view learning_output_base,
                    const ContactTracingHomeWorkSimulationConfig& config,
                    int num_workers) {
   auto get_policy_generator = [&config](LocationTypeFn location_type) {
@@ -43,8 +45,9 @@ void RunSimulation(const std::string& output_file_path,
         *CreateTracingPolicy(config.tracing_policy(), location_type));
   };
   auto context = GetSimulationContext(config.home_work_config());
-  RunSimulation(output_file_path, config.home_work_config(),
-                get_policy_generator, num_workers, context);
+  RunSimulation(output_file_path, learning_output_base,
+                config.home_work_config(), get_policy_generator, num_workers,
+                context);
 }
 
 }  // namespace abesim

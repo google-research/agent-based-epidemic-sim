@@ -55,7 +55,7 @@ TEST(SimulationTest, RunsSimulation) {
   config.set_num_steps(1);
   const std::string output_file_path =
       absl::StrCat(getenv("TEST_TMPDIR"), "/", "output.csv");
-  RunSimulation(output_file_path, config, /*num_workers=*/1);
+  RunSimulation(output_file_path, "", config, /*num_workers=*/1);
 
   std::string output;
   PANDEMIC_ASSERT_OK(file::GetContents(output_file_path, &output));

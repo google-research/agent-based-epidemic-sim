@@ -24,6 +24,9 @@ ABSL_FLAG(std::string, simulation_config_pbtxt_path, "",
           "Path to SimulationConfig pbtxt file.");
 ABSL_FLAG(int, num_workers, 1, "The number of thread workers to use.");
 ABSL_FLAG(std::string, output_file_path, "", "The output file path.");
+ABSL_FLAG(std::string, learning_output_base, "",
+          "The base path for the three learning output files. See "
+          "(broken link) for further details.");
 
 namespace abesim {
 
@@ -34,7 +37,8 @@ int Main(int argc, char** argv) {
                              &contents));
   const ContactTracingHomeWorkSimulationConfig config =
       ParseTextProtoOrDie<ContactTracingHomeWorkSimulationConfig>(contents);
-  RunSimulation(absl::GetFlag(FLAGS_output_file_path), config,
+  RunSimulation(absl::GetFlag(FLAGS_output_file_path),
+                absl::GetFlag(FLAGS_learning_output_base), config,
                 absl::GetFlag(FLAGS_num_workers));
   return 0;
 }

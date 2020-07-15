@@ -17,6 +17,7 @@
 #ifndef AGENT_BASED_EPIDEMIC_SIM_APPLICATIONS_HOME_WORK_SIMULATION_H_
 #define AGENT_BASED_EPIDEMIC_SIM_APPLICATIONS_HOME_WORK_SIMULATION_H_
 
+#include "absl/strings/string_view.h"
 #include "agent_based_epidemic_sim/agent_synthesis/population_profile.pb.h"
 #include "agent_based_epidemic_sim/applications/home_work/config.pb.h"
 #include "agent_based_epidemic_sim/applications/home_work/location_type.h"
@@ -35,7 +36,8 @@ struct SimulationContext {
 SimulationContext GetSimulationContext(const HomeWorkSimulationConfig& config);
 
 // Runs a home-work-home simulation from config.
-void RunSimulation(const std::string& output_file_path,
+void RunSimulation(absl::string_view output_file_path,
+                   absl::string_view learning_output_base,
                    const HomeWorkSimulationConfig& config, int num_workers);
 
 // Runs a simulation for a collection of agents and locations.
@@ -44,7 +46,8 @@ void RunSimulation(const std::string& output_file_path,
 // timestep info, std::unique_ptr<PolicyGenerator>, and output_file_path? In
 // this scenario, location_type_fn could be managed within SimulationObjects.
 void RunSimulation(
-    const std::string& output_file_path, const HomeWorkSimulationConfig& config,
+    absl::string_view output_file_path, absl::string_view learning_output_base,
+    const HomeWorkSimulationConfig& config,
     const std::function<std::unique_ptr<PolicyGenerator>(LocationTypeFn)>&
         get_policy_generator,
     int num_workers, const SimulationContext& context);

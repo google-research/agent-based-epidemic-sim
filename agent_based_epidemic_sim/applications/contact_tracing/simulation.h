@@ -17,6 +17,7 @@
 #ifndef AGENT_BASED_EPIDEMIC_SIM_APPLICATIONS_CONTACT_TRACING_SIMULATION_H_
 #define AGENT_BASED_EPIDEMIC_SIM_APPLICATIONS_CONTACT_TRACING_SIMULATION_H_
 
+#include "absl/strings/string_view.h"
 #include "agent_based_epidemic_sim/applications/contact_tracing/config.pb.h"
 #include "agent_based_epidemic_sim/applications/home_work/location_type.h"
 #include "agent_based_epidemic_sim/core/public_policy.h"
@@ -24,7 +25,8 @@
 namespace abesim {
 
 // Runs a home-work-home simulation from config.
-void RunSimulation(const std::string& output_file_path,
+void RunSimulation(absl::string_view output_file_path,
+                   absl::string_view learning_output_base,
                    const ContactTracingHomeWorkSimulationConfig& config,
                    int num_workers);
 

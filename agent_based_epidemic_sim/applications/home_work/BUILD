@@ -23,6 +23,49 @@ cc_proto_library(
 )
 
 cc_library(
+    name = "learning_contacts_observer",
+    srcs = [
+        "learning_contacts_observer.cc",
+    ],
+    hdrs = [
+        "learning_contacts_observer.h",
+    ],
+    deps = [
+        "//agent_based_epidemic_sim/core:agent",
+        "//agent_based_epidemic_sim/core:event",
+        "//agent_based_epidemic_sim/core:health_state",
+        "//agent_based_epidemic_sim/core:observer",
+        "//agent_based_epidemic_sim/core:timestep",
+        "//agent_based_epidemic_sim/port:file_utils",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
+    ],
+)
+
+cc_library(
+    name = "learning_history_and_testing_observer",
+    srcs = [
+        "learning_history_and_testing_observer.cc",
+    ],
+    hdrs = [
+        "learning_history_and_testing_observer.h",
+    ],
+    deps = [
+        "//agent_based_epidemic_sim/core:agent",
+        "//agent_based_epidemic_sim/core:event",
+        "//agent_based_epidemic_sim/core:observer",
+        "//agent_based_epidemic_sim/core:pandemic_cc_proto",
+        "//agent_based_epidemic_sim/core:timestep",
+        "//agent_based_epidemic_sim/port:file_utils",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/time",
+        "@com_google_absl//absl/types:span",
+    ],
+)
+
+cc_library(
     name = "simulation",
     srcs = [
         "observer.cc",
@@ -37,6 +80,8 @@ cc_library(
     ],
     deps = [
         ":config_cc_proto",
+        ":learning_contacts_observer",
+        ":learning_history_and_testing_observer",
         "//agent_based_epidemic_sim/agent_synthesis:agent_sampler",
         "//agent_based_epidemic_sim/agent_synthesis:population_profile_cc_proto",
         "//agent_based_epidemic_sim/agent_synthesis:shuffled_sampler",
@@ -64,6 +109,7 @@ cc_library(
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/random",
         "@com_google_absl//absl/random:distributions",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/time",
     ],
@@ -96,7 +142,6 @@ cc_test(
         "//agent_based_epidemic_sim/port:status_matchers",
         "//agent_based_epidemic_sim/port:time_proto_util",
         "//agent_based_epidemic_sim/util:ostream_overload",
-        "@com_google_absl//absl/random:mock_distributions",
         "@com_google_absl//absl/time",
         "@com_google_googletest//:gtest_main",
     ],

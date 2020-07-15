@@ -50,7 +50,9 @@ cc_library(
     ],
     deps = [
         ":broker",
+        ":event",
         ":integral_types",
+        ":pandemic_cc_proto",
         ":timestep",
         ":visit",
         "@com_google_absl//absl/time",
@@ -191,6 +193,12 @@ cc_library(
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/types:span",
     ],
+)
+
+cc_library(
+    name = "health_state",
+    hdrs = ["health_state.h"],
+    deps = [":pandemic_cc_proto"],
 )
 
 cc_library(
@@ -460,6 +468,7 @@ cc_test(
     ],
     deps = [
         ":agent",
+        ":event",
         ":location",
         ":observer",
         ":simulation",
@@ -467,6 +476,7 @@ cc_test(
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/time",
+        "@com_google_absl//absl/types:span",
         "@com_google_googletest//:gtest_main",
     ],
 )

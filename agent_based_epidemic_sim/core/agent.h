@@ -20,7 +20,9 @@
 #include "absl/time/time.h"
 #include "absl/types/span.h"
 #include "agent_based_epidemic_sim/core/broker.h"
+#include "agent_based_epidemic_sim/core/event.h"
 #include "agent_based_epidemic_sim/core/integral_types.h"
+#include "agent_based_epidemic_sim/core/pandemic.pb.h"
 #include "agent_based_epidemic_sim/core/timestep.h"
 #include "agent_based_epidemic_sim/core/visit.h"
 
@@ -76,6 +78,10 @@ class Agent {
       Broker<ContactReport>* contact_broker) = 0;
 
   virtual HealthState::State CurrentHealthState() const = 0;
+
+  virtual TestResult CurrentTestResult() const = 0;
+
+  virtual absl::Span<const HealthTransition> HealthTransitions() const = 0;
 
   virtual ~Agent() = default;
 };

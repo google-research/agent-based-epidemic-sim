@@ -64,6 +64,9 @@ class MockAgent : public Agent {
                Broker<ContactReport>* symptom_broker),
               (override));
   MOCK_METHOD(HealthState::State, CurrentHealthState, (), (const, override));
+  MOCK_METHOD(TestResult, CurrentTestResult, (), (const, override));
+  MOCK_METHOD(absl::Span<const HealthTransition>, HealthTransitions, (),
+              (const, override));
 };
 
 class MockLocation : public Location {

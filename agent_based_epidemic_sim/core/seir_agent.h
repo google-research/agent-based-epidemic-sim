@@ -72,6 +72,13 @@ class SEIRAgent : public Agent {
     return health_transitions_.back().health_state;
   }
 
+  TestResult CurrentTestResult() const override { return test_result_; }
+
+  absl::Span<const HealthTransition> HealthTransitions() const override {
+    return absl::Span<const HealthTransition>(health_transitions_.data(),
+                                              health_transitions_.size());
+  }
+
   // For use in testing.
   HealthTransition NextHealthTransition() const {
     return next_health_transition_;

@@ -17,7 +17,9 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/time/time.h"
+#include "absl/types/span.h"
 #include "agent_based_epidemic_sim/core/agent.h"
+#include "agent_based_epidemic_sim/core/event.h"
 #include "agent_based_epidemic_sim/core/location.h"
 #include "agent_based_epidemic_sim/core/observer.h"
 #include "agent_based_epidemic_sim/core/timestep.h"
@@ -106,6 +108,12 @@ class FakeAgent : public Agent {
 
   HealthState::State CurrentHealthState() const override {
     return HealthState::SUSCEPTIBLE;
+  }
+
+  TestResult CurrentTestResult() const override { return TestResult{}; }
+
+  absl::Span<const HealthTransition> HealthTransitions() const override {
+    return {};
   }
 
  private:

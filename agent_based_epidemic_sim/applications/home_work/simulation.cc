@@ -17,11 +17,14 @@
 #include <queue>
 #include <string>
 
+#include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "agent_based_epidemic_sim/agent_synthesis/agent_sampler.h"
 #include "agent_based_epidemic_sim/agent_synthesis/population_profile.pb.h"
 #include "agent_based_epidemic_sim/agent_synthesis/shuffled_sampler.h"
 #include "agent_based_epidemic_sim/applications/home_work/config.pb.h"
+#include "agent_based_epidemic_sim/applications/home_work/learning_contacts_observer.h"
+#include "agent_based_epidemic_sim/applications/home_work/learning_history_and_testing_observer.h"
 #include "agent_based_epidemic_sim/applications/home_work/observer.h"
 #include "agent_based_epidemic_sim/applications/home_work/public_policy.h"
 #include "agent_based_epidemic_sim/core/agent.h"
@@ -226,7 +229,8 @@ SimulationContext GetSimulationContext(const HomeWorkSimulationConfig& config) {
 }
 
 void RunSimulation(
-    const std::string& output_file_path, const HomeWorkSimulationConfig& config,
+    absl::string_view output_file_path, absl::string_view learning_output_base,
+    const HomeWorkSimulationConfig& config,
     const std::function<std::unique_ptr<PolicyGenerator>(LocationTypeFn)>&
         get_policy_generator,
     const int num_workers, const SimulationContext& context) {
@@ -285,20 +289,35 @@ void RunSimulation(
   HomeWorkSimulationObserverFactory observer_factory(
       output_file.get(), context.location_type, passthrough);
   sim->AddObserverFactory(&observer_factory);
-  sim->Step(config.num_steps(), step_size);
+  LearningContactsObserverFactory learning_contacts_observer_factory(
+      learning_output_base);
+  if (!learning_output_base.empty()) {
+    sim->AddObserverFactory(&learning_contacts_observer_factory);
+  }
+  sim->Step(config.num_steps() - 1, step_size);
+  // Do the last step to get agent history and tests.
+  LearningHistoryAndTestingObserverFactory hist_and_test_observer_factory(
+      learning_output_base);
+  if (!learning_output_base.empty()) {
+    sim->AddObserverFactory(&hist_and_test_observer_factory);
+  }
+  sim->Step(1, step_size);
   LOG(INFO) << observer_factory.status();
+  LOG(INFO) << learning_contacts_observer_factory.status();
+  LOG(INFO) << hist_and_test_observer_factory.status();
   CHECK_EQ(absl::OkStatus(), output_file->Close());
 }
 
-void RunSimulation(const std::string& output_file_path,
+void RunSimulation(absl::string_view output_file_path,
+                   absl::string_view mpi_learning_output_base,
                    const HomeWorkSimulationConfig& config,
                    const int num_workers) {
   auto get_policy_generator = [&config](LocationTypeFn location_type) {
     return *NewPolicyGenerator(config.distancing_policy(), location_type);
   };
   auto context = GetSimulationContext(config);
-  RunSimulation(output_file_path, config, get_policy_generator, num_workers,
-                context);
+  RunSimulation(output_file_path, mpi_learning_output_base, config,
+                get_policy_generator, num_workers, context);
 }
 
 }  // namespace abesim
