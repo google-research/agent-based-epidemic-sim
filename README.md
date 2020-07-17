@@ -1,6 +1,6 @@
 # Agent Based Epidemic Simulator
 
-[![Build Status](https://travis-ci.org/google-research/agent-based-epidemic-sim.svg)](https://travis-ci.org/google-research/agent-based-epidemic-sim)
+[![Build Status](https://travis-ci.org/google-research/agent-based-epidemic-sim.svg?branch=develop)](https://travis-ci.org/google-research/agent-based-epidemic-sim/branches)
 
 This repository hosts an open source agent-based simulator for modeling
 epidemics at large scale (nation-scale) using parallel and distributed
