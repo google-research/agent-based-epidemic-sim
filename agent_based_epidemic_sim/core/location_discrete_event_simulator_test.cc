@@ -50,28 +50,36 @@ std::vector<InfectionOutcome> InfectionOutcomesFromContacts(
   return infection_outcomes;
 }
 
+// TODO: Add test coverage of health states ASYMPTOMATIC, MILD,
+// SEVERE.
+// TODO: Test that micro_exposure_counts never over-assigns
+// durations.
 TEST(LocationDiscreteEventSimulatorTest, ContactTracing) {
   const int64 kUuid = 42LL;
   std::vector<Visit> visits{Visit{.location_uuid = 42LL,
                                   .agent_uuid = 0LL,
                                   .start_time = absl::FromUnixSeconds(0LL),
-                                  .end_time = absl::FromUnixSeconds(100LL),
-                                  .health_state = HealthState::INFECTIOUS},
+                                  .end_time = absl::FromUnixSeconds(1000LL),
+                                  .health_state = HealthState::INFECTIOUS,
+                                  .infectivity = 1.0f},
                             Visit{.location_uuid = 42LL,
                                   .agent_uuid = 1LL,
-                                  .start_time = absl::FromUnixSeconds(10LL),
-                                  .end_time = absl::FromUnixSeconds(50LL),
-                                  .health_state = HealthState::SUSCEPTIBLE},
+                                  .start_time = absl::FromUnixSeconds(100LL),
+                                  .end_time = absl::FromUnixSeconds(500LL),
+                                  .health_state = HealthState::SUSCEPTIBLE,
+                                  .infectivity = 0.0f},
                             Visit{.location_uuid = 42LL,
                                   .agent_uuid = 2LL,
-                                  .start_time = absl::FromUnixSeconds(100LL),
-                                  .end_time = absl::FromUnixSeconds(200LL),
-                                  .health_state = HealthState::EXPOSED},
+                                  .start_time = absl::FromUnixSeconds(1000LL),
+                                  .end_time = absl::FromUnixSeconds(2000LL),
+                                  .health_state = HealthState::EXPOSED,
+                                  .infectivity = 0.0f},
                             Visit{.location_uuid = 42LL,
                                   .agent_uuid = 3LL,
-                                  .start_time = absl::FromUnixSeconds(40LL),
-                                  .end_time = absl::FromUnixSeconds(60LL),
-                                  .health_state = HealthState::RECOVERED}};
+                                  .start_time = absl::FromUnixSeconds(400LL),
+                                  .end_time = absl::FromUnixSeconds(600LL),
+                                  .health_state = HealthState::RECOVERED,
+                                  .infectivity = 0.0f}};
 
   std::vector<Contact> contacts;
   MockInfectionBroker infection_broker;
@@ -80,12 +88,18 @@ TEST(LocationDiscreteEventSimulatorTest, ContactTracing) {
         {
             .other_uuid = 1,
             .other_state = HealthState::SUSCEPTIBLE,
-            .exposure = {.duration = absl::Seconds(40), .infectivity = 0.0f},
+            .exposure = {.duration = absl::Seconds(400),
+                         .micro_exposure_counts = {1, 1, 1, 1, 1, 1, 0, 0, 0,
+                                                   0},
+                         .infectivity = 0.0f},
         },
         {
             .other_uuid = 3,
             .other_state = HealthState::RECOVERED,
-            .exposure = {.duration = absl::Seconds(20), .infectivity = 0.0f},
+            .exposure = {.duration = absl::Seconds(200),
+                         .micro_exposure_counts = {1, 1, 1, 0, 0, 0, 0, 0, 0,
+                                                   0},
+                         .infectivity = 0.0f},
         }};
     EXPECT_CALL(infection_broker,
                 Send(UnorderedElementsAreArray(InfectionOutcomesFromContacts(
@@ -97,12 +111,18 @@ TEST(LocationDiscreteEventSimulatorTest, ContactTracing) {
         {
             .other_uuid = 0,
             .other_state = HealthState::INFECTIOUS,
-            .exposure = {.duration = absl::Seconds(40), .infectivity = 1.0f},
+            .exposure = {.duration = absl::Seconds(400),
+                         .micro_exposure_counts = {1, 1, 1, 1, 1, 1, 0, 0, 0,
+                                                   0},
+                         .infectivity = 1.0f},
         },
         {
             .other_uuid = 3,
             .other_state = HealthState::RECOVERED,
-            .exposure = {.duration = absl::Seconds(10), .infectivity = 0.0f},
+            .exposure = {.duration = absl::Seconds(100),
+                         .micro_exposure_counts = {1, 0, 0, 0, 0, 0, 0, 0, 0,
+                                                   0},
+                         .infectivity = 0.0f},
         }};
     EXPECT_CALL(infection_broker,
                 Send(UnorderedElementsAreArray(InfectionOutcomesFromContacts(
@@ -121,12 +141,20 @@ TEST(LocationDiscreteEventSimulatorTest, ContactTracing) {
         {
             .other_uuid = 0,
             .other_state = HealthState::INFECTIOUS,
-            .exposure = {.duration = absl::Seconds(20), .infectivity = 1.0f},
+            .exposure =
+                {
+                    .duration = absl::Seconds(200),
+                    .micro_exposure_counts = {1, 1, 1, 0, 0, 0, 0, 0, 0, 0},
+                    .infectivity = 1.0f,
+                },
         },
         {
             .other_uuid = 1,
             .other_state = HealthState::SUSCEPTIBLE,
-            .exposure = {.duration = absl::Seconds(10), .infectivity = 0.0f},
+            .exposure = {.duration = absl::Seconds(100),
+                         .micro_exposure_counts = {1, 0, 0, 0, 0, 0, 0, 0, 0,
+                                                   0},
+                         .infectivity = 0.0f},
         }};
     EXPECT_CALL(infection_broker,
                 Send(UnorderedElementsAreArray(InfectionOutcomesFromContacts(
