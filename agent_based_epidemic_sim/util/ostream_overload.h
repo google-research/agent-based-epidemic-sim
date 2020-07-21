@@ -29,4 +29,16 @@
     return os;                                                          \
   }
 
+#define OVERLOAD_ARRAY_OSTREAM_OPS                                        \
+  template <typename T, size_t N>                                         \
+  std::ostream& operator<<(std::ostream& os, const std::array<T, N>& a) { \
+    os << "[";                                                            \
+    for (int i = 0; i < a.size(); i++) {                                  \
+      os << a[i];                                                         \
+      if (i != a.size() - 1) os << ", ";                                  \
+    }                                                                     \
+    os << "]";                                                            \
+    return os;                                                            \
+  }
+
 #endif  // AGENT_BASED_EPIDEMIC_SIM_UTIL_OSTREAM_OVERLOAD_H_
