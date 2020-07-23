@@ -14,13 +14,41 @@
 
 #include "agent_based_epidemic_sim/core/seir_agent.h"
 
+#include <cmath>
+
 #include "absl/time/time.h"
+#include "agent_based_epidemic_sim/core/constants.h"
+#include "agent_based_epidemic_sim/core/enum_indexed_array.h"
 #include "agent_based_epidemic_sim/port/logging.h"
 
 namespace abesim {
 namespace {
+
 bool ContactFromBefore(const Contact& contact, const absl::Time time) {
   return contact.exposure.start_time + contact.exposure.duration < time;
+}
+
+float SymptomFactor(const HealthState::State health_state) {
+  // Symptoms are not infectious.
+  if (health_state == HealthState::SUSCEPTIBLE ||
+      health_state == HealthState::RECOVERED ||
+      health_state == HealthState::REMOVED) {
+    return 0.0f;
+  }
+
+  // Symptoms are mildly infectious.
+  if (health_state == HealthState::ASYMPTOMATIC) {
+    return 0.33f;
+  }
+
+  // Symptoms are moderately infectious.
+  if (health_state == HealthState::PRE_SYMPTOMATIC_MILD ||
+      health_state == HealthState::SYMPTOMATIC_MILD) {
+    return 0.72f;
+  }
+
+  // Symptoms are severely infectious.
+  return 1.0f;
 }
 }  // namespace
 
@@ -54,6 +82,8 @@ void SEIRAgent::SplitAndAssignHealthStates(std::vector<Visit>* visits) const {
   for (int i = visits->size() - 1; i >= 0;) {
     Visit& visit = (*visits)[i];
     visit.health_state = interval->health_state;
+    visit.infectivity = CurrentInfectivity(visit.start_time);
+    visit.symptom_factor = SymptomFactor(interval->health_state);
     visit.agent_uuid = uuid_;
     if (visit.start_time >= interval->time) {
       --i;
@@ -61,7 +91,11 @@ void SEIRAgent::SplitAndAssignHealthStates(std::vector<Visit>* visits) const {
       if (visit.end_time > interval->time) {
         Visit split_visit = visit;
         visit.end_time = interval->time;
+        // No visit should ever come before the first health transition.
+        visit.symptom_factor = SymptomFactor((interval - 1)->health_state);
         split_visit.start_time = interval->time;
+        split_visit.infectivity = CurrentInfectivity(split_visit.start_time);
+        split_visit.symptom_factor = SymptomFactor(interval->health_state);
         visits->push_back(split_visit);
       }
       ++interval;
@@ -72,6 +106,10 @@ void SEIRAgent::SplitAndAssignHealthStates(std::vector<Visit>* visits) const {
 void SEIRAgent::MaybeUpdateHealthTransitions(const Timestep& timestep) {
   while (next_health_transition_.time < timestep.end_time()) {
     const absl::Time original_transition_time = next_health_transition_.time;
+    if (IsInfectedState(next_health_transition_.health_state) &&
+        !initial_infection_time_.has_value()) {
+      initial_infection_time_ = original_transition_time;
+    }
     health_transitions_.push_back(next_health_transition_);
     next_health_transition_ =
         transition_model_->GetNextHealthTransition(next_health_transition_);
@@ -178,6 +216,14 @@ void SEIRAgent::SendContactReports(
   }
 }
 
+absl::Duration SEIRAgent::DurationSinceFirstInfection(
+    const absl::Time& current_time) const {
+  if (initial_infection_time_.has_value()) {
+    return current_time - initial_infection_time_.value();
+  }
+  return absl::InfiniteDuration();
+}
+
 void SEIRAgent::ProcessInfectionOutcomes(
     const Timestep& timestep,
     const absl::Span<const InfectionOutcome> infection_outcomes) {
@@ -232,6 +278,23 @@ void SEIRAgent::ProcessInfectionOutcomes(
   }
   contact_summary_.retention_horizon = earliest_retained_contact_time;
   MaybeUpdateHealthTransitions(timestep);
+}
+
+float SEIRAgent::CurrentInfectivity(const absl::Time& current_time) const {
+  if (!IsInfectedState(CurrentHealthState()) ||
+      !initial_infection_time_.has_value() ||
+      current_time < initial_infection_time_) {
+    return 0;
+  }
+
+  const absl::Duration duration_since_infection =
+      DurationSinceFirstInfection(current_time);
+  const int discrete_days_since_infection =
+      (int)std::round(absl::ToDoubleHours(duration_since_infection) / 24.0f);
+
+  if (discrete_days_since_infection > 14) return 0;
+
+  return kInfectivityArray[discrete_days_since_infection];
 }
 
 }  // namespace abesim
