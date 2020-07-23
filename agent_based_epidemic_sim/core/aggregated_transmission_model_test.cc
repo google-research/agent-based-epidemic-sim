@@ -36,8 +36,10 @@ std::vector<const Exposure*> MakePointers(const std::vector<Exposure>& v) {
 TEST(AggregatedTransmissionModelTest, GetsInfectionOutcomes) {
   const float kTransmissibility = 1;
   std::vector<Exposure> exposures{
-      {.duration = absl::Seconds(1), .infectivity = 1},
-      {.duration = absl::Seconds(86400), .infectivity = 1}};
+      {.duration = absl::Seconds(1), .infectivity = 1, .symptom_factor = 1},
+      {.duration = absl::Seconds(86400),
+       .infectivity = 1,
+       .symptom_factor = 1}};
   AggregatedTransmissionModel transmission_model(kTransmissibility);
   EXPECT_THAT(transmission_model.GetInfectionOutcome(MakePointers(exposures)),
               Eq(HealthTransition{.time = absl::FromUnixSeconds(86400LL),
