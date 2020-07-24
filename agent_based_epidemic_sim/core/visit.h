@@ -57,11 +57,13 @@ struct Visit {
   absl::Time start_time;
   absl::Time end_time;
   HealthState::State health_state;
+  float infectivity;
 
   friend bool operator==(const Visit& a, const Visit& b) {
     return (a.location_uuid == b.location_uuid &&
             a.agent_uuid == b.agent_uuid && a.start_time == b.start_time &&
-            a.end_time == b.end_time && a.health_state == b.health_state);
+            a.end_time == b.end_time && a.health_state == b.health_state &&
+            a.infectivity == b.infectivity);
   }
 
   friend bool operator!=(const Visit& a, const Visit& b) { return !(a == b); }
@@ -69,7 +71,7 @@ struct Visit {
   friend std::ostream& operator<<(std::ostream& strm, const Visit& visit) {
     return strm << "{" << visit.location_uuid << ", " << visit.agent_uuid
                 << ", " << visit.start_time << ", " << visit.end_time << ", "
-                << visit.health_state << "}";
+                << visit.health_state << ", " << visit.infectivity << "}";
   }
 };
 

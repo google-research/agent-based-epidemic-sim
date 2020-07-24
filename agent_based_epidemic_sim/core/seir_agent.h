@@ -110,6 +110,12 @@ class SEIRAgent : public Agent {
                                    .health_state = HealthState::SUSCEPTIBLE});
   }
 
+  // TODO: Change infectivity implementation to mirror Oxford ABM.
+  float CurrentInfectivity(const HealthTransition& health_transition) const {
+    return health_transition.health_state == HealthState::INFECTIOUS ? 1.0
+                                                                     : 0.0;
+  }
+
   // Advances the health state transitions.
   void MaybeUpdateHealthTransitions(const Timestep& timestep);
   // Splits visits on HealthTransition boundaries so that a unique HealthState

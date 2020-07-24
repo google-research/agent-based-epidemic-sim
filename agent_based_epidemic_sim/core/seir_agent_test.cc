@@ -129,22 +129,26 @@ TEST(SEIRAgentTest, ComputesVisits) {
             .agent_uuid = kUuid,
             .start_time = absl::FromUnixSeconds(0LL),
             .end_time = absl::FromUnixSeconds(28800LL),
-            .health_state = HealthState::EXPOSED},
+            .health_state = HealthState::EXPOSED,
+            .infectivity = 0.0f},
       Visit{.location_uuid = 1LL,
             .agent_uuid = kUuid,
             .start_time = absl::FromUnixSeconds(28800LL),
             .end_time = absl::FromUnixSeconds(43200LL),
-            .health_state = HealthState::EXPOSED},
+            .health_state = HealthState::EXPOSED,
+            .infectivity = 0.0f},
       Visit{.location_uuid = 0LL,
             .agent_uuid = kUuid,
             .start_time = absl::FromUnixSeconds(57600LL),
             .end_time = absl::FromUnixSeconds(86400LL),
-            .health_state = HealthState::INFECTIOUS},
+            .health_state = HealthState::INFECTIOUS,
+            .infectivity = 1.0f},
       Visit{.location_uuid = 1LL,
             .agent_uuid = kUuid,
             .start_time = absl::FromUnixSeconds(43200LL),
             .end_time = absl::FromUnixSeconds(57600LL),
-            .health_state = HealthState::INFECTIOUS}};
+            .health_state = HealthState::INFECTIOUS,
+            .infectivity = 1.0f}};
   EXPECT_CALL(*visit_broker, Send(Eq(expected_visits)));
   auto agent =
       SEIRAgent::Create(kUuid,
@@ -177,7 +181,8 @@ TEST(SEIRAgentTest, InitializesSusceptibleState) {
             .agent_uuid = kUuid,
             .start_time = absl::FromUnixSeconds(0LL),
             .end_time = absl::FromUnixSeconds(86400LL),
-            .health_state = HealthState::SUSCEPTIBLE}};
+            .health_state = HealthState::SUSCEPTIBLE,
+            .infectivity = 0.0f}};
   EXPECT_CALL(*visit_broker, Send(Eq(expected_visits)));
   auto agent = SEIRAgent::CreateSusceptible(
       kUuid, &transmission_model, std::move(transition_model),
@@ -211,7 +216,8 @@ TEST(SEIRAgentTest, InitializesNonSusceptibleState) {
             .agent_uuid = kUuid,
             .start_time = absl::FromUnixSeconds(0LL),
             .end_time = absl::FromUnixSeconds(86400LL),
-            .health_state = HealthState::EXPOSED}};
+            .health_state = HealthState::EXPOSED,
+            .infectivity = 0.0f}};
   EXPECT_CALL(*visit_broker, Send(Eq(expected_visits)));
   auto agent =
       SEIRAgent::Create(kUuid,
@@ -257,12 +263,14 @@ TEST(SEIRAgentTest, RespectsTimestepBasedDwellTimeAndFiltersZeroIntervals) {
             .agent_uuid = kUuid,
             .start_time = absl::FromUnixSeconds(0LL),
             .end_time = absl::FromUnixSeconds(86400LL - 1LL),
-            .health_state = HealthState::EXPOSED},
+            .health_state = HealthState::EXPOSED,
+            .infectivity = 0.0f},
       Visit{.location_uuid = 0LL,
             .agent_uuid = kUuid,
             .start_time = absl::FromUnixSeconds(86400LL - 1LL),
             .end_time = absl::FromUnixSeconds(86400LL),
-            .health_state = HealthState::INFECTIOUS},
+            .health_state = HealthState::INFECTIOUS,
+            .infectivity = 1.0f},
   };
   EXPECT_CALL(*visit_broker, Send(Eq(expected_visits)));
   auto agent =

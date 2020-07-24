@@ -58,22 +58,26 @@ TEST(LocationDiscreteEventSimulatorTest, ContactTracing) {
                                   .agent_uuid = 0LL,
                                   .start_time = absl::FromUnixSeconds(0LL),
                                   .end_time = absl::FromUnixSeconds(1000LL),
-                                  .health_state = HealthState::INFECTIOUS},
+                                  .health_state = HealthState::INFECTIOUS,
+                                  .infectivity = 1.0f},
                             Visit{.location_uuid = 42LL,
                                   .agent_uuid = 1LL,
                                   .start_time = absl::FromUnixSeconds(100LL),
                                   .end_time = absl::FromUnixSeconds(500LL),
-                                  .health_state = HealthState::SUSCEPTIBLE},
+                                  .health_state = HealthState::SUSCEPTIBLE,
+                                  .infectivity = 0.0f},
                             Visit{.location_uuid = 42LL,
                                   .agent_uuid = 2LL,
                                   .start_time = absl::FromUnixSeconds(1000LL),
                                   .end_time = absl::FromUnixSeconds(2000LL),
-                                  .health_state = HealthState::EXPOSED},
+                                  .health_state = HealthState::EXPOSED,
+                                  .infectivity = 0.0f},
                             Visit{.location_uuid = 42LL,
                                   .agent_uuid = 3LL,
                                   .start_time = absl::FromUnixSeconds(400LL),
                                   .end_time = absl::FromUnixSeconds(600LL),
-                                  .health_state = HealthState::RECOVERED}};
+                                  .health_state = HealthState::RECOVERED,
+                                  .infectivity = 0.0f}};
 
   std::vector<Contact> contacts;
   MockInfectionBroker infection_broker;

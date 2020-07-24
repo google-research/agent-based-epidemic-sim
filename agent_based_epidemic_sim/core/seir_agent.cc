@@ -54,6 +54,7 @@ void SEIRAgent::SplitAndAssignHealthStates(std::vector<Visit>* visits) const {
   for (int i = visits->size() - 1; i >= 0;) {
     Visit& visit = (*visits)[i];
     visit.health_state = interval->health_state;
+    visit.infectivity = CurrentInfectivity(*interval);
     visit.agent_uuid = uuid_;
     if (visit.start_time >= interval->time) {
       --i;
