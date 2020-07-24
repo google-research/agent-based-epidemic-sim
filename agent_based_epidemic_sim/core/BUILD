@@ -145,6 +145,7 @@ cc_library(
     deps = [
         ":integral_types",
         ":visit",
+        "//agent_based_epidemic_sim/util:ostream_overload",
         "@com_google_absl//absl/meta:type_traits",
         "@com_google_absl//absl/time",
         "@com_google_absl//absl/types:variant",

@@ -25,10 +25,6 @@ namespace {
 
 // TODO: Move  into an event message about visiting infectious agents.
 constexpr float kInfectivity = 1;
-constexpr float kProximityMin = 0;
-constexpr float kProximityMax = 10;
-
-absl::BitGen bitgen;
 
 // Corresponds to the record of a visiting agent in a location.
 struct VisitNode {
@@ -80,15 +76,40 @@ absl::Duration Overlap(const Visit& a, const Visit& b) {
          std::max(a.start_time, b.start_time);
 }
 
+const std::array<uint8, kNumberMicroExposureBuckets> GenerateMicroExposures(
+    absl::Duration overlap) {
+  std::array<uint8, kNumberMicroExposureBuckets> micro_exposure_counts = {};
+
+  // TODO: Use a distribution of duration@distance once it is
+  // figured out.
+  // Generate counts for each bucket and never over assign
+  // duration.
+  const uint8 total_counts_to_assign = absl::ToInt64Minutes(overlap);
+
+  if (total_counts_to_assign == 0) return micro_exposure_counts;
+
+  const uint8 buckets_to_fill =
+      std::min(kNumberMicroExposureBuckets, total_counts_to_assign);
+  const uint8 counts_per_bucket = total_counts_to_assign / buckets_to_fill;
+
+  for (auto i = 0; i < buckets_to_fill; i++) {
+    micro_exposure_counts[i] = counts_per_bucket;
+  }
+
+  return micro_exposure_counts;
+}
+
 void RecordContact(VisitNode* a, VisitNode* b) {
-  absl::Duration overlap = Overlap(*a->visit, *b->visit);
-  float proximity = absl::Uniform(bitgen, kProximityMin, kProximityMax);
+  const absl::Duration overlap = Overlap(*a->visit, *b->visit);
+  const std::array<uint8, kNumberMicroExposureBuckets> micro_exposure_counts =
+      GenerateMicroExposures(overlap);
+
   a->contacts.push_back(
       {.other_uuid = b->visit->agent_uuid,
        .other_state = b->visit->health_state,
        .exposure = {
            .duration = overlap,
-           .proximity = proximity,
+           .micro_exposure_counts = micro_exposure_counts,
            .infectivity = b->visit->health_state == HealthState::INFECTIOUS
                               ? kInfectivity
                               : 0.0f}});
@@ -97,7 +118,7 @@ void RecordContact(VisitNode* a, VisitNode* b) {
        .other_state = a->visit->health_state,
        .exposure = {
            .duration = overlap,
-           .proximity = proximity,
+           .micro_exposure_counts = micro_exposure_counts,
            .infectivity = a->visit->health_state == HealthState::INFECTIOUS
                               ? kInfectivity
                               : 0.0f}});
