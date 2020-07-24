@@ -312,6 +312,12 @@ cc_test(
 )
 
 cc_library(
+    name = "constants",
+    hdrs = ["constants.h"],
+    deps = [":integral_types"],
+)
+
+cc_library(
     name = "seir_agent",
     srcs = [
         "seir_agent.cc",
@@ -322,6 +328,7 @@ cc_library(
     deps = [
         ":agent",
         ":broker",
+        ":constants",
         ":event",
         ":integral_types",
         ":public_policy",
@@ -341,6 +348,7 @@ cc_test(
     srcs = ["seir_agent_test.cc"],
     deps = [
         ":broker",
+        ":constants",
         ":integral_types",
         ":public_policy",
         ":seir_agent",

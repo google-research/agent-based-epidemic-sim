@@ -50,6 +50,8 @@ std::vector<InfectionOutcome> InfectionOutcomesFromContacts(
   return infection_outcomes;
 }
 
+// TODO: Add test coverage of health states ASYMPTOMATIC, MILD,
+// SEVERE.
 // TODO: Test that micro_exposure_counts never over-assigns
 // durations.
 TEST(LocationDiscreteEventSimulatorTest, ContactTracing) {
