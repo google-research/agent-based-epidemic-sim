@@ -109,13 +109,15 @@ void RecordContact(VisitNode* a, VisitNode* b) {
        .other_state = b->visit->health_state,
        .exposure = {.duration = overlap,
                     .micro_exposure_counts = micro_exposure_counts,
-                    .infectivity = b->visit->infectivity}});
+                    .infectivity = b->visit->infectivity,
+                    .symptom_factor = b->visit->symptom_factor}});
   b->contacts.push_back(
       {.other_uuid = a->visit->agent_uuid,
        .other_state = a->visit->health_state,
        .exposure = {.duration = overlap,
                     .micro_exposure_counts = micro_exposure_counts,
-                    .infectivity = a->visit->infectivity}});
+                    .infectivity = a->visit->infectivity,
+                    .symptom_factor = a->visit->symptom_factor}});
 }
 }  // namespace
 

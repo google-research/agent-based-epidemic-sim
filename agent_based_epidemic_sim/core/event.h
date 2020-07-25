@@ -65,14 +65,22 @@ struct HealthTransition {
 static_assert(absl::is_trivially_copy_constructible<HealthTransition>::value,
               "HealthTransition must be trivially copyable.");
 
-// Represents multiple "micro" exposures between a SUSCEPTIBLE and an INFECTIOUS
-// entity at different durations and distances (contact, fomite, location etc.)
-// with a constant infectivity.
+// Represents a single exposure event between a SUSCEPTIBLE and an INFECTIOUS
+// entity made up of multiple "micro exposure" events.
+// Each exposure has real values that are used when computing the probability of
+// transmission from the INFECTIOUS entity to the SUSCEPTIBLE entity:
+//   infectivity: A function of the duration since the INFECTIOUS entity first
+//   became infected.
+//   symptom_factor: A function of the current HealthState of the INFECTIOUS
+//   entity.
+// Each count in micro_exposure_counts represents a duration in minutes that the
+// two entities spent at a particular distance (as represented by the index).
 struct Exposure {
   absl::Time start_time;
   absl::Duration duration;
   std::array<uint8, kNumberMicroExposureBuckets> micro_exposure_counts = {};
   float infectivity;
+  float symptom_factor;
 
   friend bool operator==(const Exposure& a, const Exposure& b) {
     return (a.start_time == b.start_time && a.duration == b.duration &&

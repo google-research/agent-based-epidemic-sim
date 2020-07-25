@@ -58,6 +58,7 @@ struct Visit {
   absl::Time end_time;
   HealthState::State health_state;
   float infectivity;
+  float symptom_factor;
 
   friend bool operator==(const Visit& a, const Visit& b) {
     return (a.location_uuid == b.location_uuid &&

@@ -26,6 +26,31 @@ namespace {
 bool ContactFromBefore(const Contact& contact, const absl::Time time) {
   return contact.exposure.start_time + contact.exposure.duration < time;
 }
+
+// TODO: Move to a more appropriate location when this gets more
+// sophisticated like taking into account covariates.
+float SymptomFactor(const HealthState::State health_state) {
+  // Symptoms are not infectious.
+  if (health_state == HealthState::SUSCEPTIBLE ||
+      health_state == HealthState::RECOVERED ||
+      health_state == HealthState::REMOVED) {
+    return 0.0f;
+  }
+
+  // Symptoms are mildly infectious.
+  if (health_state == HealthState::ASYMPTOMATIC) {
+    return 0.33f;
+  }
+
+  // Symptoms are moderately infectious.
+  if (health_state == HealthState::PRE_SYMPTOMATIC_MILD ||
+      health_state == HealthState::SYMPTOMATIC_MILD) {
+    return 0.72f;
+  }
+
+  // Symptoms are severely infectious.
+  return 1.0f;
+}
 }  // namespace
 
 /* static */
@@ -59,19 +84,27 @@ void SEIRAgent::SplitAndAssignHealthStates(std::vector<Visit>* visits) const {
     Visit& visit = (*visits)[i];
     visit.health_state = interval->health_state;
     visit.infectivity = CurrentInfectivity(visit.start_time);
+    visit.symptom_factor = SymptomFactor(interval->health_state);
     visit.agent_uuid = uuid_;
     if (visit.start_time >= interval->time) {
       --i;
-    } else {
+      continue;
+    }
+
+    if (visit.end_time > interval->time) {
       if (visit.end_time > interval->time) {
         Visit split_visit = visit;
         visit.end_time = interval->time;
+        // No visit should ever come before the first health transition.
+        visit.symptom_factor = SymptomFactor((interval - 1)->health_state);
         split_visit.start_time = interval->time;
         split_visit.infectivity = CurrentInfectivity(split_visit.start_time);
+        split_visit.symptom_factor = SymptomFactor(interval->health_state);
         visits->push_back(split_visit);
       }
-      ++interval;
     }
+
+    ++interval;
   }
 }
 
