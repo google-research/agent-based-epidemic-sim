@@ -90,20 +90,16 @@ void SEIRAgent::SplitAndAssignHealthStates(std::vector<Visit>* visits) const {
       --i;
       continue;
     }
-
     if (visit.end_time > interval->time) {
-      if (visit.end_time > interval->time) {
-        Visit split_visit = visit;
-        visit.end_time = interval->time;
-        // No visit should ever come before the first health transition.
-        visit.symptom_factor = SymptomFactor((interval - 1)->health_state);
-        split_visit.start_time = interval->time;
-        split_visit.infectivity = CurrentInfectivity(split_visit.start_time);
-        split_visit.symptom_factor = SymptomFactor(interval->health_state);
-        visits->push_back(split_visit);
-      }
+      Visit split_visit = visit;
+      visit.end_time = interval->time;
+      // No visit should ever come before the first health transition.
+      visit.symptom_factor = SymptomFactor((interval + 1)->health_state);
+      split_visit.start_time = interval->time;
+      split_visit.infectivity = CurrentInfectivity(split_visit.start_time);
+      split_visit.symptom_factor = SymptomFactor(interval->health_state);
+      visits->push_back(split_visit);
     }
-
     ++interval;
   }
 }
