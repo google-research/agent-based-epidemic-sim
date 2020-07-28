@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "agent_based_epidemic_sim/applications/contact_tracing/graph_location.h"
+#include "agent_based_epidemic_sim/core/graph_location.h"
 
 #include "agent_based_epidemic_sim/core/event.h"
 #include "agent_based_epidemic_sim/core/pandemic.pb.h"

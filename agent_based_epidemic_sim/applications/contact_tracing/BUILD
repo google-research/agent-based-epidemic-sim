@@ -94,28 +94,3 @@ cc_binary(
         "@com_google_absl//absl/flags:parse",
     ],
 )
-
-cc_library(
-    name = "graph_location",
-    srcs = ["graph_location.cc"],
-    hdrs = ["graph_location.h"],
-    deps = [
-        "//agent_based_epidemic_sim/core:event",
-        "//agent_based_epidemic_sim/core:integral_types",
-        "//agent_based_epidemic_sim/core:location",
-        "@com_google_absl//absl/container:flat_hash_map",
-        "@com_google_absl//absl/random",
-        "@com_google_absl//absl/random:distributions",
-    ],
-)
-
-cc_test(
-    name = "graph_location_test",
-    srcs = ["graph_location_test.cc"],
-    deps = [
-        ":graph_location",
-        "//agent_based_epidemic_sim/core:event",
-        "//agent_based_epidemic_sim/core:pandemic_cc_proto",
-        "@com_google_googletest//:gtest_main",
-    ],
-)
