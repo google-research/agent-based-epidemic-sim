@@ -17,7 +17,10 @@
 #ifndef AGENT_BASED_EPIDEMIC_SIM_CORE_LOCATION_DISCRETE_EVENT_SIMULATOR_H_
 #define AGENT_BASED_EPIDEMIC_SIM_CORE_LOCATION_DISCRETE_EVENT_SIMULATOR_H_
 
+#include <memory>
+
 #include "agent_based_epidemic_sim/core/broker.h"
+#include "agent_based_epidemic_sim/core/exposure_generator.h"
 #include "agent_based_epidemic_sim/core/integral_types.h"
 #include "agent_based_epidemic_sim/core/location.h"
 #include "agent_based_epidemic_sim/core/observer.h"
@@ -29,7 +32,9 @@ namespace abesim {
 // Implements a sequential discrete event simulator for a Location.
 class LocationDiscreteEventSimulator : public Location {
  public:
-  explicit LocationDiscreteEventSimulator(const int64 uuid) : uuid_(uuid) {}
+  explicit LocationDiscreteEventSimulator(
+      const int64 uuid, std::unique_ptr<ExposureGenerator> exposure_generator)
+      : uuid_(uuid), exposure_generator_(std::move(exposure_generator)) {}
 
   int64 uuid() const override { return uuid_; }
 
@@ -38,6 +43,7 @@ class LocationDiscreteEventSimulator : public Location {
 
  private:
   const int64 uuid_;
+  const std::unique_ptr<ExposureGenerator> exposure_generator_;
 };
 
 }  // namespace abesim

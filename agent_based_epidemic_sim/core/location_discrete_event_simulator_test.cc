@@ -18,6 +18,7 @@
 #include "agent_based_epidemic_sim/core/broker.h"
 #include "agent_based_epidemic_sim/core/event.h"
 #include "agent_based_epidemic_sim/core/integral_types.h"
+#include "agent_based_epidemic_sim/core/micro_exposure_generator_builder.h"
 #include "agent_based_epidemic_sim/core/observer.h"
 #include "agent_based_epidemic_sim/core/pandemic.pb.h"
 #include "agent_based_epidemic_sim/core/visit.h"
@@ -161,8 +162,8 @@ TEST(LocationDiscreteEventSimulatorTest, ContactTracing) {
                     expected_contacts, visits[3].agent_uuid))))
         .Times(1);
   }
-
-  LocationDiscreteEventSimulator location(kUuid);
+  MicroExposureGeneratorBuilder meg_builder;
+  LocationDiscreteEventSimulator location(kUuid, meg_builder.Build());
   location.ProcessVisits(visits, &infection_broker);
 }
 
@@ -174,8 +175,9 @@ TEST(LocationDiscreteEventSimulatorTest, ProcessVisitsRejectsWrongUuid) {
                                   .start_time = absl::FromUnixSeconds(0LL),
                                   .end_time = absl::FromUnixSeconds(86400LL),
                                   .health_state = HealthState::INFECTIOUS}};
-  ASSERT_DEBUG_DEATH(LocationDiscreteEventSimulator(kUuid).ProcessVisits(
-                         visits, infection_broker.get()),
+  MicroExposureGeneratorBuilder meg_builder;
+  ASSERT_DEBUG_DEATH(LocationDiscreteEventSimulator(kUuid, meg_builder.Build())
+                         .ProcessVisits(visits, infection_broker.get()),
                      "");
 }
 
@@ -188,8 +190,9 @@ TEST(LocationDiscreteEventSimulatorTest,
                                   .start_time = absl::FromUnixSeconds(0LL),
                                   .end_time = absl::FromUnixSeconds(0LL),
                                   .health_state = HealthState::INFECTIOUS}};
-  ASSERT_DEBUG_DEATH(LocationDiscreteEventSimulator(kUuid).ProcessVisits(
-                         visits, infection_broker.get()),
+  MicroExposureGeneratorBuilder meg_builder;
+  ASSERT_DEBUG_DEATH(LocationDiscreteEventSimulator(kUuid, meg_builder.Build())
+                         .ProcessVisits(visits, infection_broker.get()),
                      "");
 }
 

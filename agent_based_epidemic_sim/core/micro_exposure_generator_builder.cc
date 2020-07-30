@@ -12,17 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "agent_based_epidemic_sim/core/location_discrete_event_simulator_builder.h"
-
-#include "agent_based_epidemic_sim/core/location_discrete_event_simulator.h"
 #include "agent_based_epidemic_sim/core/micro_exposure_generator_builder.h"
+
+#include <memory>
+
+#include "absl/memory/memory.h"
+#include "agent_based_epidemic_sim/core/exposure_generator.h"
+#include "agent_based_epidemic_sim/core/micro_exposure_generator.h"
 
 namespace abesim {
 
-std::unique_ptr<Location> LocationDiscreteEventSimulatorBuilder::Build() const {
-  MicroExposureGeneratorBuilder meg_builder;
-  return absl::make_unique<LocationDiscreteEventSimulator>(
-      uuid_generator_->GenerateUuid(), meg_builder.Build());
+std::unique_ptr<ExposureGenerator> MicroExposureGeneratorBuilder::Build()
+    const {
+  return absl::make_unique<MicroExposureGenerator>();
 }
 
 }  // namespace abesim

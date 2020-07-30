@@ -92,6 +92,7 @@ cc_library(
         "//agent_based_epidemic_sim/core:integral_types",
         "//agent_based_epidemic_sim/core:location",
         "//agent_based_epidemic_sim/core:location_discrete_event_simulator",
+        "//agent_based_epidemic_sim/core:micro_exposure_generator",
         "//agent_based_epidemic_sim/core:observer",
         "//agent_based_epidemic_sim/core:ptts_transition_model",
         "//agent_based_epidemic_sim/core:public_policy",

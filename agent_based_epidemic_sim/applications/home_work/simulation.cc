@@ -32,6 +32,7 @@
 #include "agent_based_epidemic_sim/core/duration_specified_visit_generator.h"
 #include "agent_based_epidemic_sim/core/location.h"
 #include "agent_based_epidemic_sim/core/location_discrete_event_simulator.h"
+#include "agent_based_epidemic_sim/core/micro_exposure_generator_builder.h"
 #include "agent_based_epidemic_sim/core/ptts_transition_model.h"
 #include "agent_based_epidemic_sim/core/public_policy.h"
 #include "agent_based_epidemic_sim/core/seir_agent.h"
@@ -268,11 +269,12 @@ void RunSimulation(
                 agent.population_profile_id()))),
         policy_generator->NextPolicy()));
   }
+  MicroExposureGeneratorBuilder meg_builder;
   std::vector<std::unique_ptr<Location>> location_des;
   location_des.reserve(context.locations.size());
   for (const auto& location : context.locations) {
-    location_des.push_back(
-        absl::make_unique<LocationDiscreteEventSimulator>(location.uuid()));
+    location_des.push_back(absl::make_unique<LocationDiscreteEventSimulator>(
+        location.uuid(), meg_builder.Build()));
   }
   // Initializes Simulation.
   auto sim = num_workers > 1
