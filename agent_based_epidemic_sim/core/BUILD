@@ -233,11 +233,14 @@ cc_library(
     hdrs = ["graph_location.h"],
     deps = [
         ":event",
+        ":exposure_generator",
         ":integral_types",
         ":location",
+        ":micro_exposure_generator",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/random",
         "@com_google_absl//absl/random:distributions",
+        "@com_google_absl//absl/time",
     ],
 )
 
@@ -246,6 +249,7 @@ cc_test(
     srcs = ["graph_location_test.cc"],
     deps = [
         ":event",
+        ":exposure_generator",
         ":graph_location",
         ":pandemic_cc_proto",
         "@com_google_googletest//:gtest_main",

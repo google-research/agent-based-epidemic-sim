@@ -19,6 +19,7 @@
 
 #include <memory>
 
+#include "agent_based_epidemic_sim/core/exposure_generator.h"
 #include "agent_based_epidemic_sim/core/integral_types.h"
 #include "agent_based_epidemic_sim/core/location.h"
 
@@ -29,7 +30,10 @@ namespace abesim {
 // connection should be ignored on each ProcessVisits call.
 std::unique_ptr<Location> NewGraphLocation(
     int64 uuid, float drop_probability,
-    std::vector<std::pair<int64, int64>> graph);
+    std::vector<std::pair<int64, int64>> graph,
+    const absl::Duration visit_length_mean,
+    const absl::Duration visit_length_stddev,
+    std::unique_ptr<ExposureGenerator> exposure_generator);
 
 }  // namespace abesim
 

@@ -14,7 +14,10 @@
 
 #include "agent_based_epidemic_sim/core/graph_location.h"
 
+#include <memory>
+
 #include "agent_based_epidemic_sim/core/event.h"
+#include "agent_based_epidemic_sim/core/exposure_generator.h"
 #include "agent_based_epidemic_sim/core/pandemic.pb.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -32,6 +35,15 @@ class FakeBroker : public Broker<InfectionOutcome> {
 
  private:
   std::vector<InfectionOutcome> visits_;
+};
+
+class FakeExposureGenerator : public ExposureGenerator {
+  Exposure Generate(const absl::Time start_time, const absl::Duration duration,
+                    const float infectivity, const float symptom_factor) {
+    return {
+        .infectivity = infectivity,
+    };
+  }
 };
 
 static constexpr int kLocationUUID = 1;
@@ -57,7 +69,9 @@ InfectionOutcome ExpectedOutcome(int64 agent, int64 source, float infectivity) {
 
 TEST(GraphLocationTest, CompleteSampleGenerated) {
   auto location = NewGraphLocation(
-      kLocationUUID, 0.0, {{0, 2}, {0, 4}, {1, 3}, {1, 5}, {2, 4}, {3, 5}});
+      kLocationUUID, 0.0, {{0, 2}, {0, 4}, {1, 3}, {1, 5}, {2, 4}, {3, 5}},
+      absl::Hours(8), absl::Hours(2),
+      std::make_unique<FakeExposureGenerator>());
   FakeBroker broker;
   location->ProcessVisits(
       {
@@ -83,7 +97,9 @@ TEST(GraphLocationTest, CompleteSampleGenerated) {
 
 TEST(GraphLocationTest, AllSamplesDropped) {
   auto location = NewGraphLocation(
-      kLocationUUID, 1.0, {{0, 2}, {0, 4}, {1, 3}, {1, 5}, {2, 4}, {3, 5}});
+      kLocationUUID, 1.0, {{0, 2}, {0, 4}, {1, 3}, {1, 5}, {2, 4}, {3, 5}},
+      absl::Hours(8), absl::Hours(2),
+      std::make_unique<FakeExposureGenerator>());
   FakeBroker broker;
   location->ProcessVisits(
       {
