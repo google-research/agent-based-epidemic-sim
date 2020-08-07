@@ -117,7 +117,8 @@ class BaseSimulation : public Simulation {
                   SplitMessages(agent->uuid(), reports);
               observer->Observe(*agent, agent_outcomes);
               agent->ProcessInfectionOutcomes(timestep, agent_outcomes);
-              agent->UpdateContactReports(agent_reports, contact_report_broker);
+              agent->UpdateContactReports(timestep, agent_reports,
+                                          contact_report_broker);
               agent->ComputeVisits(timestep, visit_broker);
             }
             DCHECK(outcomes.empty()) << "Unprocessed InfectionOutcomes";

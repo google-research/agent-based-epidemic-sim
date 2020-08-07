@@ -21,7 +21,7 @@
 #include "agent_based_epidemic_sim/agent_synthesis/population_profile.pb.h"
 #include "agent_based_epidemic_sim/applications/home_work/config.pb.h"
 #include "agent_based_epidemic_sim/applications/home_work/location_type.h"
-#include "agent_based_epidemic_sim/core/public_policy.h"
+#include "agent_based_epidemic_sim/core/risk_score.h"
 
 namespace abesim {
 
@@ -48,8 +48,8 @@ void RunSimulation(absl::string_view output_file_path,
 void RunSimulation(
     absl::string_view output_file_path, absl::string_view learning_output_base,
     const HomeWorkSimulationConfig& config,
-    const std::function<std::unique_ptr<PolicyGenerator>(LocationTypeFn)>&
-        get_policy_generator,
+    const std::function<std::unique_ptr<RiskScoreGenerator>(LocationTypeFn)>&
+        get_risk_score_generator,
     int num_workers, const SimulationContext& context);
 
 }  // namespace abesim

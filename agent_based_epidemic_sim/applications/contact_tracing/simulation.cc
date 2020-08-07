@@ -14,24 +14,30 @@
 
 #include "agent_based_epidemic_sim/applications/contact_tracing/simulation.h"
 
+#include <memory>
+
 #include "absl/strings/string_view.h"
-#include "agent_based_epidemic_sim/applications/contact_tracing/public_policy.h"
+#include "agent_based_epidemic_sim/applications/contact_tracing/config.pb.h"
+#include "agent_based_epidemic_sim/applications/contact_tracing/risk_score.h"
 #include "agent_based_epidemic_sim/applications/home_work/location_type.h"
 #include "agent_based_epidemic_sim/applications/home_work/simulation.h"
-#include "agent_based_epidemic_sim/core/public_policy.h"
+#include "agent_based_epidemic_sim/core/risk_score.h"
 
 namespace abesim {
 namespace {
 
-class TracingPolicyGenerator : public PolicyGenerator {
+class TracingRiskScoreGenerator : public RiskScoreGenerator {
  public:
-  explicit TracingPolicyGenerator(std::unique_ptr<PublicPolicy> policy)
-      : policy_(std::move(policy)) {}
-
-  const PublicPolicy* NextPolicy() override { return policy_.get(); }
+  TracingRiskScoreGenerator(const TracingPolicyProto& policy,
+                            LocationTypeFn location)
+      : policy_(policy), location_(std::move(location)) {}
+  std::unique_ptr<RiskScore> NextRiskScore() override {
+    return *CreateTracingRiskScore(policy_, location_);
+  }
 
  private:
-  std::unique_ptr<PublicPolicy> policy_;
+  const TracingPolicyProto policy_;
+  const LocationTypeFn location_;
 };
 
 }  // namespace
@@ -40,14 +46,14 @@ void RunSimulation(absl::string_view output_file_path,
                    absl::string_view learning_output_base,
                    const ContactTracingHomeWorkSimulationConfig& config,
                    int num_workers) {
-  auto get_policy_generator = [&config](LocationTypeFn location_type) {
-    return absl::make_unique<TracingPolicyGenerator>(
-        *CreateTracingPolicy(config.tracing_policy(), location_type));
+  auto get_risk_score_generator = [&config](LocationTypeFn location_type) {
+    return absl::make_unique<TracingRiskScoreGenerator>(
+        config.tracing_policy(), std::move(location_type));
   };
   auto context = GetSimulationContext(config.home_work_config());
   RunSimulation(output_file_path, learning_output_base,
-                config.home_work_config(), get_policy_generator, num_workers,
-                context);
+                config.home_work_config(), get_risk_score_generator,
+                num_workers, context);
 }
 
 }  // namespace abesim

@@ -19,7 +19,7 @@
 #include "absl/time/time.h"
 #include "agent_based_epidemic_sim/applications/home_work/config.pb.h"
 #include "agent_based_epidemic_sim/core/parse_text_proto.h"
-#include "agent_based_epidemic_sim/core/public_policy.h"
+#include "agent_based_epidemic_sim/core/risk_score.h"
 #include "agent_based_epidemic_sim/port/file_utils.h"
 #include "agent_based_epidemic_sim/port/status_matchers.h"
 #include "gmock/gmock.h"

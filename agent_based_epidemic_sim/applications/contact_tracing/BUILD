@@ -17,14 +17,15 @@ cc_proto_library(
 )
 
 cc_library(
-    name = "public_policy",
-    srcs = ["public_policy.cc"],
-    hdrs = ["public_policy.h"],
+    name = "risk_score",
+    srcs = ["risk_score.cc"],
+    hdrs = ["risk_score.h"],
     deps = [
         ":config_cc_proto",
         "//agent_based_epidemic_sim/applications/home_work:simulation",
         "//agent_based_epidemic_sim/core:integral_types",
-        "//agent_based_epidemic_sim/core:public_policy",
+        "//agent_based_epidemic_sim/core:pandemic_cc_proto",
+        "//agent_based_epidemic_sim/core:risk_score",
         "//agent_based_epidemic_sim/port:statusor",
         "//agent_based_epidemic_sim/port:time_proto_util",
         "@com_google_absl//absl/memory",
@@ -38,21 +39,22 @@ cc_library(
     hdrs = ["simulation.h"],
     deps = [
         ":config_cc_proto",
-        ":public_policy",
+        ":risk_score",
         "//agent_based_epidemic_sim/applications/home_work:simulation",
-        "//agent_based_epidemic_sim/core:public_policy",
+        "//agent_based_epidemic_sim/core:risk_score",
         "@com_google_absl//absl/strings",
     ],
 )
 
 cc_test(
-    name = "public_policy_test",
-    srcs = ["public_policy_test.cc"],
+    name = "risk_score_test",
+    srcs = ["risk_score_test.cc"],
     deps = [
         ":config_cc_proto",
-        ":public_policy",
+        ":risk_score",
+        "//agent_based_epidemic_sim/applications/home_work:simulation",
         "//agent_based_epidemic_sim/core:parse_text_proto",
-        "//agent_based_epidemic_sim/core:public_policy",
+        "//agent_based_epidemic_sim/core:risk_score",
         "//agent_based_epidemic_sim/port:status_matchers",
         "//agent_based_epidemic_sim/util:ostream_overload",
         "@com_google_absl//absl/time",
@@ -71,7 +73,7 @@ cc_test(
         ":simulation",
         "//agent_based_epidemic_sim/applications/home_work:config_cc_proto",
         "//agent_based_epidemic_sim/core:parse_text_proto",
-        "//agent_based_epidemic_sim/core:public_policy",
+        "//agent_based_epidemic_sim/core:risk_score",
         "//agent_based_epidemic_sim/port:file_utils",
         "//agent_based_epidemic_sim/port:status_matchers",
         "@com_google_absl//absl/flags:flag",

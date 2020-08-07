@@ -12,28 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "agent_based_epidemic_sim/applications/contact_tracing/public_policy.h"
+#include "agent_based_epidemic_sim/core/risk_score.h"
 
 #include <algorithm>
 
 #include "absl/memory/memory.h"
 #include "absl/time/time.h"
 #include "agent_based_epidemic_sim/applications/contact_tracing/config.pb.h"
+#include "agent_based_epidemic_sim/applications/contact_tracing/risk_score.h"
 #include "agent_based_epidemic_sim/applications/home_work/location_type.h"
 #include "agent_based_epidemic_sim/core/integral_types.h"
-#include "agent_based_epidemic_sim/core/public_policy.h"
+#include "agent_based_epidemic_sim/core/pandemic.pb.h"
 #include "agent_based_epidemic_sim/port/time_proto_util.h"
 
 namespace abesim {
 
 namespace {
 
-bool HasRetainedPositiveContact(const ContactSummary& contact_summary) {
-  return contact_summary.latest_contact_time >=
-         contact_summary.retention_horizon;
-}
-
-struct TracingPolicyConfig {
+struct TracingRiskScoreConfig {
   absl::Duration test_validity_duration;
   absl::Duration contact_retention_duration;
   absl::Duration quarantine_duration;
@@ -42,47 +38,63 @@ struct TracingPolicyConfig {
 };
 
 // A policy that implements testing, tracing, and isolation guidelines.
-class TracingPolicy : public PublicPolicy {
+class TracingRiskScore : public RiskScore {
  public:
-  TracingPolicy(LocationTypeFn location_type,
-                const TracingPolicyConfig& tracing_policy)
+  TracingRiskScore(LocationTypeFn location_type,
+                   const TracingRiskScoreConfig& tracing_policy)
       : tracing_policy_(tracing_policy),
-        location_type_(std::move(location_type)) {}
+        location_type_(std::move(location_type)),
+        latest_health_state_(HealthState::SUSCEPTIBLE),
+        test_result_({.time_requested = absl::InfiniteFuture(),
+                      .time_received = absl::InfiniteFuture(),
+                      .needs_retry = false,
+                      .probability = 0}),
+        latest_contact_time_(absl::InfinitePast()) {}
+
+  void AddHealthStateTransistion(HealthTransition transition) override {
+    latest_health_state_ = transition.health_state;
+  }
+  void AddExposures(absl::Span<const Exposure* const> exposures) override {}
+  void AddExposureNotification(const Contact& contact,
+                               const TestResult& result) override {
+    latest_contact_time_ =
+        std::max(latest_contact_time_,
+                 contact.exposure.start_time + contact.exposure.duration);
+  }
+  void AddTestResult(const TestResult& result) override {
+    test_result_ = result;
+  }
 
   VisitAdjustment GetVisitAdjustment(const Timestep& timestep,
-                                     HealthState::State health_state,
-                                     const ContactSummary& contact_summary,
                                      const int64 location_uuid) const override {
     const bool skip_visit =
         location_type_(location_uuid) != LocationType::kHome &&
-        (ShouldQuarantineFromContacts(contact_summary, timestep) ||
-         ShouldQuarantineFromSymptoms(health_state));
+        (ShouldQuarantineFromContacts(timestep) ||
+         ShouldQuarantineFromSymptoms());
     return {
         .frequency_adjustment = skip_visit ? 0.0f : 1.0f,
         .duration_adjustment = 1.0f,
     };
   }
 
-  TestPolicy GetTestPolicy(const ContactSummary& contact_summary,
-                           const TestResult& test_result) const override {
+  TestPolicy GetTestPolicy(const Timestep& timestep) const override {
     // TODO: handle symptom-based test requests.
     TestPolicy policy;
-    if (test_result.needs_retry) {
+    if (test_result_.needs_retry) {
       return {.should_test = true,
-              .time_requested = test_result.time_requested,
+              .time_requested = test_result_.time_requested,
               .latency = tracing_policy_.test_latency};
     }
-    if (NeedsNewTestFromContacts(contact_summary, test_result)) {
+    if (NeedsNewTestFromContacts(timestep)) {
+      LOG(ERROR) << "st " << latest_contact_time_;
       return {.should_test = true,
-              .time_requested = contact_summary.latest_contact_time,
+              .time_requested = latest_contact_time_,
               .latency = tracing_policy_.test_latency};
     }
     return {.should_test = false};
   }
 
-  ContactTracingPolicy GetContactTracingPolicy(
-      absl::Span<const ContactReport> received_contact_reports,
-      const TestResult& test_result) const override {
+  ContactTracingPolicy GetContactTracingPolicy() const override {
     return {.report_recursively = false, .send_positive_test = true};
   }
 
@@ -91,48 +103,54 @@ class TracingPolicy : public PublicPolicy {
   }
 
  private:
-  bool NeedsNewTestFromContacts(const ContactSummary& contact_summary,
-                                const TestResult& test_result) const {
-    if (!HasRetainedPositiveContact(contact_summary)) {
+  bool HasRetainedPositiveContact(const Timestep& timestep) const {
+    return latest_contact_time_ >=
+           timestep.start_time() - ContactRetentionDuration();
+  }
+  bool NeedsNewTestFromContacts(const Timestep& timestep) const {
+    if (!HasRetainedPositiveContact(timestep)) {
       // No retained positive contact.
       return false;
     }
-    if (test_result.time_received == absl::InfiniteFuture()) {
+    if (test_result_.time_received == absl::InfiniteFuture()) {
       // Has not yet requested a test.
       return true;
     }
-    if (test_result.time_received >
-        contact_summary.latest_contact_time -
-            tracing_policy_.test_validity_duration) {
+    if (test_result_.time_received >
+        latest_contact_time_ - tracing_policy_.test_validity_duration) {
       // Test result still valid.
       return false;
     }
     // Test result (if negative) is stale : retest.
-    return test_result.probability < tracing_policy_.positive_threshold;
+    return test_result_.probability < tracing_policy_.positive_threshold;
   }
-  bool ShouldQuarantineFromContacts(const ContactSummary& contact_summary,
-                                    const Timestep& timestep) const {
-    absl::Time earliest_quarantine_time = std::min(
-        contact_summary.retention_horizon, contact_summary.latest_contact_time);
-    absl::Time latest_quarantine_time = contact_summary.latest_contact_time +
-                                        tracing_policy_.quarantine_duration;
+  bool ShouldQuarantineFromContacts(const Timestep& timestep) const {
+    absl::Time earliest_quarantine_time =
+        std::min(timestep.start_time() - ContactRetentionDuration(),
+                 latest_contact_time_);
+    absl::Time latest_quarantine_time =
+        latest_contact_time_ + tracing_policy_.quarantine_duration;
     return (timestep.start_time() < latest_quarantine_time &&
             timestep.end_time() > earliest_quarantine_time);
   }
-  bool ShouldQuarantineFromSymptoms(
-      const HealthState::State health_state) const {
-    return health_state != HealthState::SUSCEPTIBLE;
+  bool ShouldQuarantineFromSymptoms() const {
+    // TODO: It seems that this should consider recovered patients
+    // and also the time at which the latest health state became active.
+    return latest_health_state_ != HealthState::SUSCEPTIBLE;
   }
 
-  TracingPolicyConfig tracing_policy_;
+  const TracingRiskScoreConfig tracing_policy_;
   const LocationTypeFn location_type_;
+  HealthState::State latest_health_state_;
+  TestResult test_result_;
+  absl::Time latest_contact_time_;
 };
 
 }  // namespace
 
-StatusOr<std::unique_ptr<PublicPolicy>> CreateTracingPolicy(
+StatusOr<std::unique_ptr<RiskScore>> CreateTracingRiskScore(
     const TracingPolicyProto& proto, LocationTypeFn location_type) {
-  TracingPolicyConfig config;
+  TracingRiskScoreConfig config;
   auto test_validity_duration_or =
       DecodeGoogleApiProto(proto.test_validity_duration());
   if (!test_validity_duration_or.ok()) {
@@ -157,7 +175,7 @@ StatusOr<std::unique_ptr<PublicPolicy>> CreateTracingPolicy(
   }
   config.test_latency = *test_latency_or;
   config.positive_threshold = proto.positive_threshold();
-  return absl::make_unique<TracingPolicy>(location_type, config);
+  return absl::make_unique<TracingRiskScore>(location_type, config);
 }
 
 }  // namespace abesim

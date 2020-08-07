@@ -15,7 +15,7 @@
 #include "agent_based_epidemic_sim/core/indexed_location_visit_generator.h"
 
 #include "absl/time/time.h"
-#include "agent_based_epidemic_sim/core/public_policy.h"
+#include "agent_based_epidemic_sim/core/risk_score.h"
 #include "agent_based_epidemic_sim/core/visit.h"
 #include "gtest/gtest.h"
 
@@ -29,14 +29,13 @@ absl::Duration VisitDuration(const Visit& visit) {
 TEST(IndexedLocationVisitGeneratorTest, GeneratesVisits) {
   std::vector<int64> location_uuids{0LL, 1LL, 2LL};
   IndexedLocationVisitGenerator visit_generator(location_uuids);
-  auto public_policy = NewNoOpPolicy();
+  auto risk_score = NewNullRiskScore();
 
   std::vector<Visit> visits;
 
   {
     Timestep timestep(absl::UnixEpoch(), absl::Hours(24));
-    visit_generator.GenerateVisits(timestep, public_policy.get(),
-                                   HealthState::SUSCEPTIBLE, {}, &visits);
+    visit_generator.GenerateVisits(timestep, *risk_score, &visits);
     ASSERT_EQ(3, visits.size());
     for (int i = 0; i < 2; ++i) {
       EXPECT_EQ(visits[i].end_time, visits[i + 1].start_time);
@@ -50,8 +49,7 @@ TEST(IndexedLocationVisitGeneratorTest, GeneratesVisits) {
 
   {
     Timestep timestep(absl::UnixEpoch() + absl::Hours(24), absl::Hours(12));
-    visit_generator.GenerateVisits(timestep, public_policy.get(),
-                                   HealthState::SUSCEPTIBLE, {}, &visits);
+    visit_generator.GenerateVisits(timestep, *risk_score, &visits);
     ASSERT_EQ(6, visits.size());
     EXPECT_EQ(absl::FromUnixSeconds(86400LL), visits[3].start_time);
     EXPECT_EQ(absl::FromUnixSeconds(129600LL), visits[5].end_time);

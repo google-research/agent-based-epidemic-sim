@@ -18,7 +18,7 @@
 #define AGENT_BASED_EPIDEMIC_SIM_CORE_VISIT_GENERATOR_H_
 
 #include "agent_based_epidemic_sim/core/event.h"
-#include "agent_based_epidemic_sim/core/public_policy.h"
+#include "agent_based_epidemic_sim/core/risk_score.h"
 #include "agent_based_epidemic_sim/core/timestep.h"
 #include "agent_based_epidemic_sim/core/visit.h"
 
@@ -28,9 +28,7 @@ namespace abesim {
 class VisitGenerator {
  public:
   virtual void GenerateVisits(const Timestep& timestep,
-                              const PublicPolicy* policy,
-                              HealthState::State current_health_state,
-                              const ContactSummary& contact_summary,
+                              const RiskScore& risk_score,
                               std::vector<Visit>* visits) = 0;
   virtual ~VisitGenerator() = default;
 };

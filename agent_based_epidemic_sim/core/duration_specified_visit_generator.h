@@ -21,6 +21,7 @@
 #include "absl/time/time.h"
 #include "agent_based_epidemic_sim/core/event.h"
 #include "agent_based_epidemic_sim/core/integral_types.h"
+#include "agent_based_epidemic_sim/core/risk_score.h"
 #include "agent_based_epidemic_sim/core/timestep.h"
 #include "agent_based_epidemic_sim/core/visit.h"
 #include "agent_based_epidemic_sim/core/visit_generator.h"
@@ -45,9 +46,7 @@ class DurationSpecifiedVisitGenerator : public VisitGenerator {
       const std::vector<LocationDuration>& location_durations)
       : location_durations_(location_durations) {}
 
-  void GenerateVisits(const Timestep& timestep, const PublicPolicy* policy,
-                      HealthState::State current_health_state,
-                      const ContactSummary& contact_summary,
+  void GenerateVisits(const Timestep& timestep, const RiskScore& risk_score,
                       std::vector<Visit>* visits) override;
 
  private:

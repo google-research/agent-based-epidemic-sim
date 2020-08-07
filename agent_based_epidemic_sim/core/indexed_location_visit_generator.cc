@@ -38,12 +38,10 @@ IndexedLocationVisitGenerator::IndexedLocationVisitGenerator(
       absl::make_unique<DurationSpecifiedVisitGenerator>(location_durations);
 }
 
-void IndexedLocationVisitGenerator::GenerateVisits(
-    const Timestep& timestep, const PublicPolicy* policy,
-    const HealthState::State current_health_state,
-    const ContactSummary& contact_summary, std::vector<Visit>* visits) {
-  visit_generator_->GenerateVisits(timestep, policy, current_health_state,
-                                   contact_summary, visits);
+void IndexedLocationVisitGenerator::GenerateVisits(const Timestep& timestep,
+                                                   const RiskScore& risk_score,
+                                                   std::vector<Visit>* visits) {
+  visit_generator_->GenerateVisits(timestep, risk_score, visits);
 }
 
 }  // namespace abesim

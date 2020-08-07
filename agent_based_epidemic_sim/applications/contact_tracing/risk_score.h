@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef AGENT_BASED_EPIDEMIC_SIM_APPLICATIONS_CONTACT_TRACING_PUBLIC_POLICY_H_
-#define AGENT_BASED_EPIDEMIC_SIM_APPLICATIONS_CONTACT_TRACING_PUBLIC_POLICY_H_
+#ifndef AGENT_BASED_EPIDEMIC_SIM_APPLICATIONS_CONTACT_TRACING_RISK_SCORE_H_
+#define AGENT_BASED_EPIDEMIC_SIM_APPLICATIONS_CONTACT_TRACING_RISK_SCORE_H_
 
 #include "agent_based_epidemic_sim/applications/contact_tracing/config.pb.h"
 #include "agent_based_epidemic_sim/applications/home_work/location_type.h"
-#include "agent_based_epidemic_sim/core/public_policy.h"
+#include "agent_based_epidemic_sim/core/risk_score.h"
 #include "agent_based_epidemic_sim/port/statusor.h"
 
 namespace abesim {
 
-StatusOr<std::unique_ptr<PublicPolicy>> CreateTracingPolicy(
+StatusOr<std::unique_ptr<RiskScore>> CreateTracingRiskScore(
     const TracingPolicyProto& proto, LocationTypeFn location_type);
 
 }  // namespace abesim
 
-#endif  // AGENT_BASED_EPIDEMIC_SIM_APPLICATIONS_CONTACT_TRACING_PUBLIC_POLICY_H_
+#endif  // AGENT_BASED_EPIDEMIC_SIM_APPLICATIONS_CONTACT_TRACING_RISK_SCORE_H_

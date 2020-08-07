@@ -26,7 +26,7 @@
 #include "agent_based_epidemic_sim/core/broker.h"
 #include "agent_based_epidemic_sim/core/event.h"
 #include "agent_based_epidemic_sim/core/integral_types.h"
-#include "agent_based_epidemic_sim/core/public_policy.h"
+#include "agent_based_epidemic_sim/core/risk_score.h"
 #include "agent_based_epidemic_sim/core/transition_model.h"
 #include "agent_based_epidemic_sim/core/transmission_model.h"
 #include "agent_based_epidemic_sim/core/visit.h"
@@ -51,7 +51,7 @@ class SEIRAgent : public Agent {
       const int64 uuid, TransmissionModel* transmission_model,
       std::unique_ptr<TransitionModel> transition_model,
       std::unique_ptr<VisitGenerator> visit_generator,
-      const PublicPolicy* public_policy);
+      std::unique_ptr<RiskScore> risk_score);
 
   // Constructs an agent with a specified health state transition.
   static std::unique_ptr<SEIRAgent> Create(
@@ -59,7 +59,7 @@ class SEIRAgent : public Agent {
       TransmissionModel* transmission_model,
       std::unique_ptr<TransitionModel> transition_model,
       std::unique_ptr<VisitGenerator> visit_generator,
-      const PublicPolicy* public_policy);
+      std::unique_ptr<RiskScore> risk_score);
 
   SEIRAgent(const SEIRAgent&) = delete;
   SEIRAgent& operator=(const SEIRAgent&) = delete;
@@ -71,7 +71,11 @@ class SEIRAgent : public Agent {
   void ComputeVisits(const Timestep& timestep,
                      Broker<Visit>* visit_broker) const override;
 
-  void UpdateContactReports(absl::Span<const ContactReport> contact_reports,
+  // Receives contact reports from agents contacted in previous timesteps and
+  // send new contact reports to prior contacts.  Also performs clinical tests
+  // to be performed during the current timestep.
+  void UpdateContactReports(const Timestep& timestep,
+                            absl::Span<const ContactReport> contact_reports,
                             Broker<ContactReport>* broker) override;
 
   // Updates health state from infections.
@@ -95,19 +99,13 @@ class SEIRAgent : public Agent {
     return next_health_transition_;
   }
 
-  // For use in testing. TODO: Remove once ContactSummary is plumbed
-  // through to VisitGenerator.
-  ContactSummary GetContactSummary() const { return contact_summary_; }
-
  private:
   SEIRAgent(const int64 uuid, const HealthTransition& initial_health_transition,
             TransmissionModel* transmission_model,
             std::unique_ptr<TransitionModel> transition_model,
             std::unique_ptr<VisitGenerator> visit_generator,
-            const PublicPolicy* const public_policy)
+            std::unique_ptr<RiskScore> risk_score)
       : uuid_(uuid),
-        contact_summary_({.retention_horizon = absl::InfiniteFuture(),
-                          .latest_contact_time = absl::InfinitePast()}),
         test_result_({.time_requested = absl::InfiniteFuture(),
                       .time_received = absl::InfiniteFuture(),
                       .needs_retry = false,
@@ -115,10 +113,12 @@ class SEIRAgent : public Agent {
         transmission_model_(transmission_model),
         transition_model_(std::move(transition_model)),
         visit_generator_(std::move(visit_generator)),
-        public_policy_(public_policy) {
+        risk_score_(std::move(risk_score)) {
     next_health_transition_ = initial_health_transition;
     health_transitions_.push_back({.time = absl::InfinitePast(),
                                    .health_state = HealthState::SUSCEPTIBLE});
+    risk_score_->AddTestResult(test_result_);
+    risk_score_->AddHealthStateTransistion(health_transitions_.back());
   }
 
   // Computes infectivity of agent at a given time.
@@ -132,11 +132,11 @@ class SEIRAgent : public Agent {
 
   // May carry out a test depending on the given test policy.
   // TODO: Move this logic to public policy implementation.
-  void MaybeTest(const PublicPolicy::TestPolicy& test_policy,
+  void MaybeTest(const RiskScore::TestPolicy& test_policy,
                  TestResult* test_result);
 
   void SendContactReports(
-      const PublicPolicy::ContactTracingPolicy& contact_tracing_policy,
+      const RiskScore::ContactTracingPolicy& contact_tracing_policy,
       absl::Span<const ContactReport> received_reports,
       Broker<ContactReport>* broker) const;
 
@@ -152,7 +152,6 @@ class SEIRAgent : public Agent {
   HealthTransition next_health_transition_;
   absl::optional<absl::Time> initial_infection_time_;
 
-  ContactSummary contact_summary_;
   TestResult test_result_;
 
   using ContactList = std::list<Contact>;
@@ -188,8 +187,7 @@ class SEIRAgent : public Agent {
   // be shared among "equivalence" classes of agents.
   std::unique_ptr<TransitionModel> transition_model_;
   std::unique_ptr<VisitGenerator> visit_generator_;
-
-  const PublicPolicy* const public_policy_;
+  std::unique_ptr<RiskScore> risk_score_;
 };
 
 }  // namespace abesim

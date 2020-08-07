@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "agent_based_epidemic_sim/applications/home_work/public_policy.h"
+#include "agent_based_epidemic_sim/core/risk_score.h"
 
 #include "absl/time/time.h"
 #include "agent_based_epidemic_sim/applications/home_work/config.pb.h"
-#include "agent_based_epidemic_sim/core/public_policy.h"
+#include "agent_based_epidemic_sim/applications/home_work/risk_score.h"
 #include "agent_based_epidemic_sim/port/status_matchers.h"
 #include "agent_based_epidemic_sim/port/time_proto_util.h"
 #include "agent_based_epidemic_sim/util/ostream_overload.h"
@@ -30,21 +30,18 @@ absl::Time TestDay(int day) {
   return absl::UnixEpoch() + absl::Hours(24) * day;
 }
 
-std::vector<float> FrequencyAdjustments(const TogglePolicyGenerator* const gen,
-                                        const float essentialness,
-                                        const LocationType type,
-                                        const std::vector<int>& days) {
+std::vector<float> FrequencyAdjustments(
+    const ToggleRiskScoreGenerator* const gen, const float essentialness,
+    const LocationType type, const std::vector<int>& days) {
   int64 location_uuid = type == LocationType::kWork ? 0 : 1;
-  const PublicPolicy* policy = gen->GetPolicy(essentialness);
+  auto risk_score = gen->GetRiskScore(essentialness);
 
   std::vector<float> adjustments;
   for (const int day : days) {
     Timestep timestep(TestDay(day), absl::Hours(24));
-    adjustments.push_back(policy
-                              ->GetVisitAdjustment(timestep,
-                                                   HealthState::SUSCEPTIBLE, {},
-                                                   location_uuid)
-                              .frequency_adjustment);
+    adjustments.push_back(
+        risk_score->GetVisitAdjustment(timestep, location_uuid)
+            .frequency_adjustment);
   }
   return adjustments;
 }
@@ -77,11 +74,12 @@ struct Case {
 TEST(PublicPolicyTest, AppropriateFrequencyAdjustments) {
   DistancingPolicy config =
       BuildPolicy({{10, .6}, {3, .2}, {20, 1.0}, {15, .2}});
-  auto generator_or = NewPolicyGenerator(config, [](const int64 location_uuid) {
-    return location_uuid == 0 ? LocationType::kWork : LocationType::kHome;
-  });
+  auto generator_or =
+      NewRiskScoreGenerator(config, [](const int64 location_uuid) {
+        return location_uuid == 0 ? LocationType::kWork : LocationType::kHome;
+      });
   PANDEMIC_ASSERT_OK(generator_or);
-  TogglePolicyGenerator* gen = generator_or->get();
+  ToggleRiskScoreGenerator* gen = generator_or->get();
 
   std::vector<int> test_days = {1, 3, 5, 10, 15, 20, 25};
   Case cases[] = {
@@ -112,10 +110,11 @@ TEST(PublicPolicyTest, AppropriateFrequencyAdjustments) {
 
 TEST(PublicPolicyTest, ZeroStagePolicy) {
   DistancingPolicy config;
-  auto generator_or = NewPolicyGenerator(config, [](const int64 location_uuid) {
-    return location_uuid == 0 ? LocationType::kWork : LocationType::kHome;
-  });
-  TogglePolicyGenerator* gen = generator_or->get();
+  auto generator_or =
+      NewRiskScoreGenerator(config, [](const int64 location_uuid) {
+        return location_uuid == 0 ? LocationType::kWork : LocationType::kHome;
+      });
+  ToggleRiskScoreGenerator* gen = generator_or->get();
   std::vector<int> test_days = {1, 3, 5, 10, 15, 20, 25};
   Case cases[] = {
       {1.0, LocationType::kWork, {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}},

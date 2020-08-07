@@ -26,7 +26,7 @@
 #include "agent_based_epidemic_sim/applications/home_work/learning_contacts_observer.h"
 #include "agent_based_epidemic_sim/applications/home_work/learning_history_and_testing_observer.h"
 #include "agent_based_epidemic_sim/applications/home_work/observer.h"
-#include "agent_based_epidemic_sim/applications/home_work/public_policy.h"
+#include "agent_based_epidemic_sim/applications/home_work/risk_score.h"
 #include "agent_based_epidemic_sim/core/agent.h"
 #include "agent_based_epidemic_sim/core/aggregated_transmission_model.h"
 #include "agent_based_epidemic_sim/core/duration_specified_visit_generator.h"
@@ -34,7 +34,7 @@
 #include "agent_based_epidemic_sim/core/location_discrete_event_simulator.h"
 #include "agent_based_epidemic_sim/core/micro_exposure_generator_builder.h"
 #include "agent_based_epidemic_sim/core/ptts_transition_model.h"
-#include "agent_based_epidemic_sim/core/public_policy.h"
+#include "agent_based_epidemic_sim/core/risk_score.h"
 #include "agent_based_epidemic_sim/core/seir_agent.h"
 #include "agent_based_epidemic_sim/core/simulation.h"
 #include "agent_based_epidemic_sim/core/uuid_generator.h"
@@ -232,8 +232,8 @@ SimulationContext GetSimulationContext(const HomeWorkSimulationConfig& config) {
 void RunSimulation(
     absl::string_view output_file_path, absl::string_view learning_output_base,
     const HomeWorkSimulationConfig& config,
-    const std::function<std::unique_ptr<PolicyGenerator>(LocationTypeFn)>&
-        get_policy_generator,
+    const std::function<std::unique_ptr<RiskScoreGenerator>(LocationTypeFn)>&
+        get_risk_score_generator,
     const int num_workers, const SimulationContext& context) {
   LOG(INFO) << "Writing output to file: " << output_file_path;
 
@@ -252,7 +252,7 @@ void RunSimulation(
     transition_models[i] = PTTSTransitionModel::CreateFromProto(
         context.population_profiles.population_profiles(i).transition_model());
   }
-  auto policy_generator = get_policy_generator(context.location_type);
+  auto policy_generator = get_risk_score_generator(context.location_type);
   std::vector<std::unique_ptr<Agent>> seir_agents;
   seir_agents.reserve(context.agents.size());
   absl::BitGen gen;
@@ -267,7 +267,7 @@ void RunSimulation(
             &gen, agent,
             context.population_profiles.population_profiles(
                 agent.population_profile_id()))),
-        policy_generator->NextPolicy()));
+        policy_generator->NextRiskScore()));
   }
   MicroExposureGeneratorBuilder meg_builder;
   std::vector<std::unique_ptr<Location>> location_des;
@@ -314,12 +314,12 @@ void RunSimulation(absl::string_view output_file_path,
                    absl::string_view mpi_learning_output_base,
                    const HomeWorkSimulationConfig& config,
                    const int num_workers) {
-  auto get_policy_generator = [&config](LocationTypeFn location_type) {
-    return *NewPolicyGenerator(config.distancing_policy(), location_type);
+  auto get_risk_score_generator = [&config](LocationTypeFn location_type) {
+    return *NewRiskScoreGenerator(config.distancing_policy(), location_type);
   };
   auto context = GetSimulationContext(config);
   RunSimulation(output_file_path, mpi_learning_output_base, config,
-                get_policy_generator, num_workers, context);
+                get_risk_score_generator, num_workers, context);
 }
 
 }  // namespace abesim

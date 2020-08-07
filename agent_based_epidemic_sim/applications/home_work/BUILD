@@ -69,13 +69,13 @@ cc_library(
     name = "simulation",
     srcs = [
         "observer.cc",
-        "public_policy.cc",
+        "risk_score.cc",
         "simulation.cc",
     ],
     hdrs = [
         "location_type.h",
         "observer.h",
-        "public_policy.h",
+        "risk_score.h",
         "simulation.h",
     ],
     deps = [
@@ -95,7 +95,7 @@ cc_library(
         "//agent_based_epidemic_sim/core:micro_exposure_generator",
         "//agent_based_epidemic_sim/core:observer",
         "//agent_based_epidemic_sim/core:ptts_transition_model",
-        "//agent_based_epidemic_sim/core:public_policy",
+        "//agent_based_epidemic_sim/core:risk_score",
         "//agent_based_epidemic_sim/core:seir_agent",
         "//agent_based_epidemic_sim/core:simulation",
         "//agent_based_epidemic_sim/core:uuid_generator",
@@ -134,12 +134,12 @@ cc_test(
 )
 
 cc_test(
-    name = "public_policy_test",
-    srcs = ["public_policy_test.cc"],
+    name = "risk_score_test",
+    srcs = ["risk_score_test.cc"],
     deps = [
         ":config_cc_proto",
         ":simulation",
-        "//agent_based_epidemic_sim/core:public_policy",
+        "//agent_based_epidemic_sim/core:risk_score",
         "//agent_based_epidemic_sim/port:status_matchers",
         "//agent_based_epidemic_sim/port:time_proto_util",
         "//agent_based_epidemic_sim/util:ostream_overload",
@@ -158,7 +158,7 @@ cc_test(
         ":config_cc_proto",
         ":simulation",
         "//agent_based_epidemic_sim/core:parse_text_proto",
-        "//agent_based_epidemic_sim/core:public_policy",
+        "//agent_based_epidemic_sim/core:risk_score",
         "//agent_based_epidemic_sim/port:file_utils",
         "//agent_based_epidemic_sim/port:status_matchers",
         "@com_google_absl//absl/flags:flag",

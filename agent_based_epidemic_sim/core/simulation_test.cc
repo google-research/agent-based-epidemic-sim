@@ -86,7 +86,8 @@ class FakeAgent : public Agent {
       *last_timestep_ = timestep;
     }
   }
-  void UpdateContactReports(absl::Span<const ContactReport> symptom_reports,
+  void UpdateContactReports(const Timestep& timestep,
+                            absl::Span<const ContactReport> symptom_reports,
                             Broker<ContactReport>* symptom_broker) override {
     {
       absl::MutexLock l(&map_mu);

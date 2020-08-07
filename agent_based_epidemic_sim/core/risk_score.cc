@@ -12,39 +12,34 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "agent_based_epidemic_sim/core/public_policy.h"
+#include "agent_based_epidemic_sim/core/risk_score.h"
 
 #include "absl/memory/memory.h"
+#include "absl/time/time.h"
 
 namespace abesim {
 
 namespace {
 
-class NullPublicPolicy : public PublicPolicy {
+class NullRiskScore : public RiskScore {
  public:
-  // Get the adjustment a particular agent should make to it's visits to the
-  // given location assuming the given current_health_state.
-  // Note that different agents can have different policies.  For exmample
-  // an essential employee may see no adjustment, whereas a non-essential
-  // employee may be banned from the same location.
+  void AddHealthStateTransistion(HealthTransition transition) override {}
+  void AddExposures(absl::Span<const Exposure* const> exposures) override {}
+  void AddExposureNotification(const Contact& contact,
+                               const TestResult& result) override {}
+  void AddTestResult(const TestResult& result) override {}
+
   VisitAdjustment GetVisitAdjustment(const Timestep& timestep,
-                                     HealthState::State health_state,
-                                     const ContactSummary& contact_summary,
                                      int64 location_uuid) const override {
     return {.frequency_adjustment = 1.0, .duration_adjustment = 1.0};
   }
-
-  TestPolicy GetTestPolicy(
-      const ContactSummary& contact_summary,
-      const TestResult& previous_test_result) const override {
+  TestPolicy GetTestPolicy(const Timestep& timestep) const override {
     return {.should_test = false,
             .time_requested = absl::InfiniteFuture(),
             .latency = absl::InfiniteDuration()};
   }
 
-  ContactTracingPolicy GetContactTracingPolicy(
-      absl::Span<const ContactReport> received_contact_reports,
-      const TestResult& test_result) const override {
+  ContactTracingPolicy GetContactTracingPolicy() const override {
     return {.report_recursively = false, .send_positive_test = false};
   }
 
@@ -55,8 +50,8 @@ class NullPublicPolicy : public PublicPolicy {
 
 }  // namespace
 
-std::unique_ptr<PublicPolicy> NewNoOpPolicy() {
-  return absl::make_unique<NullPublicPolicy>();
+std::unique_ptr<RiskScore> NewNullRiskScore() {
+  return absl::make_unique<NullRiskScore>();
 }
 
 }  // namespace abesim

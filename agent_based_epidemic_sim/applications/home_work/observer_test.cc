@@ -60,7 +60,8 @@ class MockAgent : public Agent {
                absl::Span<const InfectionOutcome> infection_outcomes),
               (override));
   MOCK_METHOD(void, UpdateContactReports,
-              (absl::Span<const ContactReport> symptom_reports,
+              (const Timestep& timestep,
+               absl::Span<const ContactReport> symptom_reports,
                Broker<ContactReport>* symptom_broker),
               (override));
   MOCK_METHOD(HealthState::State, CurrentHealthState, (), (const, override));

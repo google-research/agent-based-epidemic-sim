@@ -16,21 +16,18 @@
 
 #include "absl/random/distributions.h"
 #include "absl/time/time.h"
-#include "agent_based_epidemic_sim/core/public_policy.h"
 #include "agent_based_epidemic_sim/port/logging.h"
 
 namespace abesim {
 
 void DurationSpecifiedVisitGenerator::GenerateVisits(
-    const Timestep& timestep, const PublicPolicy* const policy,
-    const HealthState::State current_health_state,
-    const ContactSummary& contact_summary, std::vector<Visit>* visits) {
+    const Timestep& timestep, const RiskScore& risk_score,
+    std::vector<Visit>* visits) {
   DCHECK(visits != nullptr);
   std::vector<float> durations;
   for (const LocationDuration& location_duration : location_durations_) {
-    auto adjustment = policy->GetVisitAdjustment(
-        timestep, current_health_state, contact_summary,
-        location_duration.location_uuid);
+    auto adjustment = risk_score.GetVisitAdjustment(
+        timestep, location_duration.location_uuid);
     if (!absl::Bernoulli(gen_, adjustment.frequency_adjustment)) {
       durations.push_back(0.0);
     } else {

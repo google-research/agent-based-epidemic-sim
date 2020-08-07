@@ -69,12 +69,13 @@ class Agent {
       const Timestep& timestep,
       absl::Span<const InfectionOutcome> infection_outcomes) = 0;
 
-  // Incorporates ContactReports from contacts and generates new
-  // ContactReports.
+  // Receive contact reports from agents contacted in previous timesteps and
+  // send new contact reports to prior contacts.  Also perform clinical tests
+  // to be performed during the current timestep.
   // Can be called multiple times for a single Timestep (typically separated by
   // a global barrier).
   virtual void UpdateContactReports(
-      absl::Span<const ContactReport> symptom_reports,
+      const Timestep& timestep, absl::Span<const ContactReport> symptom_reports,
       Broker<ContactReport>* contact_broker) = 0;
 
   virtual HealthState::State CurrentHealthState() const = 0;

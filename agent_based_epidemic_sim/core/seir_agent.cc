@@ -15,6 +15,7 @@
 #include "agent_based_epidemic_sim/core/seir_agent.h"
 
 #include <cmath>
+#include <memory>
 
 #include "absl/time/time.h"
 #include "agent_based_epidemic_sim/core/constants.h"
@@ -58,12 +59,12 @@ std::unique_ptr<SEIRAgent> SEIRAgent::CreateSusceptible(
     const int64 uuid, TransmissionModel* transmission_model,
     std::unique_ptr<TransitionModel> transition_model,
     std::unique_ptr<VisitGenerator> visit_generator,
-    const PublicPolicy* public_policy) {
+    std::unique_ptr<RiskScore> risk_score) {
   return SEIRAgent::Create(uuid,
                            {.time = absl::InfiniteFuture(),
                             .health_state = HealthState::SUSCEPTIBLE},
                            transmission_model, std::move(transition_model),
-                           std::move(visit_generator), public_policy);
+                           std::move(visit_generator), std::move(risk_score));
 }
 
 /* static */
@@ -72,10 +73,10 @@ std::unique_ptr<SEIRAgent> SEIRAgent::Create(
     TransmissionModel* transmission_model,
     std::unique_ptr<TransitionModel> transition_model,
     std::unique_ptr<VisitGenerator> visit_generator,
-    const PublicPolicy* public_policy) {
+    std::unique_ptr<RiskScore> risk_score) {
   return absl::WrapUnique(new SEIRAgent(
       uuid, health_transition, transmission_model, std::move(transition_model),
-      std::move(visit_generator), public_policy));
+      std::move(visit_generator), std::move(risk_score)));
 }
 
 void SEIRAgent::SplitAndAssignHealthStates(std::vector<Visit>* visits) const {
@@ -112,6 +113,7 @@ void SEIRAgent::MaybeUpdateHealthTransitions(const Timestep& timestep) {
       initial_infection_time_ = original_transition_time;
     }
     health_transitions_.push_back(next_health_transition_);
+    risk_score_->AddHealthStateTransistion(next_health_transition_);
     next_health_transition_ =
         transition_model_->GetNextHealthTransition(next_health_transition_);
     absl::Duration health_state_duration =
@@ -129,15 +131,13 @@ void SEIRAgent::ComputeVisits(const Timestep& timestep,
                               Broker<Visit>* visit_broker) const {
   thread_local std::vector<Visit> visits;
   visits.clear();
-  visit_generator_->GenerateVisits(timestep, public_policy_,
-                                   CurrentHealthState(), GetContactSummary(),
-                                   &visits);
+  visit_generator_->GenerateVisits(timestep, *risk_score_, &visits);
   SplitAndAssignHealthStates(&visits);
   visit_broker->Send(visits);
 }
 
 void SEIRAgent::UpdateContactReports(
-    absl::Span<const ContactReport> contact_reports,
+    const Timestep& timestep, absl::Span<const ContactReport> contact_reports,
     Broker<ContactReport>* broker) {
   auto matches_uuid_fn =
       [this](const absl::Span<const ContactReport> contact_reports) {
@@ -157,21 +157,18 @@ void SEIRAgent::UpdateContactReports(
   for (const ContactReport& contact_report : contact_reports) {
     auto contact = contact_set_.find(contact_report.from_agent_uuid);
     if (contact == contact_set_.end()) continue;
-    contact_summary_.latest_contact_time = std::max(
-        (*contact)->exposure.start_time + (*contact)->exposure.duration,
-        contact_summary_.latest_contact_time);
+    risk_score_->AddExposureNotification(**contact, contact_report.test_result);
   }
-  MaybeTest(public_policy_->GetTestPolicy(contact_summary_, test_result_),
-            &test_result_);
+  MaybeTest(risk_score_->GetTestPolicy(timestep), &test_result_);
+  risk_score_->AddTestResult(test_result_);
 
   // TODO: Cache already-sent internal report to avoid resending
   // identical report.
-  SendContactReports(
-      public_policy_->GetContactTracingPolicy(contact_reports, test_result_),
-      contact_reports, broker);
+  SendContactReports(risk_score_->GetContactTracingPolicy(), contact_reports,
+                     broker);
 }
 
-void SEIRAgent::MaybeTest(const PublicPolicy::TestPolicy& test_policy,
+void SEIRAgent::MaybeTest(const RiskScore::TestPolicy& test_policy,
                           TestResult* test_result) {
   if (!test_policy.should_test) {
     return;
@@ -198,12 +195,14 @@ void SEIRAgent::MaybeTest(const PublicPolicy::TestPolicy& test_policy,
 }
 
 void SEIRAgent::SendContactReports(
-    const PublicPolicy::ContactTracingPolicy& contact_tracing_policy,
+    const RiskScore::ContactTracingPolicy& contact_tracing_policy,
     absl::Span<const ContactReport> received_reports,
     Broker<ContactReport>* broker) const {
   if (contact_tracing_policy.report_recursively) {
     LOG(DFATAL) << "Recursive contact tracing not yet supported.";
   }
+  // TODO: only send contact reports if test was received before the
+  // end of the current day.
   if (contact_tracing_policy.send_positive_test &&
       test_result_.probability == 1) {
     std::vector<ContactReport> contact_reports;
@@ -261,6 +260,7 @@ void SEIRAgent::ProcessInfectionOutcomes(
       exposures.push_back(&infection_outcome.exposure);
     }
   }
+  risk_score_->AddExposures(exposures);
   if (next_health_transition_.health_state == HealthState::SUSCEPTIBLE &&
       !exposures.empty()) {
     const HealthTransition health_transition =
@@ -270,14 +270,13 @@ void SEIRAgent::ProcessInfectionOutcomes(
     }
   }
   const absl::Time earliest_retained_contact_time =
-      timestep.start_time() - public_policy_->ContactRetentionDuration();
+      timestep.start_time() - risk_score_->ContactRetentionDuration();
   while (
       !contacts_.empty() &&
       ContactFromBefore(*contacts_.begin(), earliest_retained_contact_time)) {
     contact_set_.erase(contacts_.begin());
     contacts_.erase(contacts_.begin());
   }
-  contact_summary_.retention_horizon = earliest_retained_contact_time;
   MaybeUpdateHealthTransitions(timestep);
 }
 

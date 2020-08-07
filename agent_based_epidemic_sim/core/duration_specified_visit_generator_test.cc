@@ -18,7 +18,7 @@
 
 #include "absl/time/time.h"
 #include "agent_based_epidemic_sim/core/integral_types.h"
-#include "agent_based_epidemic_sim/core/public_policy.h"
+#include "agent_based_epidemic_sim/core/risk_score.h"
 #include "agent_based_epidemic_sim/core/visit.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -52,13 +52,12 @@ TEST(DurationSpecifiedVisitGeneratorTest, GeneratesVisits) {
   std::vector<LocationDuration> location_duration =
       MakeLocationDurationVector(durations);
   DurationSpecifiedVisitGenerator visit_generator({location_duration});
-  auto public_policy = NewNoOpPolicy();
+  auto risk_score = NewNullRiskScore();
 
   std::vector<Visit> visits;
   {
     Timestep timestep(absl::UnixEpoch(), absl::Hours(24));
-    visit_generator.GenerateVisits(timestep, public_policy.get(),
-                                   HealthState::SUSCEPTIBLE, {}, &visits);
+    visit_generator.GenerateVisits(timestep, *risk_score, &visits);
     ASSERT_EQ(3, visits.size());
     for (int i = 0; i < 2; ++i) {
       EXPECT_EQ(visits[i].end_time, visits[i + 1].start_time);
@@ -73,8 +72,7 @@ TEST(DurationSpecifiedVisitGeneratorTest, GeneratesVisits) {
 
   {
     Timestep timestep(absl::UnixEpoch() + absl::Hours(24), absl::Hours(12));
-    visit_generator.GenerateVisits(timestep, public_policy.get(),
-                                   HealthState::SUSCEPTIBLE, {}, &visits);
+    visit_generator.GenerateVisits(timestep, *risk_score, &visits);
     ASSERT_EQ(6, visits.size());
     EXPECT_EQ(absl::FromUnixSeconds(86400LL), visits[3].start_time);
     EXPECT_EQ(absl::FromUnixSeconds(129600LL), visits[5].end_time);
@@ -87,12 +85,11 @@ TEST(DurationSpecifiedVisitGeneratorTest,
   std::vector<LocationDuration> location_duration =
       MakeLocationDurationVector(durations);
   DurationSpecifiedVisitGenerator visit_generator({location_duration});
-  auto public_policy = NewNoOpPolicy();
+  auto risk_score = NewNullRiskScore();
 
   std::vector<Visit> visits;
   Timestep timestep(absl::UnixEpoch(), absl::Hours(24));
-  visit_generator.GenerateVisits(timestep, public_policy.get(),
-                                 HealthState::SUSCEPTIBLE, {}, &visits);
+  visit_generator.GenerateVisits(timestep, *risk_score, &visits);
   ASSERT_EQ(1, visits.size());
   EXPECT_EQ(visits[0].start_time, timestep.start_time());
   EXPECT_EQ(visits[0].end_time, timestep.end_time());
@@ -103,30 +100,31 @@ TEST(DurationSpecifiedVisitGeneratorTest, GeneratesVisitsWithNegativeSamples) {
   std::vector<LocationDuration> location_duration =
       MakeLocationDurationVector(durations);
   DurationSpecifiedVisitGenerator visit_generator({location_duration});
-  auto public_policy = NewNoOpPolicy();
+  auto risk_score = NewNullRiskScore();
 
   std::vector<Visit> visits;
   Timestep timestep(absl::UnixEpoch(), absl::Hours(24));
-  visit_generator.GenerateVisits(timestep, public_policy.get(),
-                                 HealthState::SUSCEPTIBLE, {}, &visits);
+  visit_generator.GenerateVisits(timestep, *risk_score, &visits);
   ASSERT_EQ(1, visits.size());
   EXPECT_EQ(visits[0].start_time, timestep.start_time());
   EXPECT_EQ(visits[0].end_time, timestep.end_time());
 }
 
-class MockPublicPolicy : public PublicPolicy {
+class MockRiskScore : public RiskScore {
  public:
+  MOCK_METHOD(void, AddHealthStateTransistion, (HealthTransition transition),
+              (override));
+  MOCK_METHOD(void, AddExposures, (absl::Span<const Exposure* const> exposures),
+              (override));
+  MOCK_METHOD(void, AddExposureNotification,
+              (const Contact& contact, const TestResult& result), (override));
+  MOCK_METHOD(void, AddTestResult, (const TestResult& result), (override));
   MOCK_METHOD(VisitAdjustment, GetVisitAdjustment,
-              (const Timestep& timestep, HealthState::State health_state,
-               const ContactSummary& contact_summary, int64 location_uuid),
+              (const Timestep& timestep, int64 location_uuid),
               (const, override));
-  MOCK_METHOD(TestPolicy, GetTestPolicy,
-              (const ContactSummary& contact_summary,
-               const TestResult& test_result),
+  MOCK_METHOD(TestPolicy, GetTestPolicy, (const Timestep& timestep),
               (const, override));
-  MOCK_METHOD(ContactTracingPolicy, GetContactTracingPolicy,
-              (absl::Span<const ContactReport> received_contact_reports,
-               const TestResult& previous_test_result),
+  MOCK_METHOD(ContactTracingPolicy, GetContactTracingPolicy, (),
               (const, override));
   MOCK_METHOD(absl::Duration, ContactRetentionDuration, (), (const, override));
 };
@@ -140,25 +138,22 @@ TEST(DurationSpecifiedVisitGeneratorTest, GeneratesFrequencyAdjustedVisits) {
   std::vector<LocationDuration> location_duration =
       MakeLocationDurationVector(durations);
   DurationSpecifiedVisitGenerator visit_generator({location_duration});
-  MockPublicPolicy mock_policy;
+  MockRiskScore mock_risk_score;
 
   Timestep timestep(absl::UnixEpoch(), absl::Hours(24));
   // Currently there isn't a nice way to mock the random number generator inside
   // the visit generator, so we will choose either 1.0 or 0.0 here.
   std::vector<float> frequency_adjustments = {1.0, 0.0, 1.0};
   for (int i = 0; i < frequency_adjustments.size(); ++i) {
-    EXPECT_CALL(mock_policy,
-                GetVisitAdjustment(timestep, HealthState::SUSCEPTIBLE,
-                                   ContactSummary(), i))
-        .WillOnce(Return(PublicPolicy::VisitAdjustment{
+    EXPECT_CALL(mock_risk_score, GetVisitAdjustment(timestep, i))
+        .WillOnce(Return(RiskScore::VisitAdjustment{
             .frequency_adjustment = frequency_adjustments[i],
             .duration_adjustment = 1.0,
         }));
   }
 
   std::vector<Visit> visits;
-  visit_generator.GenerateVisits(timestep, &mock_policy,
-                                 HealthState::SUSCEPTIBLE, {}, &visits);
+  visit_generator.GenerateVisits(timestep, mock_risk_score, &visits);
   ASSERT_EQ(2, visits.size());
   EXPECT_EQ(0, visits[0].location_uuid);
   EXPECT_EQ(timestep.start_time(), visits[0].start_time);
@@ -175,25 +170,22 @@ TEST(DurationSpecifiedVisitGeneratorTest, GeneratesDurationAdjustedVisits) {
   std::vector<LocationDuration> location_duration =
       MakeLocationDurationVector(durations);
   DurationSpecifiedVisitGenerator visit_generator({location_duration});
-  MockPublicPolicy mock_policy;
+  MockRiskScore mock_risk_score;
 
   Timestep timestep(absl::UnixEpoch(), absl::Hours(24));
   // Currently there isn't a nice way to mock the random number generator inside
   // the visit generator, so we will choose either 1.0 or 0.0 here.
   std::vector<float> duration_adjustments = {0.0, 1.0 / 3.0, 2.0 / 3.0};
   for (int i = 0; i < duration_adjustments.size(); ++i) {
-    EXPECT_CALL(mock_policy,
-                GetVisitAdjustment(timestep, HealthState::SUSCEPTIBLE,
-                                   ContactSummary(), i))
-        .WillOnce(Return(PublicPolicy::VisitAdjustment{
+    EXPECT_CALL(mock_risk_score, GetVisitAdjustment(timestep, i))
+        .WillOnce(Return(RiskScore::VisitAdjustment{
             .frequency_adjustment = 1.0,
             .duration_adjustment = duration_adjustments[i],
         }));
   }
 
   std::vector<Visit> visits;
-  visit_generator.GenerateVisits(timestep, &mock_policy,
-                                 HealthState::SUSCEPTIBLE, {}, &visits);
+  visit_generator.GenerateVisits(timestep, mock_risk_score, &visits);
   ASSERT_EQ(2, visits.size());
   EXPECT_EQ(1, visits[0].location_uuid);
   EXPECT_EQ(timestep.start_time(), visits[0].start_time);
