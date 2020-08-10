@@ -50,8 +50,7 @@ class GraphLocation : public Location {
     thread_local absl::flat_hash_map<int64, float> symptom_factor;
     infectivity.clear();
     for (const Visit& visit : visits) {
-      infectivity[visit.agent_uuid] =
-          visit.health_state == HealthState::INFECTIOUS ? 1.0 : 0.0;
+      infectivity[visit.agent_uuid] = visit.infectivity;
       symptom_factor[visit.agent_uuid] = visit.symptom_factor;
     }
 

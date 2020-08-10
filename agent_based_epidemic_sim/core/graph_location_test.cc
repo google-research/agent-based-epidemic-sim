@@ -53,6 +53,7 @@ Visit GenerateVisit(int64 agent, HealthState::State health_state) {
       .location_uuid = kLocationUUID,
       .agent_uuid = agent,
       .health_state = health_state,
+      .infectivity = (health_state == HealthState::INFECTIOUS) ? 1.0f : 0.0f,
   };
 }
 InfectionOutcome ExpectedOutcome(int64 agent, int64 source, float infectivity) {
