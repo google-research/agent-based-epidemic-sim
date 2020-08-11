@@ -41,11 +41,16 @@ constexpr char kExpectedHeader[] =
     "household_size_probability,initial_prob_SUSCEPTIBLE,"
     "initial_prob_INFECTIOUS,top_business_size,top_business_size,"
     "top_business_size,top_business_size,top_business_size,timestep_end,agents,"
-    "susceptible,exposed,"
-    "infectious,recovered,home_0,home_1h,home_2h,home_4h,home_8h,home_16h,"
+    "SUSCEPTIBLE,EXPOSED,INFECTIOUS,RECOVERED,ASYMPTOMATIC,"
+    "PRE_SYMPTOMATIC_MILD,PRE_SYMPTOMATIC_SEVERE,SYMPTOMATIC_MILD,"
+    "SYMPTOMATIC_SEVERE,SYMPTOMATIC_HOSPITALIZED,SYMPTOMATIC_CRITICAL,"
+    "SYMPTOMATIC_HOSPITALIZED_RECOVERING,REMOVED,"
+    "home_0,home_1h,home_2h,home_4h,home_8h,home_16h,"
     "work_0,work_1h,work_2h,work_4h,work_8h,work_16h,contact_1,contact_2,"
     "contact_4,contact_8,contact_16,contact_32,contact_64,contact_128,"
     "contact_256,contact_512";
+
+constexpr int kExpectedContentsLength = 60;
 
 TEST(SimulationTest, RunsSimulation) {
   const std::string config_path = absl::StrCat("./", "/", kConfigPath);
@@ -63,6 +68,9 @@ TEST(SimulationTest, RunsSimulation) {
   const std::vector<std::string> lines =
       absl::StrSplit(output, '\n', absl::SkipEmpty());
   EXPECT_EQ(kExpectedHeader, lines[0]);
+  const std::vector<std::string> first_row =
+      absl::StrSplit(lines[1], absl::ByString(","));
+  EXPECT_EQ(kExpectedContentsLength, first_row.size());
 }
 
 }  // namespace

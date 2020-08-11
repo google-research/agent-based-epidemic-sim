@@ -90,7 +90,10 @@ HomeWorkSimulationObserverFactory::HomeWorkSimulationObserverFactory(
       data_prefix_ += field.second + ",";
     }
   }
-  headers += "timestep_end,agents,susceptible,exposed,infectious,recovered";
+  headers += "timestep_end,agents";
+  for (HealthState::State state : EnumerateEnumValues<HealthState::State>()) {
+    headers += absl::StrCat(",", HealthState::State_Name(state));
+  }
   for (const char* location_type : {"home", "work"}) {
     for (int i = 0; i < kDurationBuckets; ++i) {
       absl::StrAppendFormat(

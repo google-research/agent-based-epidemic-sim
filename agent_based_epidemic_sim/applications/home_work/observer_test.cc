@@ -44,9 +44,13 @@ class MemFileWriterImpl : public file::FileWriter {
 };
 
 const char* kExpectedHeaders =
-    "timestep_end,agents,susceptible,exposed,infectious,recovered,home_0,home_"
-    "1h,home_2h,home_4h,home_8h,home_16h,work_0,work_1h,work_2h,work_4h,work_"
-    "8h,work_16h,contact_1,contact_2,contact_4,contact_8,contact_16,"
+    "timestep_end,agents,"
+    "SUSCEPTIBLE,EXPOSED,INFECTIOUS,RECOVERED,ASYMPTOMATIC,"
+    "PRE_SYMPTOMATIC_MILD,PRE_SYMPTOMATIC_SEVERE,SYMPTOMATIC_MILD,"
+    "SYMPTOMATIC_SEVERE,SYMPTOMATIC_HOSPITALIZED,SYMPTOMATIC_CRITICAL,"
+    "SYMPTOMATIC_HOSPITALIZED_RECOVERING,REMOVED,home_0,home_1h,"
+    "home_2h,home_4h,home_8h,home_16h,work_0,work_1h,work_2h,work_4h,work_8h,"
+    "work_16h,contact_1,contact_2,contact_4,contact_8,contact_16,"
     "contact_32,contact_64,contact_128,contact_256,contact_512\n";
 
 class MockAgent : public Agent {
