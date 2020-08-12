@@ -426,6 +426,27 @@ cc_test(
 )
 
 cc_library(
+    name = "small_world_graph",
+    srcs = ["small_world_graph.cc"],
+    hdrs = ["small_world_graph.h"],
+    deps = [
+        "//agent_based_epidemic_sim/port:logging",
+        "@com_google_absl//absl/container:inlined_vector",
+        "@com_google_absl//absl/random",
+        "@com_google_absl//absl/random:distributions",
+    ],
+)
+
+cc_test(
+    name = "small_world_graph_test",
+    srcs = ["small_world_graph_test.cc"],
+    deps = [
+        ":small_world_graph",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "transition_model",
     hdrs = [
         "transition_model.h",
