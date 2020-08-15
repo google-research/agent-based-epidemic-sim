@@ -21,7 +21,7 @@ import "agent_based_epidemic_sim/core/parameter_distribution.proto";
 import "agent_based_epidemic_sim/core/ptts_transition_model.proto";
 
 message VisitDuration {
-  LocationProto.Type location_type = 1;
+  LocationReference.Type location_type = 1;
   GaussianDistribution gaussian_distribution = 2;
 }
 
@@ -44,8 +44,47 @@ message PopulationProfiles {
   repeated PopulationProfile population_profiles = 1;
 }
 
+// GraphLocation is a location whose edges represent possible interactions
+// between agents.
+message GraphLocation {
+  message Edge {
+    int64 uuid_a = 1;
+    int64 uuid_b = 2;
+  }
+  repeated Edge edges = 1;
+}
+
+// GraphParamLocation is a location whose parameters define a Watts–Strogatz
+// small world graph whose edges represent possible interactions between agents.
+message GraphParamLocation {
+  int64 nodes = 1;
+  int64 degree = 2;
+}
+
+// A RandomParamLocation is a location whose parameters define a random graph
+// whose edges represent possible interactions between agents.
+message RandomParamLocation {
+  // TODO: Add negative binomial params.
+}
+
+// DenseLocation is a location in which all cohabiting agents interact with
+// each other.
+message DenseLocation {
+  int32 size = 1;
+}
+
 // Representation of a location.
 message LocationProto {
+  LocationReference reference = 1;
+  oneof location {
+    GraphLocation graph = 2;
+    GraphParamLocation graph_params = 3;
+    RandomParamLocation random = 4;
+    DenseLocation dense = 5;
+  }
+}
+
+message LocationReference {
   enum Type {
     UNKNOWN = 0;
     HOUSEHOLD = 1;
@@ -53,7 +92,6 @@ message LocationProto {
   }
   int64 uuid = 1;
   Type type = 2;
-  int32 size = 3;
 }
 
 // Representation of an agent.
@@ -62,5 +100,5 @@ message AgentProto {
   int64 uuid = 1;
   int64 population_profile_id = 2;
   HealthState.State initial_health_state = 3;
-  repeated LocationProto locations = 4;
+  repeated LocationReference locations = 4;
 }

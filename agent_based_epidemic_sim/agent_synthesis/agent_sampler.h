@@ -38,7 +38,8 @@ using HealthStateSampler = DiscreteDistributionSampler<HealthState>;
 
 using Samplers =
     EnumIndexedArray<absl::optional<std::unique_ptr<ShuffledSampler>>,
-                     LocationProto::Type, LocationProto::Type_ARRAYSIZE>;
+                     LocationReference::Type,
+                     LocationReference::Type_ARRAYSIZE>;
 
 class ShuffledLocationAgentSampler : public AgentSampler {
  public:

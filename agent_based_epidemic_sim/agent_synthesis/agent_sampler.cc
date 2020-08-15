@@ -25,7 +25,7 @@ AgentProto ShuffledLocationAgentSampler::Next() {
   agent.set_population_profile_id(kPopulationProfileId);
   agent.set_initial_health_state(health_state_sampler_->Sample().state());
   for (int i = 0; i < samplers_->size(); ++i) {
-    const auto type = LocationProto::Type(i);
+    const auto type = LocationReference::Type(i);
     if (!(*samplers_)[type].has_value()) {
       continue;
     }

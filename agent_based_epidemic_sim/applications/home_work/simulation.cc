@@ -60,7 +60,7 @@ constexpr int kNumTopBusinesses = 5;
 namespace {
 
 int64 GetLocationUuidForTypeOrDie(const AgentProto& agent,
-                                  const LocationProto::Type type) {
+                                  const LocationReference::Type type) {
   for (const auto& location : agent.locations()) {
     if (location.type() == type) {
       return location.uuid();
@@ -132,11 +132,11 @@ std::vector<std::pair<std::string, std::string>> GetHomeWorkPassthrough(
   std::priority_queue<int, std::vector<int>, std::greater<int>> top_businesses;
   for (const LocationProto& location : locations) {
     if (top_businesses.size() < kNumTopBusinesses) {
-      top_businesses.push(location.size());
+      top_businesses.push(location.dense().size());
     } else {
-      if (top_businesses.top() < location.size()) {
+      if (top_businesses.top() < location.dense().size()) {
         top_businesses.pop();
-        top_businesses.push(location.size());
+        top_businesses.push(location.dense().size());
       }
     }
   }
@@ -148,7 +148,7 @@ std::vector<std::pair<std::string, std::string>> GetHomeWorkPassthrough(
 }
 
 void AddVisitDurationDistribution(const VisitDurationDistribution& distribution,
-                                  const LocationProto::Type location_type,
+                                  const LocationReference::Type location_type,
                                   PopulationProfile* population_profile) {
   auto visit_duration = population_profile->add_visit_durations();
   visit_duration->set_location_type(location_type);
@@ -201,12 +201,13 @@ SimulationContext GetSimulationContext(const HomeWorkSimulationConfig& config) {
   population_profile->set_infectiousness(1);
   AddVisitDurationDistribution(
       config.agent_properties().departure_distribution(),
-      LocationProto::HOUSEHOLD, population_profile);
+      LocationReference::HOUSEHOLD, population_profile);
   AddVisitDurationDistribution(
       config.agent_properties().work_duration_distribution(),
-      LocationProto::BUSINESS, population_profile);
+      LocationReference::BUSINESS, population_profile);
   AddVisitDurationDistribution(config.agent_properties().arrival_distribution(),
-                               LocationProto::HOUSEHOLD, population_profile);
+                               LocationReference::HOUSEHOLD,
+                               population_profile);
   ShuffledLocationAgentSampler sampler(std::move(samplers),
                                        std::move(uuid_generator),
                                        std::move(health_state_sampler));
@@ -215,12 +216,13 @@ SimulationContext GetSimulationContext(const HomeWorkSimulationConfig& config) {
     context.agents.push_back(sampler.Next());
   }
   absl::flat_hash_set<int64> business_uuids;
-  std::for_each(context.locations.begin(), context.locations.end(),
-                [&business_uuids](const auto& location) {
-                  if (location.type() == LocationProto::BUSINESS) {
-                    business_uuids.insert(location.uuid());
-                  }
-                });
+  std::for_each(
+      context.locations.begin(), context.locations.end(),
+      [&business_uuids](const auto& location) {
+        if (location.reference().type() == LocationReference::BUSINESS) {
+          business_uuids.insert(location.reference().uuid());
+        }
+      });
   context.location_type = [business_uuids =
                                std::move(business_uuids)](int64 uuid) {
     return business_uuids.contains(uuid) ? LocationType::kWork
@@ -274,7 +276,7 @@ void RunSimulation(
   location_des.reserve(context.locations.size());
   for (const auto& location : context.locations) {
     location_des.push_back(absl::make_unique<LocationDiscreteEventSimulator>(
-        location.uuid(), meg_builder.Build()));
+        location.reference().uuid(), meg_builder.Build()));
   }
   // Initializes Simulation.
   auto sim = num_workers > 1

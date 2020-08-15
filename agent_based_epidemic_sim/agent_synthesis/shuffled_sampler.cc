@@ -44,14 +44,15 @@ std::unique_ptr<ShuffledSampler> MakeBusinessSampler(
   absl::flat_hash_map<int64, int> uuid_to_sizes;
   for (int population = 0; population < population_size;) {
     LocationProto location;
-    location.set_uuid(uuid_generator.GenerateUuid());
-    location.set_type(LocationProto::BUSINESS);
+    location.mutable_reference()->set_uuid(uuid_generator.GenerateUuid());
+    location.mutable_reference()->set_type(LocationReference::BUSINESS);
     const int size =
         std::min(static_cast<int64>(business_size_distribution(rng)),
                  population_size - population);
-    location.set_size(size);
+    location.mutable_dense()->set_size(size);
     locations->push_back(location);
-    uuid_to_sizes.insert(std::make_pair(locations->back().uuid(), size));
+    uuid_to_sizes.insert(
+        std::make_pair(locations->back().reference().uuid(), size));
     population += size;
   }
   return absl::make_unique<ShuffledSampler>(uuid_to_sizes);
@@ -66,12 +67,14 @@ std::unique_ptr<ShuffledSampler> MakeHouseholdSampler(
   absl::flat_hash_map<int64, int> uuid_to_sizes;
   for (int population = 0; population < population_size;) {
     LocationProto location;
-    location.set_uuid(uuid_generator.GenerateUuid());
-    location.set_type(LocationProto::HOUSEHOLD);
+    location.mutable_reference()->set_uuid(uuid_generator.GenerateUuid());
+    location.mutable_reference()->set_type(LocationReference::HOUSEHOLD);
     locations->push_back(location);
     const int size = std::min(household_size_sampler->Sample(),
                               population_size - population);
-    uuid_to_sizes.insert(std::make_pair(locations->back().uuid(), size));
+    location.mutable_dense()->set_size(size);
+    uuid_to_sizes.insert(
+        std::make_pair(locations->back().reference().uuid(), size));
     population += size;
   }
   return absl::make_unique<ShuffledSampler>(uuid_to_sizes);
