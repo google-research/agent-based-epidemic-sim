@@ -1,0 +1,46 @@
+// Copyright 2020 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package abesim;
+
+import "agent_based_epidemic_sim/applications/home_work/config.proto";
+import "google/protobuf/duration.proto";
+
+// Configures a TracingPolicy that defines test, trace, and isolation
+// parameters.
+message TracingPolicyProto {
+  // The duration for which test results are valid (e.g., a negative).
+  // May serve as a buffering between test requests.
+  google.protobuf.Duration test_validity_duration = 1;
+  // The duration to retain contacts.
+  google.protobuf.Duration contact_retention_duration = 2;
+  // The duration to remain quarantined following the latest positive contact.
+  google.protobuf.Duration quarantine_duration = 3;
+  // The latency in receiving a test result.
+  // May be generalized in the future to account for randomness, different test
+  // types.
+  google.protobuf.Duration test_latency = 4;
+  // The (inclusive) threshold above which a test is presumed positive.
+  float positive_threshold = 5;
+}
+
+message ContactTracingHomeWorkSimulationConfig {
+  // Parameters for the home work config.
+  // NB: Distancing policy is ignored currently.
+  HomeWorkSimulationConfig home_work_config = 1;
+  // The tracing, testing, isolation policy config.
+  TracingPolicyProto tracing_policy = 2;
+}

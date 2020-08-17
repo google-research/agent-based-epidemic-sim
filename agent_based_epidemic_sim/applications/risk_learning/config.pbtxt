@@ -1,0 +1,174 @@
+home_work_config {
+  init_time {
+  }
+
+  population_size: 10000
+  agent_properties {
+    ptts_transition_model {
+      state_transition_diagram {
+        health_state: SUSCEPTIBLE
+        transition_probability {
+          health_state: SUSCEPTIBLE
+          transition_probability: 1
+        }
+        transition_probability {
+          health_state: EXPOSED
+          transition_probability: 0
+        }
+        transition_probability {
+          health_state: INFECTIOUS
+          transition_probability: 0
+        }
+        transition_probability {
+          health_state: RECOVERED
+          transition_probability: 0
+        }
+        rate: 1
+      }
+      state_transition_diagram {
+        health_state: EXPOSED
+        transition_probability {
+          health_state: SUSCEPTIBLE
+          transition_probability: 0
+        }
+        transition_probability {
+          health_state: EXPOSED
+          transition_probability: 0
+        }
+        transition_probability {
+          health_state: INFECTIOUS
+          transition_probability: 0.8
+        }
+        transition_probability {
+          health_state: RECOVERED
+          transition_probability: 0.2
+        }
+        rate: 0.5
+      }
+      state_transition_diagram {
+        health_state: INFECTIOUS
+        transition_probability {
+          health_state: SUSCEPTIBLE
+          transition_probability: 0
+        }
+        transition_probability {
+          health_state: EXPOSED
+          transition_probability: 0
+        }
+        transition_probability {
+          health_state: INFECTIOUS
+          transition_probability: 0
+        }
+        transition_probability {
+          health_state: RECOVERED
+          transition_probability: 1
+        }
+        rate: 0.1
+      }
+      state_transition_diagram {
+        health_state: RECOVERED
+        transition_probability {
+          health_state: SUSCEPTIBLE
+          transition_probability: 0
+        }
+        transition_probability {
+          health_state: EXPOSED
+          transition_probability: 0
+        }
+        transition_probability {
+          health_state: INFECTIOUS
+          transition_probability: 0
+        }
+        transition_probability {
+          health_state: RECOVERED
+          transition_probability: 1
+        }
+        rate: 1
+      }
+    }
+    departure_distribution {
+      mean: .3
+      stddev: .3
+    }
+    work_duration_distribution {
+      mean: .3
+      stddev: .3
+    }
+    arrival_distribution {
+      mean: .3
+      stddev: .3
+    }
+    initial_health_state_distribution {
+      buckets {
+        proto_value { [type.googleapis.com/abesim.HealthState] { state: SUSCEPTIBLE } }
+        count: .9
+      }
+      buckets {
+        proto_value { [type.googleapis.com/abesim.HealthState] { state: INFECTIOUS } }
+        count: .1
+      }
+    }
+  }
+  location_distributions {
+    business_distribution {
+      alpha: 0.5
+      beta: 1000
+    }
+    household_size_distribution {
+      buckets {
+        int_value: 1
+        count: 0.1
+      }
+      buckets {
+        int_value: 2
+        count: 0.2
+      }
+      buckets {
+        int_value: 3
+        count: 0.2
+      }
+      buckets {
+        int_value: 4
+        count: 0.4
+      }
+      buckets {
+        int_value: 5
+        count: 0.1
+      }
+    }
+  }
+  transmissibility: .95
+  distancing_policy {
+    stages {
+      start_time {
+        seconds: 1728000
+      }
+      essential_worker_fraction: 0.2
+    }
+    stages {
+      start_time {
+        seconds: 5184000
+      }
+      essential_worker_fraction: 1.0
+    }
+  }
+  step_size {
+    seconds: 86400
+  }
+  num_steps: 100
+}
+tracing_policy {
+  test_validity_duration {
+    seconds: 604800
+  }
+  contact_retention_duration {
+    seconds: 1209600
+  }
+  quarantine_duration {
+    seconds: 1209600
+  }
+  test_latency {
+    seconds: 86400
+  }
+  positive_threshold: 1.0
+}
