@@ -69,7 +69,8 @@ class MockAgent : public Agent {
                Broker<ContactReport>* symptom_broker),
               (override));
   MOCK_METHOD(HealthState::State, CurrentHealthState, (), (const, override));
-  MOCK_METHOD(TestResult, CurrentTestResult, (), (const, override));
+  MOCK_METHOD(TestResult, CurrentTestResult, (const Timestep&),
+              (const, override));
   MOCK_METHOD(absl::Span<const HealthTransition>, HealthTransitions, (),
               (const, override));
 };
@@ -124,8 +125,9 @@ TEST(HomeWorkSimulationObserverTest, ZerosReturnedForNoObservations) {
         },
         {});
     std::vector<std::unique_ptr<HomeWorkSimulationObserver>> observers;
-    observers.push_back(observer_factory.MakeObserver());
-    observers.push_back(observer_factory.MakeObserver());
+    Timestep timestep(absl::UnixEpoch(), absl::Hours(24));
+    observers.push_back(observer_factory.MakeObserver(timestep));
+    observers.push_back(observer_factory.MakeObserver(timestep));
     observer_factory.Aggregate(t, observers);
 
     std::string expected = kExpectedHeaders;
@@ -154,8 +156,9 @@ TEST(HomeWorkSimulationObserverTest, PassthroughFields) {
         },
         passthrough);
     std::vector<std::unique_ptr<HomeWorkSimulationObserver>> observers;
-    observers.push_back(observer_factory.MakeObserver());
-    observers.push_back(observer_factory.MakeObserver());
+    Timestep timestep(absl::UnixEpoch(), absl::Hours(24));
+    observers.push_back(observer_factory.MakeObserver(timestep));
+    observers.push_back(observer_factory.MakeObserver(timestep));
     observer_factory.Aggregate(t, observers);
 
     std::string expected = std::string("k1,k2,") + kExpectedHeaders;
@@ -182,8 +185,9 @@ TEST(HomeWorkSimulationObserverTest, CorrectValuesForObservations) {
         },
         {});
     std::vector<std::unique_ptr<HomeWorkSimulationObserver>> observers;
-    observers.push_back(observer_factory.MakeObserver());
-    observers.push_back(observer_factory.MakeObserver());
+    Timestep timestep(absl::UnixEpoch(), absl::Hours(24));
+    observers.push_back(observer_factory.MakeObserver(timestep));
+    observers.push_back(observer_factory.MakeObserver(timestep));
 
     auto home = MakeLocation(0);
     auto work = MakeLocation(1);

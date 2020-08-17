@@ -54,7 +54,7 @@ void LearningContactsObserverFactory::Aggregate(
 }
 
 std::unique_ptr<LearningContactsObserver>
-LearningContactsObserverFactory::MakeObserver() const {
+LearningContactsObserverFactory::MakeObserver(const Timestep& timestep) const {
   return absl::make_unique<LearningContactsObserver>();
 }
 

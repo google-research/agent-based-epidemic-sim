@@ -100,6 +100,7 @@ class BaseSimulation : public Simulation {
     Timestep timestep(time_, step_duration);
     for (int step = 0; step < steps; ++step) {
       RunAgentPhase(
+          timestep,
           [&timestep](const absl::Span<const std::unique_ptr<Agent>> agents,
                       absl::Span<InfectionOutcome> outcomes,
                       absl::Span<ContactReport> reports,
@@ -125,6 +126,7 @@ class BaseSimulation : public Simulation {
             DCHECK(reports.empty()) << "Unprocessed ContactReports";
           });
       RunLocationPhase(
+          timestep,
           [](const absl::Span<const std::unique_ptr<Location>> locations,
              absl::Span<Visit> visits, ObserverShard* const observer,
              Broker<InfectionOutcome>* const broker) {
@@ -151,8 +153,10 @@ class BaseSimulation : public Simulation {
       absl::Span<const std::unique_ptr<Location>>, absl::Span<Visit>,
       ObserverShard*, Broker<InfectionOutcome>*)>;
 
-  virtual void RunAgentPhase(const AgentPhaseFn& fn) = 0;
-  virtual void RunLocationPhase(const LocationPhaseFn& fn) = 0;
+  virtual void RunAgentPhase(const Timestep& timestep,
+                             const AgentPhaseFn& fn) = 0;
+  virtual void RunLocationPhase(const Timestep& timestep,
+                                const LocationPhaseFn& fn) = 0;
 
   void AddObserverFactory(ObserverFactoryBase* factory) override {
     observer_manager_.AddFactory(factory);
@@ -216,16 +220,19 @@ class Serial : public BaseSimulation {
          std::vector<std::unique_ptr<Location>> locations)
       : BaseSimulation(start, std::move(agents), std::move(locations)) {}
 
-  void RunAgentPhase(const AgentPhaseFn& fn) override {
+  void RunAgentPhase(const Timestep& timestep,
+                     const AgentPhaseFn& fn) override {
     auto outcomes = outcome_broker_.Consume();
     auto reports = report_broker_.Consume();
     fn(agents(), absl::MakeSpan(*outcomes), absl::MakeSpan(*reports),
-       GetObserverManager().MakeShard(), &visit_broker_, &report_broker_);
+       GetObserverManager().MakeShard(timestep), &visit_broker_,
+       &report_broker_);
   }
-  void RunLocationPhase(const LocationPhaseFn& fn) override {
+  void RunLocationPhase(const Timestep& timestep,
+                        const LocationPhaseFn& fn) override {
     auto visits = visit_broker_.Consume();
-    fn(locations(), absl::MakeSpan(*visits), GetObserverManager().MakeShard(),
-       &outcome_broker_);
+    fn(locations(), absl::MakeSpan(*visits),
+       GetObserverManager().MakeShard(timestep), &outcome_broker_);
   }
 
  private:
@@ -321,7 +328,8 @@ class WorkQueueBroker : public Broker<Msg> {
 };
 
 template <typename Worker>
-void ParallelAgentPhase(Executor& executor, ObserverManager& observer_manager,
+void ParallelAgentPhase(const Timestep& timestep, Executor& executor,
+                        ObserverManager& observer_manager,
                         const Chunker<Agent>& chunker,
                         std::vector<std::vector<InfectionOutcome>>& outcomes,
                         std::vector<std::vector<ContactReport>>& reports,
@@ -332,7 +340,7 @@ void ParallelAgentPhase(Executor& executor, ObserverManager& observer_manager,
 
   absl::FixedArray<ObserverShard*> observers(workers.size());
   for (int i = 0; i < workers.size(); ++i) {
-    observers[i] = observer_manager.MakeShard();
+    observers[i] = observer_manager.MakeShard(timestep);
   }
 
   DCHECK_EQ(outcomes.size(), chunker.Chunks().size());
@@ -366,7 +374,7 @@ void ParallelAgentPhase(Executor& executor, ObserverManager& observer_manager,
 }
 
 template <typename Worker>
-void ParallelLocationPhase(Executor& executor,
+void ParallelLocationPhase(const Timestep& timestep, Executor& executor,
                            ObserverManager& observer_manager,
                            const Chunker<Location>& chunker,
                            std::vector<std::vector<Visit>>& visits,
@@ -377,7 +385,7 @@ void ParallelLocationPhase(Executor& executor,
 
   absl::FixedArray<ObserverShard*> observers(workers.size());
   for (int i = 0; i < workers.size(); ++i) {
-    observers[i] = observer_manager.MakeShard();
+    observers[i] = observer_manager.MakeShard(timestep);
   }
 
   std::unique_ptr<Execution> exec = executor.NewExecution();
@@ -431,16 +439,18 @@ class Parallel : public BaseSimulation {
     }
   }
 
-  void RunAgentPhase(const AgentPhaseFn& fn) override {
+  void RunAgentPhase(const Timestep& timestep,
+                     const AgentPhaseFn& fn) override {
     auto outcomes = outcome_broker_.Consume();
     auto reports = report_broker_.Consume();
-    ParallelAgentPhase(*executor_, GetObserverManager(), agent_chunker_,
-                       *outcomes, *reports, agent_workers_, fn);
+    ParallelAgentPhase(timestep, *executor_, GetObserverManager(),
+                       agent_chunker_, *outcomes, *reports, agent_workers_, fn);
   }
-  void RunLocationPhase(const LocationPhaseFn& fn) override {
+  void RunLocationPhase(const Timestep& timestep,
+                        const LocationPhaseFn& fn) override {
     auto visits = visit_broker_.Consume();
-    ParallelLocationPhase(*executor_, GetObserverManager(), location_chunker_,
-                          *visits, location_workers_, fn);
+    ParallelLocationPhase(timestep, *executor_, GetObserverManager(),
+                          location_chunker_, *visits, location_workers_, fn);
   }
 
  private:
@@ -506,7 +516,8 @@ class DistributedParallel : public BaseSimulation {
         nullptr);
   }
 
-  void RunAgentPhase(const AgentPhaseFn& fn) override {
+  void RunAgentPhase(const Timestep& timestep,
+                     const AgentPhaseFn& fn) override {
     auto outcomes = outcome_broker_.Consume();
     auto reports = report_broker_.Consume();
 
@@ -515,20 +526,21 @@ class DistributedParallel : public BaseSimulation {
     distributed_manager_->ContactReportMessenger()
         ->SetReceiveBrokerForNextPhase(&report_broker_);
 
-    ParallelAgentPhase(*executor_, GetObserverManager(), agent_chunker_,
-                       *outcomes, *reports, agent_workers_, fn);
+    ParallelAgentPhase(timestep, *executor_, GetObserverManager(),
+                       agent_chunker_, *outcomes, *reports, agent_workers_, fn);
     distributed_manager_->VisitMessenger()->FlushAndAwaitRemotes();
     // TODO: We technically don't need to await remotes here, but we
     // should flush.  Consider splitting the two functions and calling
     // await remotes at the end of the location phase.
     distributed_manager_->ContactReportMessenger()->FlushAndAwaitRemotes();
   }
-  void RunLocationPhase(const LocationPhaseFn& fn) override {
+  void RunLocationPhase(const Timestep& timestep,
+                        const LocationPhaseFn& fn) override {
     auto visits = visit_broker_.Consume();
     distributed_manager_->OutcomeMessenger()->SetReceiveBrokerForNextPhase(
         &outcome_broker_);
-    ParallelLocationPhase(*executor_, GetObserverManager(), location_chunker_,
-                          *visits, location_workers_, fn);
+    ParallelLocationPhase(timestep, *executor_, GetObserverManager(),
+                          location_chunker_, *visits, location_workers_, fn);
     distributed_manager_->OutcomeMessenger()->FlushAndAwaitRemotes();
   }
 

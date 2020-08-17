@@ -55,6 +55,7 @@ cc_test(
         "//agent_based_epidemic_sim/applications/home_work:simulation",
         "//agent_based_epidemic_sim/core:parse_text_proto",
         "//agent_based_epidemic_sim/core:risk_score",
+        "//agent_based_epidemic_sim/core:timestep",
         "//agent_based_epidemic_sim/port:status_matchers",
         "//agent_based_epidemic_sim/util:ostream_overload",
         "@com_google_absl//absl/time",

@@ -209,13 +209,12 @@ static_assert(absl::is_trivially_copy_constructible<InfectionOutcome>::value,
 struct TestResult {
   absl::Time time_requested;
   absl::Time time_received;
-  bool needs_retry;
   float probability;
 
   friend bool operator==(const TestResult& a, const TestResult& b) {
     return (a.time_requested == b.time_requested &&
             a.time_received == b.time_received &&
-            a.needs_retry == b.needs_retry && a.probability == b.probability);
+            a.probability == b.probability);
   }
 
   friend bool operator!=(const TestResult& a, const TestResult& b) {
@@ -225,8 +224,8 @@ struct TestResult {
   friend std::ostream& operator<<(std::ostream& strm,
                                   const TestResult& test_result) {
     return strm << "{" << test_result.time_requested << ", "
-                << test_result.time_received << ", " << test_result.needs_retry
-                << ", " << test_result.probability << "}";
+                << test_result.time_received << ", " << test_result.probability
+                << "}";
   }
 };
 

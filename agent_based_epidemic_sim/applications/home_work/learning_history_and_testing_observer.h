@@ -24,7 +24,7 @@ struct HealthTransitionsAndTestResults {
 // compliant with the documentation in (broken link).
 class LearningHistoryAndTestingObserver : public AgentInfectionObserver {
  public:
-  explicit LearningHistoryAndTestingObserver();
+  explicit LearningHistoryAndTestingObserver(const Timestep& timestep);
 
   void Observe(const Agent& agent,
                absl::Span<const InfectionOutcome> outcomes) override;
@@ -32,6 +32,7 @@ class LearningHistoryAndTestingObserver : public AgentInfectionObserver {
  private:
   friend class LearningHistoryAndTestingObserverFactory;
 
+  const Timestep timestep_;
   std::vector<HealthTransitionsAndTestResults> history_and_tests_;
 };
 
@@ -45,8 +46,8 @@ class LearningHistoryAndTestingObserverFactory
       const Timestep& timestep,
       absl::Span<std::unique_ptr<LearningHistoryAndTestingObserver> const>
           observers) override;
-  std::unique_ptr<LearningHistoryAndTestingObserver> MakeObserver()
-      const override;
+  std::unique_ptr<LearningHistoryAndTestingObserver> MakeObserver(
+      const Timestep& timestep) const override;
 
   absl::Status status() const { return status_; }
 

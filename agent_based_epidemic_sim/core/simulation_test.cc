@@ -111,7 +111,9 @@ class FakeAgent : public Agent {
     return HealthState::SUSCEPTIBLE;
   }
 
-  TestResult CurrentTestResult() const override { return TestResult{}; }
+  TestResult CurrentTestResult(const Timestep&) const override {
+    return TestResult{};
+  }
 
   absl::Span<const HealthTransition> HealthTransitions() const override {
     return {};
@@ -179,7 +181,7 @@ class FakeObserver : public AgentInfectionObserver,
 
 class FakeObserverFactory : public ObserverFactory<FakeObserver> {
  public:
-  std::unique_ptr<FakeObserver> MakeObserver() const override {
+  std::unique_ptr<FakeObserver> MakeObserver(const Timestep&) const override {
     return absl::make_unique<FakeObserver>();
   }
   void Aggregate(

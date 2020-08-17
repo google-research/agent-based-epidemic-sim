@@ -122,8 +122,8 @@ class ObserverFactoryBase {
 
  private:
   friend class ObserverManager;
-  virtual void MakeObserverForShard(ObserverShard*) = 0;
-  virtual void Aggregate(const Timestep& timestep) = 0;
+  virtual void MakeObserverForShard(const Timestep&, ObserverShard*) = 0;
+  virtual void Aggregate(const Timestep&) = 0;
 };
 
 template <typename Observer>
@@ -133,7 +133,8 @@ class ObserverFactory : public ObserverFactoryBase {
   // Many observer instances may be produced for a given timestep, and all
   // the observers that are produced will be passed to Aggregate at the end of
   // the timestep.
-  virtual std::unique_ptr<Observer> MakeObserver() const = 0;
+  virtual std::unique_ptr<Observer> MakeObserver(
+      const Timestep& timestep) const = 0;
 
   // Aggregates the data from many Observers.  This is called at the end of each
   // timestep.
@@ -142,7 +143,8 @@ class ObserverFactory : public ObserverFactoryBase {
       absl::Span<std::unique_ptr<Observer> const> observers) = 0;
 
  private:
-  void MakeObserverForShard(ObserverShard* shard) override;
+  void MakeObserverForShard(const Timestep& timestep,
+                            ObserverShard* shard) override;
   void Aggregate(const Timestep& timestep) override;
 
   std::vector<std::unique_ptr<Observer>> observers_;
@@ -190,11 +192,11 @@ class ObserverManager {
   // observations.  Note that the manager retains ownership and that the
   // returned pointer will only be valid until the next call to
   // AggregateTimestep.
-  ObserverShard* MakeShard();
+  ObserverShard* MakeShard(const Timestep& timestep);
 
  private:
   friend class ObserverShard;
-  void RegisterObservers(ObserverShard* shard);
+  void RegisterObservers(const Timestep& timestep, ObserverShard* shard);
 
   absl::flat_hash_set<ObserverFactoryBase*> factories_;
   std::vector<std::unique_ptr<ObserverShard>> shards_;
@@ -207,8 +209,9 @@ void ObserverFactory<Observer>::Aggregate(const Timestep& timestep) {
 }
 
 template <typename Observer>
-void ObserverFactory<Observer>::MakeObserverForShard(ObserverShard* shard) {
-  observers_.push_back(MakeObserver());
+void ObserverFactory<Observer>::MakeObserverForShard(const Timestep& timestep,
+                                                     ObserverShard* shard) {
+  observers_.push_back(MakeObserver(timestep));
   shard->RegisterObserver(observers_.back().get());
 }
 

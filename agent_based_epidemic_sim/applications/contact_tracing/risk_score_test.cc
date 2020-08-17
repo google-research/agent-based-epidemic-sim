@@ -21,6 +21,7 @@
 #include "agent_based_epidemic_sim/applications/home_work/location_type.h"
 #include "agent_based_epidemic_sim/core/parse_text_proto.h"
 #include "agent_based_epidemic_sim/core/risk_score.h"
+#include "agent_based_epidemic_sim/core/timestep.h"
 #include "agent_based_epidemic_sim/port/status_matchers.h"
 #include "agent_based_epidemic_sim/util/ostream_overload.h"
 #include "gmock/gmock.h"
@@ -47,7 +48,8 @@ std::vector<float> FrequencyAdjustments(RiskScore& risk_score,
     Timestep timestep(TimeFromDay(day), absl::Hours(24));
     while (exposure != exposures.end() &&
            timestep.end_time() > exposure->start_time) {
-      risk_score.AddExposureNotification({.exposure = *exposure}, {});
+      risk_score.AddExposureNotification({.exposure = *exposure},
+                                         {.probability = 1.0});
       exposure++;
     }
     adjustments.push_back(risk_score.GetVisitAdjustment(timestep, location_uuid)
@@ -102,18 +104,6 @@ TEST_F(RiskScoreTest, GetVisitAdjustment) {
           .expected_adjustments = {1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0},
       },
       {
-          .initial_health_state = HealthState::EXPOSED,
-          .positive_exposures = {},
-          .location_type = LocationType::kWork,
-          .expected_adjustments = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
-      },
-      {
-          .initial_health_state = HealthState::EXPOSED,
-          .positive_exposures = {{.start_time = TimeFromDay(1)}},
-          .location_type = LocationType::kWork,
-          .expected_adjustments = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
-      },
-      {
           .initial_health_state = HealthState::SUSCEPTIBLE,
           .positive_exposures = {},
           .location_type = LocationType::kWork,
@@ -159,90 +149,126 @@ TEST_F(RiskScoreTest, GetVisitAdjustment) {
   }
 }
 
-TEST_F(RiskScoreTest, GetsTestPolicyUntested) {
+TEST_F(RiskScoreTest, GetTestResult) {
   auto risk_score = GetRiskScore();
-  risk_score->AddExposureNotification(
-      {.exposure = {.start_time = TimeFromDayAndHour(1, 1)}}, {});
-  Timestep timestep(TimeFromDay(2), absl::Hours(24));
-  EXPECT_THAT(
-      risk_score->GetTestPolicy(timestep),
-      Eq(RiskScore::TestPolicy{.should_test = true,
-                               .time_requested = TimeFromDayAndHour(1, 1),
-                               .latency = absl::Hours(24)}));
-}
 
-TEST_F(RiskScoreTest, GetsTestPolicyRetry) {
-  auto risk_score = GetRiskScore();
-  risk_score->AddExposureNotification(
-      {.exposure = {.start_time = TimeFromDayAndHour(1, 1)}}, {});
-  risk_score->AddTestResult({.time_requested = TimeFromDayAndHour(1, 1),
-                             .time_received = absl::InfiniteFuture(),
-                             .needs_retry = true,
-                             .probability = 0.0f});
-  Timestep timestep(TimeFromDay(2), absl::Hours(24));
-  EXPECT_THAT(
-      risk_score->GetTestPolicy(timestep),
-      Eq(RiskScore::TestPolicy{.should_test = true,
-                               .time_requested = TimeFromDayAndHour(1, 1),
-                               .latency = absl::Hours(24)}));
-}
+  {
+    // Before there is a test we return the null result.
+    TestResult result =
+        risk_score->GetTestResult(Timestep(TimeFromDay(1), absl::Hours(24)));
+    TestResult expected = {.time_requested = absl::InfiniteFuture(),
+                           .time_received = absl::InfiniteFuture(),
+                           .probability = 0.0};
+    EXPECT_EQ(result, expected);
+  }
 
-TEST_F(RiskScoreTest, GetsTestPolicyTooSoonForRetest) {
-  auto risk_score = GetRiskScore();
-  risk_score->AddTestResult({.time_requested = TimeFromDayAndHour(0, 1),
-                             .time_received = TimeFromDayAndHour(1, 1),
-                             .needs_retry = false,
-                             .probability = 0.0f});
   risk_score->AddExposureNotification(
-      {.exposure = {.start_time = TimeFromDayAndHour(0, 1)}}, {});
-  Timestep timestep(TimeFromDay(2), absl::Hours(24));
-  EXPECT_THAT(risk_score->GetTestPolicy(timestep),
-              Eq(RiskScore::TestPolicy{.should_test = false}));
-}
+      {.exposure = {.start_time = TimeFromDay(1)}},
+      {
+          .time_requested = TimeFromDay(1),
+          .time_received = TimeFromDay(2),
+          .probability = 0.0,
+      });
+  {
+    // Negative results don't matter.
+    TestResult result =
+        risk_score->GetTestResult(Timestep(TimeFromDay(2), absl::Hours(24)));
+    TestResult expected = {.time_requested = absl::InfiniteFuture(),
+                           .time_received = absl::InfiniteFuture(),
+                           .probability = 0.0};
+    EXPECT_EQ(result, expected);
+  }
 
-TEST_F(RiskScoreTest, GetsTestPolicyRetest) {
-  auto risk_score = GetRiskScore();
-  risk_score->AddTestResult({.time_requested = TimeFromDayAndHour(0, 1),
-                             .time_received = TimeFromDayAndHour(1, 0),
-                             .needs_retry = false,
-                             .probability = 0.0f});
   risk_score->AddExposureNotification(
-      {.exposure = {.start_time = TimeFromDayAndHour(11, 1)}}, {});
-  Timestep timestep(TimeFromDay(12), absl::Hours(24));
-  EXPECT_THAT(
-      risk_score->GetTestPolicy(timestep),
-      Eq(RiskScore::TestPolicy{.should_test = true,
-                               .time_requested = TimeFromDayAndHour(11, 1),
-                               .latency = absl::Hours(24)}));
-}
+      {.exposure = {.start_time = TimeFromDay(2)}},
+      {
+          .time_requested = TimeFromDay(2),
+          .time_received = TimeFromDay(3),
+          .probability = 1.0,
+      });
+  {
+    // On positive contact reports we perform a test, but if we're not sick
+    // the result is negative.
+    TestResult result =
+        risk_score->GetTestResult(Timestep(TimeFromDay(4), absl::Hours(24)));
+    TestResult expected = {.time_requested = TimeFromDay(3),
+                           .time_received = TimeFromDay(4),
+                           .probability = 0.0};
+    EXPECT_EQ(result, expected);
+  }
 
-TEST_F(RiskScoreTest, GetsTestPolicyNoRetestNeeded) {
-  auto risk_score = GetRiskScore();
-  risk_score->AddTestResult({.time_requested = TimeFromDayAndHour(0, 1),
-                             .time_received = TimeFromDayAndHour(1, 0),
-                             .needs_retry = false,
-                             .probability = 1.0f});
   risk_score->AddExposureNotification(
-      {.exposure = {.start_time = TimeFromDayAndHour(11, 4)}}, {});
-  Timestep timestep(TimeFromDay(12), absl::Hours(24));
-  EXPECT_THAT(risk_score->GetTestPolicy(timestep),
-              Eq(RiskScore::TestPolicy{.should_test = false}));
-}
+      {.exposure = {.start_time = TimeFromDay(8)}},
+      {
+          .time_requested = TimeFromDay(8),
+          .time_received = TimeFromDay(9),
+          .probability = 1.0,
+      });
+  {
+    // Another positive contact that is within the test validity period will
+    // NOT cause another test.
+    TestResult result =
+        risk_score->GetTestResult(Timestep(TimeFromDay(10), absl::Hours(24)));
+    TestResult expected = {.time_requested = TimeFromDay(3),
+                           .time_received = TimeFromDay(4),
+                           .probability = 0.0};
+    EXPECT_EQ(result, expected);
+  }
 
-TEST_F(RiskScoreTest, GetsTestPolicyNoRecentContacts) {
-  auto risk_score = GetRiskScore();
+  risk_score->AddHealthStateTransistion(
+      {.time = TimeFromDay(12), .health_state = HealthState::EXPOSED});
   risk_score->AddExposureNotification(
-      {.exposure = {.start_time = TimeFromDayAndHour(0, 1)}}, {});
-  Timestep timestep(TimeFromDay(15), absl::Hours(24));
-  EXPECT_THAT(risk_score->GetTestPolicy(timestep),
-              Eq(RiskScore::TestPolicy{.should_test = false}));
+      {.exposure = {.start_time = TimeFromDay(12)}},
+      {
+          .time_requested = TimeFromDay(12),
+          .time_received = TimeFromDay(13),
+          .probability = 1.0,
+      });
+  {
+    // Another positive contact after the validity period expires will perform
+    // another test.  This time it will report that we are sick since we
+    // have transitioned health states.
+    TestResult result =
+        risk_score->GetTestResult(Timestep(TimeFromDay(14), absl::Hours(24)));
+    TestResult expected = {.time_requested = TimeFromDay(13),
+                           .time_received = TimeFromDay(14),
+                           .probability = 1.0};
+    EXPECT_EQ(result, expected);
+  }
 }
 
 TEST_F(RiskScoreTest, GetsContactTracingPolicy) {
   auto risk_score = GetRiskScore();
-  EXPECT_THAT(risk_score->GetContactTracingPolicy(),
+
+  // If there's no positive test, we don't send.
+  EXPECT_THAT(risk_score->GetContactTracingPolicy(
+                  Timestep(TimeFromDay(5), absl::Hours(24))),
               Eq(RiskScore::ContactTracingPolicy{.report_recursively = false,
-                                                 .send_positive_test = true}));
+                                                 .send_report = false}));
+
+  risk_score->AddHealthStateTransistion(
+      {.time = TimeFromDay(2), .health_state = HealthState::EXPOSED});
+  risk_score->AddExposureNotification({}, {
+                                              .time_requested = TimeFromDay(3),
+                                              .time_received = TimeFromDay(6),
+                                              .probability = 1.0,
+                                          });
+
+  // If the test isn't received yet (will be received on day 7) don't send.
+  EXPECT_THAT(risk_score->GetContactTracingPolicy(
+                  Timestep(TimeFromDay(5), absl::Hours(24))),
+              Eq(RiskScore::ContactTracingPolicy{.report_recursively = false,
+                                                 .send_report = false}));
+  // The test has been received.
+  EXPECT_THAT(risk_score->GetContactTracingPolicy(
+                  Timestep(TimeFromDay(7), absl::Hours(24))),
+              Eq(RiskScore::ContactTracingPolicy{.report_recursively = false,
+                                                 .send_report = true}));
+  // Don't send old tests that were requested 2 weeks ago+;
+  EXPECT_THAT(risk_score->GetContactTracingPolicy(
+                  Timestep(TimeFromDay(21), absl::Hours(24))),
+              Eq(RiskScore::ContactTracingPolicy{.report_recursively = false,
+                                                 .send_report = false}));
 }
 
 TEST_F(RiskScoreTest, GetsContactRetentionDuration) {

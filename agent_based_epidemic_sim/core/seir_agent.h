@@ -87,7 +87,9 @@ class SEIRAgent : public Agent {
     return health_transitions_.back().health_state;
   }
 
-  TestResult CurrentTestResult() const override { return test_result_; }
+  TestResult CurrentTestResult(const Timestep& timestep) const override {
+    return risk_score_->GetTestResult(timestep);
+  }
 
   absl::Span<const HealthTransition> HealthTransitions() const override {
     return absl::Span<const HealthTransition>(health_transitions_.data(),
@@ -106,10 +108,12 @@ class SEIRAgent : public Agent {
             std::unique_ptr<VisitGenerator> visit_generator,
             std::unique_ptr<RiskScore> risk_score)
       : uuid_(uuid),
-        test_result_({.time_requested = absl::InfiniteFuture(),
-                      .time_received = absl::InfiniteFuture(),
-                      .needs_retry = false,
-                      .probability = 0}),
+        last_contact_report_considered_(contacts_.end()),
+        last_test_result_sent_({
+            .time_requested = absl::InfiniteFuture(),
+            .time_received = absl::InfiniteFuture(),
+            .probability = 0.0,
+        }),
         transmission_model_(transmission_model),
         transition_model_(std::move(transition_model)),
         visit_generator_(std::move(visit_generator)),
@@ -117,7 +121,6 @@ class SEIRAgent : public Agent {
     next_health_transition_ = initial_health_transition;
     health_transitions_.push_back({.time = absl::InfinitePast(),
                                    .health_state = HealthState::SUSCEPTIBLE});
-    risk_score_->AddTestResult(test_result_);
     risk_score_->AddHealthStateTransistion(health_transitions_.back());
   }
 
@@ -130,15 +133,9 @@ class SEIRAgent : public Agent {
   // can be assigned to each visit.
   void SplitAndAssignHealthStates(std::vector<Visit>* visits) const;
 
-  // May carry out a test depending on the given test policy.
-  // TODO: Move this logic to public policy implementation.
-  void MaybeTest(const RiskScore::TestPolicy& test_policy,
-                 TestResult* test_result);
-
-  void SendContactReports(
-      const RiskScore::ContactTracingPolicy& contact_tracing_policy,
-      absl::Span<const ContactReport> received_reports,
-      Broker<ContactReport>* broker) const;
+  void SendContactReports(const Timestep& timestep,
+                          absl::Span<const ContactReport> received_reports,
+                          Broker<ContactReport>* broker);
 
   absl::Duration DurationSinceFirstInfection(
       const absl::Time& current_time) const;
@@ -151,8 +148,6 @@ class SEIRAgent : public Agent {
   std::vector<HealthTransition> health_transitions_;
   HealthTransition next_health_transition_;
   absl::optional<absl::Time> initial_infection_time_;
-
-  TestResult test_result_;
 
   using ContactList = std::list<Contact>;
   struct ContactHasher {
@@ -179,6 +174,21 @@ class SEIRAgent : public Agent {
   ContactList contacts_;
   absl::flat_hash_set<ContactList::iterator, ContactHasher, ContactEq>
       contact_set_;
+
+  // This is the last contact that we sent last_test_result_sent_ to.
+  // Before we send any test results, or if we remove all considered contacts
+  // last_contact_report_considered_ is set to contacts_.end() which is a
+  // special value that means none of the current contacts have been considered.
+  // Before any test has been sent last_test_result_sent_ is sent to a test that
+  // was administered at infinite future.
+  // Note also that if a previous contact with the same source exists, and if
+  // that contact was also the last_contact_report_considered, we reset
+  // last_contact_report_considered_ so it points to the position prior to the
+  // one about to be deleted, since in this case subsequent contacts are
+  // guaranteed not to be the last_contact_report_considered_ (or if there is
+  // not previous contact, then again to the special value contacts_.end()).
+  ContactList::iterator last_contact_report_considered_;
+  TestResult last_test_result_sent_;
 
   // Unowned (shared between agents at risk for the given disease).
   TransmissionModel* const transmission_model_;

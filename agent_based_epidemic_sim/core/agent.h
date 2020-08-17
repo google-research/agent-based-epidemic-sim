@@ -80,7 +80,7 @@ class Agent {
 
   virtual HealthState::State CurrentHealthState() const = 0;
 
-  virtual TestResult CurrentTestResult() const = 0;
+  virtual TestResult CurrentTestResult(const Timestep& timestep) const = 0;
 
   virtual absl::Span<const HealthTransition> HealthTransitions() const = 0;
 

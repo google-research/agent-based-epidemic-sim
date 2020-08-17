@@ -13,7 +13,9 @@
 
 namespace abesim {
 
-LearningHistoryAndTestingObserver::LearningHistoryAndTestingObserver() {}
+LearningHistoryAndTestingObserver::LearningHistoryAndTestingObserver(
+    const Timestep& timestep)
+    : timestep_(timestep) {}
 
 void LearningHistoryAndTestingObserver::Observe(
     const Agent& agent, absl::Span<const InfectionOutcome> outcomes) {
@@ -22,7 +24,7 @@ void LearningHistoryAndTestingObserver::Observe(
   for (const auto& health_transition : agent.HealthTransitions()) {
     output.health_transitions.push_back(health_transition);
   }
-  output.test_results.push_back(agent.CurrentTestResult());
+  output.test_results.push_back(agent.CurrentTestResult(timestep_));
   history_and_tests_.push_back(output);
 }
 
@@ -66,8 +68,9 @@ void LearningHistoryAndTestingObserverFactory::Aggregate(
 }
 
 std::unique_ptr<LearningHistoryAndTestingObserver>
-LearningHistoryAndTestingObserverFactory::MakeObserver() const {
-  return absl::make_unique<LearningHistoryAndTestingObserver>();
+LearningHistoryAndTestingObserverFactory::MakeObserver(
+    const Timestep& timestep) const {
+  return absl::make_unique<LearningHistoryAndTestingObserver>(timestep);
 }
 
 }  // namespace abesim

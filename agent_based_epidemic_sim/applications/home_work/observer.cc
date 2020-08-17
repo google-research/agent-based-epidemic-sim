@@ -163,7 +163,8 @@ void HomeWorkSimulationObserverFactory::Aggregate(
 }
 
 std::unique_ptr<HomeWorkSimulationObserver>
-HomeWorkSimulationObserverFactory::MakeObserver() const {
+HomeWorkSimulationObserverFactory::MakeObserver(
+    const Timestep& timestep) const {
   return absl::make_unique<HomeWorkSimulationObserver>(location_type_);
 }
 

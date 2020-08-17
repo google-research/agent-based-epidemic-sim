@@ -35,7 +35,8 @@ class LearningContactsObserverFactory
   void Aggregate(const Timestep& timestep,
                  absl::Span<std::unique_ptr<LearningContactsObserver> const>
                      observers) override;
-  std::unique_ptr<LearningContactsObserver> MakeObserver() const override;
+  std::unique_ptr<LearningContactsObserver> MakeObserver(
+      const Timestep& timestep) const override;
 
   absl::Status status() const { return status_; }
 

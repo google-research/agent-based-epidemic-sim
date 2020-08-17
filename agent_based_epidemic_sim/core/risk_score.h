@@ -17,6 +17,7 @@
 
 #include <memory>
 
+#include "absl/time/time.h"
 #include "absl/types/span.h"
 #include "agent_based_epidemic_sim/core/event.h"
 #include "agent_based_epidemic_sim/core/timestep.h"
@@ -32,8 +33,6 @@ class RiskScore {
   // Informs the RiskScore of received exposure notifications.
   virtual void AddExposureNotification(const Contact& contact,
                                        const TestResult& result) = 0;
-  // Informs the RiskScore of received test results.
-  virtual void AddTestResult(const TestResult& result) = 0;
 
   struct VisitAdjustment {
     float frequency_adjustment;
@@ -63,42 +62,18 @@ class RiskScore {
   virtual VisitAdjustment GetVisitAdjustment(const Timestep& timestep,
                                              int64 location_uuid) const = 0;
 
-  // Encapsulates whether and how to request a test. Contains the following:
-  // - whether a test should be conducted
-  // - the time at which the test is requested
-  // - the duration for receiving a result from the test.
-  struct TestPolicy {
-    bool should_test;
-    absl::Time time_requested;
-    absl::Duration latency;
-
-    friend bool operator==(const TestPolicy& a, const TestPolicy& b) {
-      return (a.should_test == b.should_test &&
-              a.time_requested == b.time_requested && a.latency == b.latency);
-    }
-
-    friend bool operator!=(const TestPolicy& a, const TestPolicy& b) {
-      return !(a == b);
-    }
-
-    friend std::ostream& operator<<(std::ostream& strm,
-                                    const TestPolicy& test_policy) {
-      return strm << "{" << test_policy.should_test << ","
-                  << test_policy.time_requested << "," << test_policy.latency
-                  << "}";
-    }
-  };
-  virtual TestPolicy GetTestPolicy(const Timestep& timestep) const = 0;
+  // Get the test result that is relevant for the given timestep.
+  virtual TestResult GetTestResult(const Timestep& timestep) const = 0;
 
   // Encapsulates which contact reports to forward.
   struct ContactTracingPolicy {
     bool report_recursively;
-    bool send_positive_test;
+    bool send_report;
 
     friend bool operator==(const ContactTracingPolicy& a,
                            const ContactTracingPolicy& b) {
       return (a.report_recursively == b.report_recursively &&
-              a.send_positive_test == b.send_positive_test);
+              a.send_report == b.send_report);
     }
 
     friend bool operator!=(const ContactTracingPolicy& a,
@@ -110,12 +85,12 @@ class RiskScore {
         std::ostream& strm,
         const ContactTracingPolicy& contact_tracing_policy) {
       return strm << "{" << contact_tracing_policy.report_recursively << ", "
-                  << contact_tracing_policy.send_positive_test << "}";
+                  << contact_tracing_policy.send_report << "}";
     }
   };
   // Gets the policy to be used when sending contact reports.
-  // TODO: Should take a timestep.
-  virtual ContactTracingPolicy GetContactTracingPolicy() const = 0;
+  virtual ContactTracingPolicy GetContactTracingPolicy(
+      const Timestep& timestep) const = 0;
 
   // Gets the duration for which to retain contacts.
   virtual absl::Duration ContactRetentionDuration() const = 0;

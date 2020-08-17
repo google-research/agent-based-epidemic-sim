@@ -44,58 +44,72 @@ class TracingRiskScore : public RiskScore {
                    const TracingRiskScoreConfig& tracing_policy)
       : tracing_policy_(tracing_policy),
         location_type_(std::move(location_type)),
-        latest_health_state_(HealthState::SUSCEPTIBLE),
-        test_result_({.time_requested = absl::InfiniteFuture(),
-                      .time_received = absl::InfiniteFuture(),
-                      .needs_retry = false,
-                      .probability = 0}),
+        infection_onset_time_(absl::InfiniteFuture()),
         latest_contact_time_(absl::InfinitePast()) {}
 
   void AddHealthStateTransistion(HealthTransition transition) override {
-    latest_health_state_ = transition.health_state;
+    // TODO: Should this exclude EXPOSED?
+    if (transition.health_state != HealthState::SUSCEPTIBLE) {
+      infection_onset_time_ = std::min(infection_onset_time_, transition.time);
+    }
   }
   void AddExposures(absl::Span<const Exposure* const> exposures) override {}
   void AddExposureNotification(const Contact& contact,
                                const TestResult& result) override {
-    latest_contact_time_ =
-        std::max(latest_contact_time_,
-                 contact.exposure.start_time + contact.exposure.duration);
-  }
-  void AddTestResult(const TestResult& result) override {
-    test_result_ = result;
+    // We don't take action on negative tests.
+    if (result.probability < 1.0) return;
+
+    absl::Time new_contact_time =
+        contact.exposure.start_time + contact.exposure.duration;
+    // If we already know about a contact that happened after this new
+    // notification, we aren't going to take action based on this.
+    if (latest_contact_time_ >= new_contact_time) return;
+
+    latest_contact_time_ = new_contact_time;
+
+    absl::Time request_time = result.time_received;
+
+    // This means that if we receive an exposure notification for a contact
+    // that happened within test_validity_duration of the last time we started
+    // a test, we ignore that exposure.
+    if (HasActiveTest(request_time)) return;
+
+    test_results_.push_back({
+        .time_requested = result.time_received,
+        .time_received = request_time + tracing_policy_.test_latency,
+        .probability = request_time < infection_onset_time_ ? 0.0f : 1.0f,
+    });
   }
 
   VisitAdjustment GetVisitAdjustment(const Timestep& timestep,
                                      const int64 location_uuid) const override {
     const bool skip_visit =
         location_type_(location_uuid) != LocationType::kHome &&
-        (ShouldQuarantineFromContacts(timestep) ||
-         ShouldQuarantineFromSymptoms());
+        (ShouldQuarantineFromContacts(timestep));
     return {
         .frequency_adjustment = skip_visit ? 0.0f : 1.0f,
         .duration_adjustment = 1.0f,
     };
   }
-
-  TestPolicy GetTestPolicy(const Timestep& timestep) const override {
-    // TODO: handle symptom-based test requests.
-    TestPolicy policy;
-    if (test_result_.needs_retry) {
-      return {.should_test = true,
-              .time_requested = test_result_.time_requested,
-              .latency = tracing_policy_.test_latency};
+  TestResult GetTestResult(const Timestep& timestep) const override {
+    for (auto result = test_results_.rbegin(); result != test_results_.rend();
+         ++result) {
+      if (result->time_received < timestep.end_time()) return *result;
     }
-    if (NeedsNewTestFromContacts(timestep)) {
-      LOG(ERROR) << "st " << latest_contact_time_;
-      return {.should_test = true,
-              .time_requested = latest_contact_time_,
-              .latency = tracing_policy_.test_latency};
-    }
-    return {.should_test = false};
+    return {.time_requested = absl::InfiniteFuture(),
+            .time_received = absl::InfiniteFuture(),
+            .probability = 0};
   }
 
-  ContactTracingPolicy GetContactTracingPolicy() const override {
-    return {.report_recursively = false, .send_positive_test = true};
+  ContactTracingPolicy GetContactTracingPolicy(
+      const Timestep& timestep) const override {
+    const TestResult result = GetTestResult(timestep);
+    const bool should_report =
+        result.probability > 0 && result.time_received <= timestep.end_time() &&
+        result.time_requested + tracing_policy_.contact_retention_duration >=
+            timestep.start_time();
+
+    return {.report_recursively = false, .send_report = should_report};
   }
 
   absl::Duration ContactRetentionDuration() const override {
@@ -103,27 +117,15 @@ class TracingRiskScore : public RiskScore {
   }
 
  private:
-  bool HasRetainedPositiveContact(const Timestep& timestep) const {
-    return latest_contact_time_ >=
-           timestep.start_time() - ContactRetentionDuration();
+  bool HasActiveTest(absl::Time request_time) const {
+    return !test_results_.empty() &&
+           (test_results_.back().probability >
+                tracing_policy_.positive_threshold ||
+            test_results_.back().time_requested +
+                    tracing_policy_.test_validity_duration >
+                request_time);
   }
-  bool NeedsNewTestFromContacts(const Timestep& timestep) const {
-    if (!HasRetainedPositiveContact(timestep)) {
-      // No retained positive contact.
-      return false;
-    }
-    if (test_result_.time_received == absl::InfiniteFuture()) {
-      // Has not yet requested a test.
-      return true;
-    }
-    if (test_result_.time_received >
-        latest_contact_time_ - tracing_policy_.test_validity_duration) {
-      // Test result still valid.
-      return false;
-    }
-    // Test result (if negative) is stale : retest.
-    return test_result_.probability < tracing_policy_.positive_threshold;
-  }
+
   bool ShouldQuarantineFromContacts(const Timestep& timestep) const {
     absl::Time earliest_quarantine_time =
         std::min(timestep.start_time() - ContactRetentionDuration(),
@@ -133,16 +135,12 @@ class TracingRiskScore : public RiskScore {
     return (timestep.start_time() < latest_quarantine_time &&
             timestep.end_time() > earliest_quarantine_time);
   }
-  bool ShouldQuarantineFromSymptoms() const {
-    // TODO: It seems that this should consider recovered patients
-    // and also the time at which the latest health state became active.
-    return latest_health_state_ != HealthState::SUSCEPTIBLE;
-  }
 
   const TracingRiskScoreConfig tracing_policy_;
   const LocationTypeFn location_type_;
+  absl::Time infection_onset_time_;
   HealthState::State latest_health_state_;
-  TestResult test_result_;
+  std::vector<TestResult> test_results_;
   absl::Time latest_contact_time_;
 };
 

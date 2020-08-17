@@ -118,14 +118,13 @@ class MockRiskScore : public RiskScore {
               (override));
   MOCK_METHOD(void, AddExposureNotification,
               (const Contact& contact, const TestResult& result), (override));
-  MOCK_METHOD(void, AddTestResult, (const TestResult& result), (override));
   MOCK_METHOD(VisitAdjustment, GetVisitAdjustment,
               (const Timestep& timestep, int64 location_uuid),
               (const, override));
-  MOCK_METHOD(TestPolicy, GetTestPolicy, (const Timestep& timestep),
-              (const, override));
-  MOCK_METHOD(ContactTracingPolicy, GetContactTracingPolicy, (),
-              (const, override));
+  MOCK_METHOD(TestResult, GetTestResult, (const Timestep& timestep),
+              (const override));
+  MOCK_METHOD(ContactTracingPolicy, GetContactTracingPolicy,
+              (const Timestep& timestep), (const, override));
   MOCK_METHOD(absl::Duration, ContactRetentionDuration, (), (const, override));
 };
 

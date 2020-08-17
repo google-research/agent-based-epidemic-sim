@@ -37,6 +37,11 @@ using testing::Ref;
 using testing::Return;
 using testing::SetArgPointee;
 
+absl::Time TimeFromDayAndHour(const int day, const int hour) {
+  return absl::UnixEpoch() + absl::Hours(24 * day + hour);
+}
+absl::Time TimeFromDay(const int day) { return TimeFromDayAndHour(day, 0); }
+
 class MockTransitionModel : public TransitionModel {
  public:
   explicit MockTransitionModel() = default;
@@ -75,14 +80,13 @@ class MockRiskScore : public RiskScore {
               (override));
   MOCK_METHOD(void, AddExposureNotification,
               (const Contact& contact, const TestResult& result), (override));
-  MOCK_METHOD(void, AddTestResult, (const TestResult& result), (override));
   MOCK_METHOD(VisitAdjustment, GetVisitAdjustment,
               (const Timestep& timestep, int64 location_uuid),
               (const, override));
-  MOCK_METHOD(TestPolicy, GetTestPolicy, (const Timestep& timestep),
+  MOCK_METHOD(TestResult, GetTestResult, (const Timestep& timestep),
               (const, override));
-  MOCK_METHOD(ContactTracingPolicy, GetContactTracingPolicy, (),
-              (const, override));
+  MOCK_METHOD(ContactTracingPolicy, GetContactTracingPolicy,
+              (const Timestep& timestep), (const, override));
   MOCK_METHOD(absl::Duration, ContactRetentionDuration, (), (const, override));
 };
 
@@ -422,35 +426,76 @@ TEST(SEIRAgentTest, ProcessInfectionOutcomesReturnsNoOpIfNonePresent) {
   agent->ProcessInfectionOutcomes(timestep, {});
 }
 
-TEST(SEIRAgentTest, NoOpUpdateContactReports) {
+// Test that the agent updates the risk score with newly received exposures and
+// contact reports.
+TEST(SEIRAgentTest,
+     ProcessInfectionOutcomesAndUpdateContactReportsUpdateRiskScore) {
+  const int64 kUuid = 42LL;
   auto transition_model = absl::make_unique<MockTransitionModel>();
   auto visit_generator = absl::make_unique<MockVisitGenerator>();
+  auto contact_report_broker = absl::make_unique<MockBroker<ContactReport>>();
+
+  std::vector<Contact> contacts = {
+      {
+          .other_uuid = 12LL,
+          .exposure = {.start_time = absl::FromUnixSeconds(0LL),
+                       .duration = absl::Hours(1LL),
+                       .infectivity = 0.0f},
+      },
+      {
+          .other_uuid = 15LL,
+          .exposure = {.start_time = absl::FromUnixSeconds(0LL),
+                       .duration = absl::Hours(1LL),
+                       .infectivity = 0.0f},
+      }};
+  std::vector<ContactReport> contact_reports = {
+      {.from_agent_uuid = 12LL,
+       .to_agent_uuid = kUuid,
+       .test_result = {.probability = 0.5}},
+      {.from_agent_uuid = 13LL,
+       .to_agent_uuid = kUuid,
+       .test_result = {.probability = 0.75}},
+      {.from_agent_uuid = 15LL,
+       .to_agent_uuid = kUuid,
+       .test_result = {.probability = 0.95}},
+  };
+  auto outcomes = OutcomesFromContacts(kUuid, contacts);
+
   MockTransmissionModel transmission_model;
+  EXPECT_CALL(transmission_model,
+              GetInfectionOutcome(testing::ElementsAre(&outcomes[0].exposure,
+                                                       &outcomes[1].exposure)));
+
   auto risk_score = absl::make_unique<MockRiskScore>();
-  const TestResult init_test_result{.time_requested = absl::InfiniteFuture(),
-                                    .time_received = absl::InfiniteFuture(),
-                                    .needs_retry = false,
-                                    .probability = 0};
-  std::vector<ContactReport> contact_reports;
-  EXPECT_CALL(*risk_score, AddTestResult(init_test_result)).Times(2);
+  EXPECT_CALL(*risk_score, ContactRetentionDuration())
+      .WillRepeatedly(Return(absl::Hours(24 * 14)));
   EXPECT_CALL(*risk_score,
               AddHealthStateTransistion(HealthTransition{
                   absl::InfinitePast(), HealthState::SUSCEPTIBLE}));
 
-  EXPECT_CALL(*risk_score, GetTestPolicy(_))
-      .WillOnce(Return(RiskScore::TestPolicy{.should_test = false}));
-  EXPECT_CALL(*risk_score, GetContactTracingPolicy())
+  EXPECT_CALL(*risk_score, GetContactTracingPolicy(_))
       .WillOnce(Return(RiskScore::ContactTracingPolicy{}));
 
-  const int64 kUuid = 42LL;
+  // This is a key assertion that we pass on exposures from
+  // ProcessInfectionOutcomes to the risk score.
+  EXPECT_CALL(*risk_score, AddExposures(testing::ElementsAre(
+                               &outcomes[0].exposure, &outcomes[1].exposure)));
+
+  // This is a key assertion that we do pass on contact reports to the
+  // risk score.
+  // Only the contact_report form agents 12 and 15 are reported because the
+  // agent had no matching exposure for agent 13.
+  EXPECT_CALL(*risk_score, AddExposureNotification(
+                               contacts[0], contact_reports[0].test_result));
+  EXPECT_CALL(*risk_score, AddExposureNotification(
+                               contacts[1], contact_reports[2].test_result));
+
   auto agent = SEIRAgent::CreateSusceptible(
       kUuid, &transmission_model, std::move(transition_model),
       std::move(visit_generator), std::move(risk_score));
 
-  auto contact_report_broker = absl::make_unique<MockBroker<ContactReport>>();
-  EXPECT_CALL(*contact_report_broker, Send(testing::_)).Times(0);
-
   Timestep timestep(absl::UnixEpoch(), absl::Hours(24));
+  agent->ProcessInfectionOutcomes(timestep, outcomes);
   agent->UpdateContactReports(timestep, contact_reports,
                               contact_report_broker.get());
 }
@@ -460,13 +505,8 @@ TEST(SEIRAgentTest, PositiveTest) {
   auto visit_generator = absl::make_unique<MockVisitGenerator>();
 
   auto risk_score = absl::make_unique<MockRiskScore>();
-  const TestResult init_test_result{.time_requested = absl::InfiniteFuture(),
-                                    .time_received = absl::InfiniteFuture(),
-                                    .needs_retry = false,
-                                    .probability = 0};
   EXPECT_CALL(*risk_score, ContactRetentionDuration())
       .WillRepeatedly(Return(absl::Hours(24 * 14)));
-  EXPECT_CALL(*risk_score, AddTestResult(Eq(init_test_result)));
   EXPECT_CALL(*risk_score, AddHealthStateTransistion(HealthTransition{
                                .time = absl::InfinitePast(),
                                .health_state = HealthState::SUSCEPTIBLE}));
@@ -492,21 +532,14 @@ TEST(SEIRAgentTest, PositiveTest) {
       .WillOnce(
           Return(HealthTransition{.time = absl::InfiniteFuture(),
                                   .health_state = HealthState::RECOVERED}));
-  EXPECT_CALL(*risk_score, GetTestPolicy(_))
-      .WillOnce(Return(
-          RiskScore::TestPolicy{.should_test = true,
-                                .time_requested = absl::FromUnixSeconds(0LL),
-                                .latency = absl::Hours(36)}));
-  const TestResult expected_test_result{
-      .time_requested = absl::FromUnixSeconds(0LL),
-      .time_received = absl::FromUnixSeconds(129600LL),
-      .needs_retry = false,
-      .probability = 1.0f};
-  EXPECT_CALL(*risk_score, AddTestResult(Eq(expected_test_result)));
-
-  EXPECT_CALL(*risk_score, GetContactTracingPolicy())
-      .WillOnce(
-          Return(RiskScore::ContactTracingPolicy{.send_positive_test = true}));
+  EXPECT_CALL(*risk_score, GetContactTracingPolicy(_))
+      .WillOnce(Return(RiskScore::ContactTracingPolicy{.send_report = true}));
+  TestResult expected_result = {
+      .time_requested = absl::UnixEpoch(),
+      .time_received = absl::UnixEpoch(),
+      .probability = 1.0,
+  };
+  EXPECT_CALL(*risk_score, GetTestResult(_)).WillOnce(Return(expected_result));
 
   MockTransmissionModel transmission_model;
   auto agent =
@@ -520,7 +553,7 @@ TEST(SEIRAgentTest, PositiveTest) {
   const std::vector<ContactReport> expected_contact_reports{
       {.from_agent_uuid = kUuid,
        .to_agent_uuid = 314LL,
-       .test_result = expected_test_result}};
+       .test_result = expected_result}};
   EXPECT_CALL(*contact_report_broker, Send(Eq(expected_contact_reports)))
       .Times(1);
   const Timestep timestep(absl::UnixEpoch(), absl::Hours(24));
@@ -539,7 +572,6 @@ TEST(SEIRAgentTest, NegativeTestResult) {
   const TestResult contact_test_result{
       .time_requested = absl::FromUnixSeconds(0LL),
       .time_received = absl::FromUnixSeconds(129600LL),
-      .needs_retry = false,
       .probability = 1.0f};
   std::vector<ContactReport> contact_reports{
       {.from_agent_uuid = 314LL,
@@ -549,19 +581,9 @@ TEST(SEIRAgentTest, NegativeTestResult) {
       {.other_uuid = 314LL,
        .exposure = {.start_time = absl::FromUnixSeconds(0LL),
                     .duration = absl::Hours(1LL)}}};
-  const TestResult init_test_result{.time_requested = absl::InfiniteFuture(),
-                                    .time_received = absl::InfiniteFuture(),
-                                    .needs_retry = false,
-                                    .probability = 0};
   EXPECT_CALL(*risk_score, AddHealthStateTransistion(HealthTransition{
                                .time = absl::InfinitePast(),
                                .health_state = HealthState::SUSCEPTIBLE}));
-  EXPECT_CALL(*risk_score, AddTestResult(Eq(init_test_result)));
-  EXPECT_CALL(*risk_score, GetTestPolicy(_))
-      .WillOnce(Return(
-          RiskScore::TestPolicy{.should_test = true,
-                                .time_requested = absl::FromUnixSeconds(0LL),
-                                .latency = absl::Hours(36)}));
   std::vector<InfectionOutcome> outcomes =
       OutcomesFromContacts(kUuid, contacts);
   EXPECT_CALL(*risk_score,
@@ -569,15 +591,8 @@ TEST(SEIRAgentTest, NegativeTestResult) {
   EXPECT_CALL(*risk_score,
               AddExposureNotification(contacts[0], contact_test_result));
 
-  const TestResult expected_test_result{
-      .time_requested = absl::FromUnixSeconds(0LL),
-      .time_received = absl::FromUnixSeconds(129600LL),
-      .needs_retry = false,
-      .probability = 0.0f};
-  EXPECT_CALL(*risk_score, AddTestResult(Eq(expected_test_result)));
-  EXPECT_CALL(*risk_score, GetContactTracingPolicy())
-      .WillOnce(
-          Return(RiskScore::ContactTracingPolicy{.send_positive_test = true}));
+  EXPECT_CALL(*risk_score, GetContactTracingPolicy(_))
+      .WillOnce(Return(RiskScore::ContactTracingPolicy{.send_report = false}));
 
   MockTransmissionModel transmission_model;
   EXPECT_CALL(transmission_model,
@@ -595,128 +610,7 @@ TEST(SEIRAgentTest, NegativeTestResult) {
                               contact_report_broker.get());
 }
 
-// TODO: Remove this test after transitioning GetTestPolicy to
-// GetTestResult in the risk score interface.
-// TEST(SEIRAgentTest, TestTooEarlyRetries) {
-//   auto transition_model = absl::make_unique<MockTransitionModel>();
-//   auto raw_transition_model = transition_model.get();
-//   auto visit_generator = absl::make_unique<MockVisitGenerator>();
-//   MockTransmissionModel transmission_model;
-//   auto contact_report_broker =
-//   absl::make_unique<MockBroker<ContactReport>>(); const int64 kUuid = 42LL;
-
-//   auto risk_score = absl::make_unique<MockRiskScore>();
-//   EXPECT_CALL(*risk_score, ContactRetentionDuration())
-//       .WillRepeatedly(Return(absl::Hours(24 * 14)));
-//   const TestResult contact_test_result{
-//       .time_requested = absl::FromUnixSeconds(0LL),
-//       .time_received = absl::FromUnixSeconds(129600LL),
-//       .needs_retry = false,
-//       .probability = 1.0f};
-//   std::vector<ContactReport> contact_reports{
-//       {.from_agent_uuid = 314LL,
-//        .to_agent_uuid = kUuid,
-//        .test_result = contact_test_result}};
-//   std::vector<Contact> contacts{
-//       {.other_uuid = 314LL,
-//        .exposure = {.start_time = absl::FromUnixSeconds(0LL),
-//                     .duration = absl::Hours(1LL)}}};
-//   const TestResult expected_test_result_1{
-//       .time_requested = absl::FromUnixSeconds(129600LL),
-//       .time_received = absl::InfiniteFuture(),
-//       .needs_retry = true,
-//       .probability = 0.0f};
-//   {
-//     const TestResult test_result{.time_requested = absl::InfiniteFuture(),
-//                                  .time_received = absl::InfiniteFuture(),
-//                                  .needs_retry = false,
-//                                  .probability = 0};
-
-//     EXPECT_CALL(*raw_transition_model,
-//                 GetNextHealthTransition(
-//                     Eq(HealthTransition{.time = absl::FromUnixSeconds(0LL),
-//                                         .health_state =
-//                                         HealthState::EXPOSED})))
-//         .WillOnce(
-//             Return(HealthTransition{.time = absl::FromUnixSeconds(43200LL),
-//                                     .health_state =
-//                                     HealthState::INFECTIOUS}));
-//     ContactSummary contact_summary{
-//         .retention_horizon = absl::UnixEpoch() - absl::Hours(336LL),
-//         .latest_contact_time = absl::FromUnixSeconds(3600LL)};
-//     EXPECT_CALL(*risk_score, GetTestPolicy(_, Eq(test_result)))
-//         .WillOnce(Return(RiskScore::TestPolicy{
-//             .should_test = true,
-//             .time_requested = absl::FromUnixSeconds(129600LL),
-//             .latency = absl::Hours(36)}));
-//     EXPECT_CALL(*risk_score,
-//                 GetContactTracingPolicy(Eq(contact_reports),
-//                                         Eq(expected_test_result_1)))
-//         .WillOnce(Return(
-//             RiskScore::ContactTracingPolicy{.send_positive_test = true}));
-//     EXPECT_CALL(*contact_report_broker, Send).Times(0);
-//   }
-//   {
-//     const TestResult expected_test_result_2{
-//         .time_requested = absl::FromUnixSeconds(129600LL),
-//         .time_received = absl::FromUnixSeconds(259200LL),
-//         .needs_retry = false,
-//         .probability = 1.0f};
-//     EXPECT_CALL(*raw_transition_model,
-//                 GetNextHealthTransition(Eq(
-//                     HealthTransition{.time = absl::FromUnixSeconds(86400LL),
-//                                      .health_state =
-//                                      HealthState::INFECTIOUS})))
-//         .WillOnce(
-//             Return(HealthTransition{.time = absl::FromUnixSeconds(604800LL),
-//                                     .health_state =
-//                                     HealthState::RECOVERED}));
-//     ContactSummary contact_summary{
-//         .retention_horizon = absl::UnixEpoch() - absl::Hours(312LL),
-//         .latest_contact_time = absl::FromUnixSeconds(3600LL)};
-//     EXPECT_CALL(*risk_score,
-//                 GetTestPolicy(Eq(contact_summary),
-//                 Eq(expected_test_result_1)))
-//         .WillOnce(Return(RiskScore::TestPolicy{
-//             .should_test = true,
-//             .time_requested = absl::FromUnixSeconds(129600LL),
-//             .latency = absl::Hours(36)}));
-//     EXPECT_CALL(*risk_score,
-//                 GetContactTracingPolicy(Eq({}), Eq(expected_test_result_2)))
-//         .WillOnce(Return(
-//             RiskScore::ContactTracingPolicy{.send_positive_test = true}));
-//     const std::vector<ContactReport> expected_contact_reports{
-//         {.from_agent_uuid = kUuid,
-//          .to_agent_uuid = 314LL,
-//          .test_result = expected_test_result_2}};
-//     EXPECT_CALL(*contact_report_broker, Send(Eq(expected_contact_reports)))
-//         .Times(1);
-//   }
-
-//   auto agent =
-//       SEIRAgent::Create(kUuid,
-//                         {.time = absl::FromUnixSeconds(0LL),
-//                          .health_state = HealthState::EXPOSED},
-//                         &transmission_model, std::move(transition_model),
-//                         std::move(visit_generator), std::move(risk_score));
-//   const TestResult expected_test_result_1{
-//       .time_requested = absl::FromUnixSeconds(129600LL),
-//       .time_received = absl::InfiniteFuture(),
-//       .needs_retry = true,
-//       .probability = 0.0f};
-
-//   Timestep timestep(absl::UnixEpoch(), absl::Hours(24));
-//   agent->ProcessInfectionOutcomes(
-//       timestep, OutcomesFromContacts(kUuid, contacts));
-//   agent->UpdateContactReports(timestep, contact_reports,
-//                               contact_report_broker.get());
-
-//   timestep.Advance();
-//   agent->ProcessInfectionOutcomes(timestep, {});
-//   agent->UpdateContactReports(timestep, {}, contact_report_broker.get());
-// }
-
-TEST(SEIRAgentTest, UpdatesAndPrunesContacts) {
+TEST(SEIRAgentTest, SendContactReports) {
   const int64 kUuid = 42LL;
   auto transition_model = absl::make_unique<MockTransitionModel>();
   EXPECT_CALL(*transition_model, GetNextHealthTransition(_))
@@ -726,93 +620,202 @@ TEST(SEIRAgentTest, UpdatesAndPrunesContacts) {
   auto visit_generator = absl::make_unique<MockVisitGenerator>();
   MockTransmissionModel transmission_model;
 
+  auto contact_report_broker = absl::make_unique<MockBroker<ContactReport>>();
+
   auto risk_score = absl::make_unique<MockRiskScore>();
+  // That we add exposures to the risk score is tested elsewhere so we ignore it
+  // in this test.
+  EXPECT_CALL(*risk_score, AddExposures(_)).Times(testing::AnyNumber());
   EXPECT_CALL(*risk_score, ContactRetentionDuration)
-      .WillRepeatedly(Return(absl::Hours(1LL)));
-  EXPECT_CALL(*risk_score, GetContactTracingPolicy())
+      .WillRepeatedly(Return(absl::Hours(24 * 7)));
+  EXPECT_CALL(*risk_score, GetContactTracingPolicy(_))
       .WillRepeatedly(
-          Return(RiskScore::ContactTracingPolicy{.send_positive_test = true}));
-  const TestResult init_test_result{.time_requested = absl::InfiniteFuture(),
-                                    .time_received = absl::InfiniteFuture(),
-                                    .needs_retry = false,
-                                    .probability = 0};
-  HealthTransition initial_transition = {
-      .time = absl::FromUnixSeconds(-1LL),
-      .health_state = HealthState::INFECTIOUS};
+          Return(RiskScore::ContactTracingPolicy{.send_report = true}));
   EXPECT_CALL(*risk_score, AddHealthStateTransistion(HealthTransition{
                                .time = absl::InfinitePast(),
                                .health_state = HealthState::SUSCEPTIBLE}));
+  HealthTransition initial_transition = {
+      .time = absl::FromUnixSeconds(-1LL),
+      .health_state = HealthState::INFECTIOUS};
   EXPECT_CALL(*risk_score, AddHealthStateTransistion(initial_transition));
-  EXPECT_CALL(*risk_score, AddTestResult(Eq(init_test_result)));
 
-  auto contact_report_broker = absl::make_unique<MockBroker<ContactReport>>();
-
-  const TestResult expected_test_result{
-      .time_requested = absl::FromUnixSeconds(0LL),
-      .time_received = absl::FromUnixSeconds(43200LL),
-      .needs_retry = false,
-      .probability = 1.0f};
-  EXPECT_CALL(*risk_score, AddTestResult(Eq(expected_test_result))).Times(2);
-
+  // First we receive two contacts on day 1 and a positive test result that
+  // needs to be sent so we'll expect contact reports from each of them.
+  Timestep timestep1(TimeFromDay(1), absl::Hours(24));
+  const TestResult expected_test_result1{
+      .time_requested = TimeFromDay(0),
+      .time_received = TimeFromDay(0),
+      .probability = 1.0f,
+  };
+  EXPECT_CALL(*risk_score, GetTestResult(timestep1))
+      .WillOnce(Return(expected_test_result1));
   std::vector<Contact> contacts1{
       {.other_uuid = 314LL,
-       .exposure = {.start_time = absl::FromUnixSeconds(43201LL),
+       .exposure = {.start_time = TimeFromDayAndHour(0, 12),
                     .duration = absl::Hours(1LL)}},
       {.other_uuid = 272LL,
-       .exposure = {.start_time = absl::FromUnixSeconds(43200LL),
+       .exposure = {.start_time = TimeFromDayAndHour(0, 13),
                     .duration = absl::Hours(1LL)}}};
   auto outcomes1 = OutcomesFromContacts(kUuid, contacts1);
-  EXPECT_CALL(*risk_score,
-              AddExposures(testing::ElementsAre(&outcomes1[0].exposure,
-                                                &outcomes1[1].exposure)));
-  EXPECT_CALL(*risk_score, GetTestPolicy(_))
-      .WillOnce(Return(
-          RiskScore::TestPolicy{.should_test = true,
-                                .time_requested = absl::FromUnixSeconds(0LL),
-                                .latency = absl::Hours(12)}))
-      .WillOnce(Return(RiskScore::TestPolicy{.should_test = false}));
+  {
+    const std::vector<ContactReport> expected_contact_reports{
+        {.from_agent_uuid = kUuid,
+         .to_agent_uuid = 314LL,
+         .test_result = expected_test_result1},
+        {.from_agent_uuid = kUuid,
+         .to_agent_uuid = 272LL,
+         .test_result = expected_test_result1}};
+    EXPECT_CALL(
+        *contact_report_broker,
+        Send(testing::UnorderedElementsAreArray(expected_contact_reports)))
+        .Times(1);
+  }
 
-  std::vector<Contact> contacts2{
-      {.other_uuid = 314LL,
-       .exposure = {.start_time = absl::FromUnixSeconds(86400LL),
-                    .duration = absl::Hours(1LL)}}};
+  // The next day if we receive no further contacts we don't resend the
+  // reports.
+  Timestep timestep2(TimeFromDay(2), absl::Hours(24));
+  EXPECT_CALL(*risk_score, GetTestResult(timestep2))
+      .WillOnce(Return(expected_test_result1));
+  std::vector<Contact> contacts2{};
   auto outcomes2 = OutcomesFromContacts(kUuid, contacts2);
-  EXPECT_CALL(*risk_score,
-              AddExposures(testing::ElementsAre(&outcomes2[0].exposure)));
-  // EXPECT_CALL(*risk_score, GetTestPolicy(_))
-  //     .WillOnce(Return(RiskScore::TestPolicy{.should_test = false}));
+  {
+    const std::vector<ContactReport> expected_contact_reports{};
+    EXPECT_CALL(
+        *contact_report_broker,
+        Send(testing::UnorderedElementsAreArray(expected_contact_reports)))
+        .Times(1);
+  }
+
+  // If on the next day we receive new contacts, whether or not we have sent
+  // to the same agent before, we send new reports only to the new contacts.
+  // Note that it's not necessary that we re-send the new test result to an
+  // agent that has already received it, but that is the current behavior.
+  Timestep timestep3(TimeFromDay(3), absl::Hours(24));
+  EXPECT_CALL(*risk_score, GetTestResult(timestep3))
+      .WillOnce(Return(expected_test_result1));
+  std::vector<Contact> contacts3{
+      {.other_uuid = 314LL,
+       .exposure = {.start_time = TimeFromDayAndHour(3, 12),
+                    .duration = absl::Hours(1LL)}},
+      {.other_uuid = 999LL,
+       .exposure = {.start_time = TimeFromDayAndHour(3, 13),
+                    .duration = absl::Hours(1LL)}}};
+  auto outcomes3 = OutcomesFromContacts(kUuid, contacts3);
+  {
+    const std::vector<ContactReport> expected_contact_reports{
+        {.from_agent_uuid = kUuid,
+         .to_agent_uuid = 314LL,
+         .test_result = expected_test_result1},
+        {.from_agent_uuid = kUuid,
+         .to_agent_uuid = 999LL,
+         .test_result = expected_test_result1}};
+    EXPECT_CALL(
+        *contact_report_broker,
+        Send(testing::UnorderedElementsAreArray(expected_contact_reports)))
+        .Times(1);
+  }
+
+  // If we get a new test result, we resend it to all previous contacts.
+  // Note that we don't send to the same agent twice (314) because the
+  // contact list only remembers the most recent contact with each other agent.
+  Timestep timestep4(TimeFromDay(4), absl::Hours(24));
+  const TestResult expected_test_result2{
+      .time_requested = TimeFromDay(3),
+      .time_received = TimeFromDay(4),
+      .probability = 1.0f,
+  };
+  EXPECT_CALL(*risk_score, GetTestResult(timestep4))
+      .WillOnce(Return(expected_test_result2));
+  std::vector<Contact> contacts4{};
+  auto outcomes4 = OutcomesFromContacts(kUuid, contacts2);
+  {
+    const std::vector<ContactReport> expected_contact_reports{
+        {.from_agent_uuid = kUuid,
+         .to_agent_uuid = 272LL,
+         .test_result = expected_test_result2},
+        {.from_agent_uuid = kUuid,
+         .to_agent_uuid = 314LL,
+         .test_result = expected_test_result2},
+        {.from_agent_uuid = kUuid,
+         .to_agent_uuid = 999LL,
+         .test_result = expected_test_result2}};
+    EXPECT_CALL(
+        *contact_report_broker,
+        Send(testing::UnorderedElementsAreArray(expected_contact_reports)))
+        .Times(1);
+  }
+
+  // Another new test result leads us to resend to all contacts again, but
+  // this time we've advanced the timestep far enough that the oldest contacts
+  // have fallen off our history buffer, therefore contact 272 does not appear.
+  Timestep timestep5(TimeFromDay(8), absl::Hours(24));
+  const TestResult expected_test_result3{
+      .time_requested = TimeFromDay(7),
+      .time_received = TimeFromDay(8),
+      .probability = 1.0f,
+  };
+  EXPECT_CALL(*risk_score, GetTestResult(timestep5))
+      .WillOnce(Return(expected_test_result3));
+  std::vector<Contact> contacts5{};
+  auto outcomes5 = OutcomesFromContacts(kUuid, contacts2);
+  {
+    const std::vector<ContactReport> expected_contact_reports{
+        {.from_agent_uuid = kUuid,
+         .to_agent_uuid = 314LL,
+         .test_result = expected_test_result3},
+        {.from_agent_uuid = kUuid,
+         .to_agent_uuid = 999LL,
+         .test_result = expected_test_result3}};
+    EXPECT_CALL(
+        *contact_report_broker,
+        Send(testing::UnorderedElementsAreArray(expected_contact_reports)))
+        .Times(1);
+  }
+
+  // Currently the last_contact_considered_ is 999.  Here we test the special
+  // case that that entry is removed due to a new contact from the same agent.
+  // It still should be the case that we don't resend old contacts.
+  Timestep timestep6(TimeFromDay(9), absl::Hours(24));
+  EXPECT_CALL(*risk_score, GetTestResult(timestep6))
+      .WillOnce(Return(expected_test_result3));
+  std::vector<Contact> contacts6{
+      {.other_uuid = 999LL,
+       .exposure = {.start_time = TimeFromDayAndHour(8, 12),
+                    .duration = absl::Hours(1LL)}}};
+  auto outcomes6 = OutcomesFromContacts(kUuid, contacts6);
+  {
+    const std::vector<ContactReport> expected_contact_reports{
+        {.from_agent_uuid = kUuid,
+         .to_agent_uuid = 999LL,
+         .test_result = expected_test_result3}};
+    EXPECT_CALL(
+        *contact_report_broker,
+        Send(testing::UnorderedElementsAreArray(expected_contact_reports)))
+        .Times(1);
+  }
 
   auto agent =
       SEIRAgent::Create(kUuid, initial_transition, &transmission_model,
                         std::move(transition_model), std::move(visit_generator),
                         std::move(risk_score));
 
-  Timestep timestep(absl::UnixEpoch(), absl::Hours(24));
-  agent->ProcessInfectionOutcomes(timestep, outcomes1);
-  {
-    const std::vector<ContactReport> expected_contact_reports{
-        {.from_agent_uuid = kUuid,
-         .to_agent_uuid = 314LL,
-         .test_result = expected_test_result},
-        {.from_agent_uuid = kUuid,
-         .to_agent_uuid = 272LL,
-         .test_result = expected_test_result}};
-    EXPECT_CALL(*contact_report_broker, Send(Eq(expected_contact_reports)))
-        .Times(1);
-  }
-  agent->UpdateContactReports(timestep, {}, contact_report_broker.get());
+  agent->ProcessInfectionOutcomes(timestep1, outcomes1);
+  agent->UpdateContactReports(timestep1, {}, contact_report_broker.get());
 
-  timestep.Advance();
-  agent->ProcessInfectionOutcomes(timestep, outcomes2);
-  {
-    const std::vector<ContactReport> expected_contact_reports{
-        {.from_agent_uuid = kUuid,
-         .to_agent_uuid = 314LL,
-         .test_result = expected_test_result}};
-    EXPECT_CALL(*contact_report_broker, Send(Eq(expected_contact_reports)))
-        .Times(1);
-  }
-  agent->UpdateContactReports(timestep, {}, contact_report_broker.get());
+  agent->ProcessInfectionOutcomes(timestep2, outcomes2);
+  agent->UpdateContactReports(timestep2, {}, contact_report_broker.get());
+
+  agent->ProcessInfectionOutcomes(timestep3, outcomes3);
+  agent->UpdateContactReports(timestep3, {}, contact_report_broker.get());
+
+  agent->ProcessInfectionOutcomes(timestep4, outcomes4);
+  agent->UpdateContactReports(timestep4, {}, contact_report_broker.get());
+
+  agent->ProcessInfectionOutcomes(timestep5, outcomes5);
+  agent->UpdateContactReports(timestep5, {}, contact_report_broker.get());
+
+  agent->ProcessInfectionOutcomes(timestep6, outcomes6);
+  agent->UpdateContactReports(timestep6, {}, contact_report_broker.get());
 }
 
 TEST(SEIRAgentTest, UpdateContactReportsRejectsWrongUuid) {

@@ -52,8 +52,8 @@ message ContactReportProto {
   int64 to_agent_uuid = 2;
   google.protobuf.Timestamp test_time_requested = 3;
   google.protobuf.Timestamp test_time_received = 4;
-  bool test_needs_retry = 5;
   float test_probability = 6;
+  reserved 5;  // deprecated fields.
 }
 
 message ExposureProto {

@@ -41,7 +41,6 @@ class TogglingRiskScore : public RiskScore {
   void AddExposures(absl::Span<const Exposure* const> exposures) override {}
   void AddExposureNotification(const Contact& contact,
                                const TestResult& result) override {}
-  void AddTestResult(const TestResult& result) override {}
 
   VisitAdjustment GetVisitAdjustment(const Timestep& timestep,
                                      const int64 location_uuid) const override {
@@ -52,14 +51,17 @@ class TogglingRiskScore : public RiskScore {
     };
   }
 
-  TestPolicy GetTestPolicy(const Timestep& timestep) const override {
-    return {.should_test = false,
-            .time_requested = absl::InfiniteFuture(),
-            .latency = absl::InfiniteDuration()};
+  TestResult GetTestResult(const Timestep& timestep) const override {
+    return {
+        .time_requested = absl::InfiniteFuture(),
+        .time_received = absl::InfiniteFuture(),
+        .probability = 0.0,
+    };
   }
 
-  ContactTracingPolicy GetContactTracingPolicy() const override {
-    return {.report_recursively = false, .send_positive_test = false};
+  ContactTracingPolicy GetContactTracingPolicy(
+      const Timestep& timestep) const override {
+    return {.report_recursively = false, .send_report = false};
   }
 
   absl::Duration ContactRetentionDuration() const override {
