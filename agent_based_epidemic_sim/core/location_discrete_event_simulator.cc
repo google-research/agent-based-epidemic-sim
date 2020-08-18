@@ -25,9 +25,6 @@
 namespace abesim {
 namespace {
 
-// TODO: Move  into an event message about visiting infectious agents.
-constexpr float kInfectivity = 1;
-
 // Corresponds to the record of a visiting agent in a location.
 struct VisitNode {
   const Visit* visit;
