@@ -64,7 +64,7 @@ void HomeWorkSimulationObserver::Observe(
     const Agent& agent, absl::Span<const InfectionOutcome> outcomes) {
   health_state_counts_[agent.CurrentHealthState()]++;
   auto& visitor_contacts = contacts_[agent.uuid()];
-  for (const InfectionOutcome outcome : outcomes) {
+  for (const InfectionOutcome& outcome : outcomes) {
     if (outcome.exposure_type == InfectionOutcomeProto::CONTACT) {
       visitor_contacts.insert(outcome.source_uuid);
     }
