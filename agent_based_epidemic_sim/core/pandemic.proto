@@ -60,7 +60,7 @@ message ExposureProto {
   google.protobuf.Timestamp start_time = 1;
   google.protobuf.Duration duration = 2;
   float infectivity = 3;
-  repeated fixed32 micro_exposure_counts = 4;
+  repeated float proximity_trace = 4;
 }
 
 // InfectionOutcomeProto represents a health state change brought about by a

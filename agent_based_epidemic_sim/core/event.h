@@ -21,13 +21,12 @@
 #include "absl/meta/type_traits.h"
 #include "absl/time/time.h"
 #include "absl/types/variant.h"
+#include "agent_based_epidemic_sim/core/constants.h"
 #include "agent_based_epidemic_sim/core/integral_types.h"
 #include "agent_based_epidemic_sim/core/visit.h"
 #include "agent_based_epidemic_sim/util/ostream_overload.h"
 
 namespace abesim {
-
-inline constexpr uint8 kNumberMicroExposureBuckets = 10;
 
 // Convenience method to easily output contents of array to ostream rather than
 // constructing output string manually.
@@ -66,26 +65,26 @@ static_assert(absl::is_trivially_copy_constructible<HealthTransition>::value,
               "HealthTransition must be trivially copyable.");
 
 // Represents a single exposure event between a SUSCEPTIBLE and an INFECTIOUS
-// entity made up of multiple "micro exposure" events.
-// Each exposure has real values that are used when computing the probability of
-// transmission from the INFECTIOUS entity to the SUSCEPTIBLE entity:
+// entity. Each exposure contains real values that are used when computing the
+// probability of transmission from the INFECTIOUS entity to the SUSCEPTIBLE
+// entity:
 //   infectivity: A function of the duration since the INFECTIOUS entity first
 //   became infected.
 //   symptom_factor: A function of the current HealthState of the INFECTIOUS
 //   entity.
-// Each count in micro_exposure_counts represents a duration in minutes that the
-// two entities spent at a particular distance (as represented by the index).
+// proximity_trace represents the distance in meters between the two entities at
+// each time kProximityTraceInterval during the exposure.
 struct Exposure {
   absl::Time start_time;
   absl::Duration duration;
-  std::array<uint8, kNumberMicroExposureBuckets> micro_exposure_counts = {};
+  std::array<float, kMaxTraceLength> proximity_trace;
   float infectivity;
   float symptom_factor;
 
   friend bool operator==(const Exposure& a, const Exposure& b) {
     return (a.start_time == b.start_time && a.duration == b.duration &&
             a.infectivity == b.infectivity &&
-            a.micro_exposure_counts == b.micro_exposure_counts);
+            a.proximity_trace == b.proximity_trace);
   }
 
   friend bool operator!=(const Exposure& a, const Exposure& b) {
@@ -96,7 +95,7 @@ struct Exposure {
                                   const Exposure& exposure) {
     return strm << "{" << exposure.start_time << ", " << exposure.duration
                 << ", " << exposure.infectivity << ", "
-                << exposure.micro_exposure_counts << "}";
+                << exposure.proximity_trace << "}";
   }
 };
 

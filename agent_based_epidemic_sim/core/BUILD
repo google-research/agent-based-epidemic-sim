@@ -142,6 +142,7 @@ cc_library(
         "event.h",
     ],
     deps = [
+        ":constants",
         ":integral_types",
         ":visit",
         "//agent_based_epidemic_sim/util:ostream_overload",
