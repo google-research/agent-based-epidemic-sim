@@ -35,7 +35,8 @@ float SymptomFactor(const HealthState::State health_state) {
   // Symptoms are not infectious.
   if (health_state == HealthState::SUSCEPTIBLE ||
       health_state == HealthState::RECOVERED ||
-      health_state == HealthState::REMOVED) {
+      health_state == HealthState::REMOVED ||
+      health_state == HealthState::EXPOSED) {
     return 0.0f;
   }
 
