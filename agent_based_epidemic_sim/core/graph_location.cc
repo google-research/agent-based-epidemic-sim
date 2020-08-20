@@ -15,6 +15,7 @@
 #include "agent_based_epidemic_sim/core/graph_location.h"
 
 #include <memory>
+#include <utility>
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/random/distributions.h"
@@ -59,37 +60,35 @@ class GraphLocation : public Location {
       if (absl::Bernoulli(gen_, drop_probability_)) continue;
 
       // If either of the participants are not present, no contact is generated.
-      auto first_infectivity = infectivity.find(edge.first);
-      if (first_infectivity == infectivity.end()) continue;
-      auto second_infectivity = infectivity.find(edge.second);
-      if (second_infectivity == infectivity.end()) continue;
-      auto first_symptom_factor = symptom_factor.find(edge.first);
-      if (first_symptom_factor == symptom_factor.end()) continue;
-      auto second_symptom_factor = symptom_factor.find(edge.second);
-      if (second_symptom_factor == symptom_factor.end()) continue;
+      auto infectivity_a = infectivity.find(edge.first);
+      if (infectivity_a == infectivity.end()) continue;
+      auto infectivity_b = infectivity.find(edge.second);
+      if (infectivity_b == infectivity.end()) continue;
+      auto symptom_factor_a = symptom_factor.find(edge.first);
+      if (symptom_factor_a == symptom_factor.end()) continue;
+      auto symptom_factor_b = symptom_factor.find(edge.second);
+      if (symptom_factor_b == symptom_factor.end()) continue;
 
-      // If two agents are connected by an edge, we  randomly generate a
-      // duration and the corresponding micro exposures that result.
-      const float mean = absl::FDivDuration(visit_length_mean_, absl::Hours(1));
-      const float stdev =
-          absl::FDivDuration(visit_length_stddev_, absl::Hours(1));
-      const absl::Duration overlap =
-          absl::Hours(absl::Gaussian(gen_, mean, stdev));
+      HostData host_a = {.start_time = absl::UnixEpoch(),
+                         .infectivity = infectivity_a->second,
+                         .symptom_factor = symptom_factor_a->second};
+      HostData host_b = {.start_time = absl::UnixEpoch(),
+                         .infectivity = infectivity_b->second,
+                         .symptom_factor = symptom_factor_b->second};
+
+      ExposurePair host_exposures =
+          exposure_generator_->Generate(host_a, host_b);
 
       infection_broker->Send(
           {{
                .agent_uuid = edge.first,
-               .exposure = exposure_generator_->Generate(
-                   absl::UnixEpoch(), overlap, second_infectivity->second,
-                   second_symptom_factor->second),
+               .exposure = host_exposures.host_a,
                .exposure_type = InfectionOutcomeProto::CONTACT,
                .source_uuid = edge.second,
            },
            {
                .agent_uuid = edge.second,
-               .exposure = exposure_generator_->Generate(
-                   absl::UnixEpoch(), overlap, first_infectivity->second,
-                   first_symptom_factor->first),
+               .exposure = host_exposures.host_b,
                .exposure_type = InfectionOutcomeProto::CONTACT,
                .source_uuid = edge.first,
            }});

@@ -14,6 +14,7 @@
 
 #include "agent_based_epidemic_sim/core/location_discrete_event_simulator_builder.h"
 
+#include "agent_based_epidemic_sim/core/constants.h"
 #include "agent_based_epidemic_sim/core/location_discrete_event_simulator.h"
 #include "agent_based_epidemic_sim/core/micro_exposure_generator_builder.h"
 
@@ -22,7 +23,8 @@ namespace abesim {
 std::unique_ptr<Location> LocationDiscreteEventSimulatorBuilder::Build() const {
   MicroExposureGeneratorBuilder meg_builder;
   return absl::make_unique<LocationDiscreteEventSimulator>(
-      uuid_generator_->GenerateUuid(), meg_builder.Build());
+      uuid_generator_->GenerateUuid(),
+      meg_builder.Build(kNonParametricTraceDistribution));
 }
 
 }  // namespace abesim

@@ -18,6 +18,7 @@
 #define AGENT_BASED_EPIDEMIC_SIM_CORE_MICRO_EXPOSURE_GENERATOR_BUILDER_H_
 
 #include <memory>
+#include <vector>
 
 #include "agent_based_epidemic_sim/core/exposure_generator.h"
 #include "agent_based_epidemic_sim/core/exposure_generator_builder.h"
@@ -27,7 +28,9 @@ namespace abesim {
 // Builds an exposure generator for the micro-exposure array scheme.
 class MicroExposureGeneratorBuilder : public ExposureGeneratorBuilder {
  public:
-  std::unique_ptr<ExposureGenerator> Build() const override;
+  std::unique_ptr<ExposureGenerator> Build(
+      const std::vector<std::vector<float>>& proximity_trace_distribution)
+      const override;
 };
 
 }  // namespace abesim

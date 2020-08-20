@@ -275,8 +275,10 @@ void RunSimulation(
   std::vector<std::unique_ptr<Location>> location_des;
   location_des.reserve(context.locations.size());
   for (const auto& location : context.locations) {
+    // TODO: Load a ProximityTrace Distribution from file.
     location_des.push_back(absl::make_unique<LocationDiscreteEventSimulator>(
-        location.reference().uuid(), meg_builder.Build()));
+        location.reference().uuid(),
+        meg_builder.Build(kNonParametricTraceDistribution)));
   }
   // Initializes Simulation.
   auto sim = num_workers > 1

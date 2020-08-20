@@ -18,6 +18,7 @@
 #define AGENT_BASED_EPIDEMIC_SIM_CORE_EXPOSURE_GENERATOR_BUILDER_H_
 
 #include <memory>
+#include <vector>
 
 #include "agent_based_epidemic_sim/core/exposure_generator.h"
 
@@ -27,7 +28,20 @@ class ExposureGeneratorBuilder {
  public:
   ExposureGeneratorBuilder() = default;
   virtual ~ExposureGeneratorBuilder() = default;
-  virtual std::unique_ptr<ExposureGenerator> Build() const = 0;
+
+  // TODO: Change the signature of this method to
+  // std::vector<ProximityTrace>& proximity_trace_distribution once the CSV
+  // format containing the distribution is standardized and parsing logic has
+  // been implemented. Currently the distribution is defined in constants.h and
+  // uses std::vector for each proximity trace rather than std::array to avoid
+  // copying std::numeric_limits<float>::max() a number of times. Also consider
+  // returning absl::StatusOr and return non-ok status if
+  // proximity_trace_distribution is empty. In principle we should let the
+  // highest level handle this error instead of CHECK failing in the
+  // implementation.
+  virtual std::unique_ptr<ExposureGenerator> Build(
+      const std::vector<std::vector<float>>& proximity_trace_distribution)
+      const = 0;
 };
 
 }  // namespace abesim

@@ -19,19 +19,38 @@
 
 #include <array>
 
-#include "absl/time/time.h"
+#include "absl/random/random.h"
 #include "agent_based_epidemic_sim/core/event.h"
 #include "agent_based_epidemic_sim/core/exposure_generator.h"
+#include "agent_based_epidemic_sim/port/logging.h"
 
 namespace abesim {
 
 class MicroExposureGenerator : public ExposureGenerator {
  public:
+  explicit MicroExposureGenerator(
+      const std::vector<ProximityTrace>& proximity_trace_distribution)
+      : proximity_trace_distribution_(proximity_trace_distribution) {}
+
   virtual ~MicroExposureGenerator() = default;
-  // Generate microexposures based on a uniform sampling.
-  Exposure Generate(const absl::Time start_time, const absl::Duration duration,
-                    const float infectivity,
-                    const float symptom_factor) override;
+  // Generate a pair of Exposure objects representing a single contact between
+  // two hosts. The first and second values in the infectivity and
+  // symptom_factor pairs will correspond to the first and second Exposures
+  // returned, respectively.
+  ExposurePair Generate(const HostData& host_a,
+                        const HostData& host_b) override;
+
+ private:
+  // Draws a proximity trace from an in-memory, non-parametric distribution.
+  // Represents the distances between two hosts at fixed intervals.
+  ProximityTrace DrawProximityTrace();
+
+  // Generates a proximity trace by drawing from a uniform distribution.
+  // Represents the distances between two hosts at fixed intervals.
+  ProximityTrace GenerateProximityTrace();
+
+  std::vector<ProximityTrace> proximity_trace_distribution_;
+  absl::BitGen gen_;
 };
 
 }  // namespace abesim

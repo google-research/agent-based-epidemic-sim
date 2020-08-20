@@ -15,6 +15,7 @@
 #include "agent_based_epidemic_sim/core/graph_location.h"
 
 #include <memory>
+#include <utility>
 
 #include "agent_based_epidemic_sim/core/event.h"
 #include "agent_based_epidemic_sim/core/exposure_generator.h"
@@ -38,11 +39,9 @@ class FakeBroker : public Broker<InfectionOutcome> {
 };
 
 class FakeExposureGenerator : public ExposureGenerator {
-  Exposure Generate(const absl::Time start_time, const absl::Duration duration,
-                    const float infectivity, const float symptom_factor) {
-    return {
-        .infectivity = infectivity,
-    };
+  ExposurePair Generate(const HostData& host_a, const HostData& host_b) {
+    return {.host_a = {.infectivity = host_b.infectivity},
+            .host_b = {.infectivity = host_a.infectivity}};
   }
 };
 
@@ -54,6 +53,7 @@ Visit GenerateVisit(int64 agent, HealthState::State health_state) {
       .agent_uuid = agent,
       .health_state = health_state,
       .infectivity = (health_state == HealthState::INFECTIOUS) ? 1.0f : 0.0f,
+      .symptom_factor = (health_state == HealthState::INFECTIOUS) ? 1.0f : 0.0f,
   };
 }
 InfectionOutcome ExpectedOutcome(int64 agent, int64 source, float infectivity) {

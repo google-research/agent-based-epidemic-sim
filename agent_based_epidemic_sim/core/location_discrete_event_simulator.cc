@@ -77,18 +77,25 @@ absl::Duration Overlap(const Visit& a, const Visit& b) {
 
 void RecordContact(VisitNode* a, VisitNode* b,
                    ExposureGenerator* exposure_generator) {
-  const absl::Duration overlap = Overlap(*a->visit, *b->visit);
+  // TODO: Incorporate a notion of guaranteed exposure duration
+  // into this method.
+
+  HostData host_a = {.infectivity = a->visit->infectivity,
+                     .symptom_factor = a->visit->symptom_factor};
+  HostData host_b = {.infectivity = b->visit->infectivity,
+                     .symptom_factor = b->visit->symptom_factor};
+
+  // TODO: Generate multiple ExposurePairs when overlap exceeds
+  // current Exposure duration cap. There is currently a cap to the Exposure
+  // duration because of the fixed size of ProximityTrace.
+  ExposurePair host_exposures = exposure_generator->Generate(host_a, host_b);
 
   a->contacts.push_back({.other_uuid = b->visit->agent_uuid,
                          .other_state = b->visit->health_state,
-                         .exposure = exposure_generator->Generate(
-                             b->visit->start_time, overlap,
-                             b->visit->infectivity, b->visit->symptom_factor)});
+                         .exposure = host_exposures.host_a});
   b->contacts.push_back({.other_uuid = a->visit->agent_uuid,
                          .other_state = a->visit->health_state,
-                         .exposure = exposure_generator->Generate(
-                             a->visit->start_time, overlap,
-                             a->visit->infectivity, a->visit->symptom_factor)});
+                         .exposure = host_exposures.host_b});
 }
 
 }  // namespace

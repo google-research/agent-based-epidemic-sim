@@ -15,16 +15,29 @@
 #include "agent_based_epidemic_sim/core/micro_exposure_generator_builder.h"
 
 #include <memory>
+#include <vector>
 
 #include "absl/memory/memory.h"
+#include "agent_based_epidemic_sim/core/constants.h"
+#include "agent_based_epidemic_sim/core/event.h"
 #include "agent_based_epidemic_sim/core/exposure_generator.h"
 #include "agent_based_epidemic_sim/core/micro_exposure_generator.h"
 
 namespace abesim {
 
-std::unique_ptr<ExposureGenerator> MicroExposureGeneratorBuilder::Build()
-    const {
-  return absl::make_unique<MicroExposureGenerator>();
+std::unique_ptr<ExposureGenerator> MicroExposureGeneratorBuilder::Build(
+    const std::vector<std::vector<float>>& proximity_trace_distribution) const {
+  CHECK(!proximity_trace_distribution.empty())
+      << "proximity_trace_distribution_ cannot be empty!";
+
+  std::vector<ProximityTrace> fixed_length_proximity_trace_distribution;
+  for (const auto& proximity_trace : proximity_trace_distribution) {
+    const ProximityTrace fixed_length_proximity_trace(proximity_trace);
+    fixed_length_proximity_trace_distribution.push_back(
+        fixed_length_proximity_trace);
+  }
+  return absl::make_unique<MicroExposureGenerator>(
+      fixed_length_proximity_trace_distribution);
 }
 
 }  // namespace abesim

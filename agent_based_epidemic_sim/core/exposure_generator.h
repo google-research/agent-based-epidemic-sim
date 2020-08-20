@@ -22,15 +22,27 @@
 
 namespace abesim {
 
+struct HostData {
+  absl::Time start_time;
+  float infectivity;
+  float symptom_factor;
+};
+
+struct ExposurePair {
+  Exposure host_a;
+  Exposure host_b;
+};
+
 // Implement this interface to generate exposures based on a custom scheme.
 class ExposureGenerator {
  public:
   virtual ~ExposureGenerator() = default;
-  // Returns an Exposure object based on an implemented scheme.
-  virtual Exposure Generate(const absl::Time start_time,
-                            const absl::Duration duration,
-                            const float infectivity,
-                            const float symptom_factor) = 0;
+  // TODO: Incorporate a notion of gauranteed exposure duration
+  // into this method.
+  // Returns a pair of Exposures mirroring a single exposure event between a
+  // pair of hosts.
+  virtual ExposurePair Generate(const HostData& host_a,
+                                const HostData& host_b) = 0;
 };
 
 }  // namespace abesim
