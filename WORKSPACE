@@ -13,11 +13,12 @@ load("@bazel_skylib//lib:versions.bzl", "versions")
 versions.check(minimum_bazel_version = "2.0.0")
 
 
-# ABSL cpp library lts_2020_02_25
+# ABSL cpp library, the latest lts release is not new enough for riegeli, so
+# we use master.
 http_archive(
     name = "com_google_absl",
     urls = [
-        "https://github.com/abseil/abseil-cpp/archive/20200225.tar.gz",
+        "https://github.com/abseil/abseil-cpp/archive/master.zip"
     ],
     # Remove after https://github.com/abseil/abseil-cpp/issues/326 is solved.
     patches = [
@@ -26,8 +27,80 @@ http_archive(
     patch_args = [
         "-p1",
     ],
-    strip_prefix = "abseil-cpp-20200225",
-    sha256 = "728a813291bdec2aa46eab8356ace9f75ac2ed9dfe2df5ab603c4e6c09f1c353"
+    strip_prefix = "abseil-cpp-master",
+)
+
+http_archive(
+    name = "com_google_riegeli",
+    urls = ["https://github.com/google/riegeli/archive/master.zip"],
+    strip_prefix = "riegeli-master",
+)
+
+# Deps needed by riegeli.
+http_archive(
+    name = "highwayhash",
+    build_file = "//third_party:highwayhash.BUILD",
+    sha256 = "cf891e024699c82aabce528a024adbe16e529f2b4e57f954455e0bf53efae585",
+    strip_prefix = "highwayhash-276dd7b4b6d330e4734b756e97ccfb1b69cc2e12",
+    urls = [
+        "https://mirror.bazel.build/github.com/google/highwayhash/archive/276dd7b4b6d330e4734b756e97ccfb1b69cc2e12.zip",
+        "https://github.com/google/highwayhash/archive/276dd7b4b6d330e4734b756e97ccfb1b69cc2e12.zip",  # 2019-02-22
+    ],
+)
+http_archive(
+    name = "net_zstd",
+    build_file = "//third_party:net_zstd.BUILD",
+    sha256 = "b6c537b53356a3af3ca3e621457751fa9a6ba96daf3aebb3526ae0f610863532",
+    strip_prefix = "zstd-1.4.5/lib",
+    urls = [
+        "https://mirror.bazel.build/github.com/facebook/zstd/archive/v1.4.5.zip",
+        "https://github.com/facebook/zstd/archive/v1.4.5.zip",  # 2020-05-22
+    ],
+)
+http_archive(
+    name = "org_brotli",
+    sha256 = "6e69be238ff61cef589a3fa88da11b649c7ff7a5932cb12d1e6251c8c2e17a2f",
+    strip_prefix = "brotli-1.0.7",
+    urls = [
+        "https://mirror.bazel.build/github.com/google/brotli/archive/v1.0.7.zip",
+        "https://github.com/google/brotli/archive/v1.0.7.zip",  # 2018-10-23
+    ],
+    patches = [
+        "@//third_party:org_brotli_no_wconversion.diff"
+    ],
+    patch_args = [
+        "-p1",
+    ],
+)
+http_archive(
+    name = "snappy",
+    build_file = "//third_party:snappy.BUILD",
+    sha256 = "38b4aabf88eb480131ed45bfb89c19ca3e2a62daeb081bdf001cfb17ec4cd303",
+    strip_prefix = "snappy-1.1.8",
+    urls = [
+        "https://mirror.bazel.build/github.com/google/snappy/archive/1.1.8.zip",
+        "https://github.com/google/snappy/archive/1.1.8.zip",  # 2020-01-14
+    ],
+)
+http_archive(
+    name = "crc32c",
+    build_file = "//third_party:crc32.BUILD",
+    sha256 = "338f1d9d95753dc3cdd882dfb6e176bbb4b18353c29c411ebcb7b890f361722e",
+    strip_prefix = "crc32c-1.1.0",
+    urls = [
+        "https://mirror.bazel.build/github.com/google/crc32c/archive/1.1.0.zip",
+        "https://github.com/google/crc32c/archive/1.1.0.zip",  # 2019-05-24
+    ],
+)
+http_archive(
+    name = "zlib",
+    build_file = "//third_party:zlib.BUILD",
+    sha256 = "c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1",
+    strip_prefix = "zlib-1.2.11",
+    urls = [
+        "http://mirror.bazel.build/zlib.net/fossils/zlib-1.2.11.tar.gz",
+        "http://zlib.net/fossils/zlib-1.2.11.tar.gz",  # 2017-01-15
+    ],
 )
 
 http_archive(

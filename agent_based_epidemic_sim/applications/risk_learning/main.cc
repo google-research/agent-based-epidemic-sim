@@ -23,7 +23,7 @@
 ABSL_FLAG(std::string, simulation_config_pbtxt_path, "",
           "Path to SimulationConfig pbtxt file.");
 ABSL_FLAG(int, num_workers, 1, "The number of thread workers to use.");
-ABSL_FLAG(std::string, output_file_path, "", "The output file path.");
+ABSL_FLAG(std::string, output, "", "The output file path.");
 ABSL_FLAG(std::string, learning_output_base, "",
           "The base path for the three learning output files. See "
           "(broken link) for further details.");
@@ -35,11 +35,12 @@ int Main(int argc, char** argv) {
   CHECK_EQ(absl::OkStatus(),
            file::GetContents(absl::GetFlag(FLAGS_simulation_config_pbtxt_path),
                              &contents));
-  const ContactTracingHomeWorkSimulationConfig config =
-      ParseTextProtoOrDie<ContactTracingHomeWorkSimulationConfig>(contents);
-  RunSimulation(absl::GetFlag(FLAGS_output_file_path),
-                absl::GetFlag(FLAGS_learning_output_base), config,
-                absl::GetFlag(FLAGS_num_workers));
+  const RiskLearningSimulationConfig config =
+      ParseTextProtoOrDie<RiskLearningSimulationConfig>(contents);
+  absl::Status status = RunSimulation(config, absl::GetFlag(FLAGS_num_workers));
+  if (!status.ok()) {
+    LOG(FATAL) << status;
+  }
   return 0;
 }
 

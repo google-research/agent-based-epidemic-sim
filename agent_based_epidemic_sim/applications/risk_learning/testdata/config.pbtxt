@@ -1,0 +1,128 @@
+
+# agent_file and location_file are set in simulation_test.cc.
+init_time {
+  seconds: 0
+}
+step_size {
+  seconds: 86400
+}
+steps: 2
+
+
+tracing_policy {
+  test_validity_duration {
+    seconds: 604800
+  }
+  contact_retention_duration {
+    seconds: 1209600
+  }
+  quarantine_duration {
+    seconds: 1209600
+  }
+  test_latency {
+    seconds: 86400
+  }
+  positive_threshold: 1.0
+}
+
+profiles {
+  id: 1
+  transition_model {
+    state_transition_diagram {
+      health_state: SUSCEPTIBLE
+      transition_probability {
+        health_state: SUSCEPTIBLE
+        transition_probability: 1
+      }
+      transition_probability {
+        health_state: EXPOSED
+        transition_probability: 0
+      }
+      transition_probability {
+        health_state: INFECTIOUS
+        transition_probability: 0
+      }
+      transition_probability {
+        health_state: RECOVERED
+        transition_probability: 0
+      }
+      rate: 1
+    }
+    state_transition_diagram {
+      health_state: EXPOSED
+      transition_probability {
+        health_state: SUSCEPTIBLE
+        transition_probability: 0
+      }
+      transition_probability {
+        health_state: EXPOSED
+        transition_probability: 0
+      }
+      transition_probability {
+        health_state: INFECTIOUS
+        transition_probability: 0.8
+      }
+      transition_probability {
+        health_state: RECOVERED
+        transition_probability: 0.2
+      }
+      rate: 0.5
+    }
+    state_transition_diagram {
+      health_state: INFECTIOUS
+      transition_probability {
+        health_state: SUSCEPTIBLE
+        transition_probability: 0
+      }
+      transition_probability {
+        health_state: EXPOSED
+        transition_probability: 0
+      }
+      transition_probability {
+        health_state: INFECTIOUS
+        transition_probability: 0
+      }
+      transition_probability {
+        health_state: RECOVERED
+        transition_probability: 1
+      }
+      rate: 0.1
+    }
+    state_transition_diagram {
+      health_state: RECOVERED
+      transition_probability {
+        health_state: SUSCEPTIBLE
+        transition_probability: 0
+      }
+      transition_probability {
+        health_state: EXPOSED
+        transition_probability: 0
+      }
+      transition_probability {
+        health_state: INFECTIOUS
+        transition_probability: 0
+      }
+      transition_probability {
+        health_state: RECOVERED
+        transition_probability: 1
+      }
+      rate: 1
+    }
+  }
+  susceptibility: 1.0
+  infectiousness: 1.0
+  visit_durations {
+    location_type: HOUSEHOLD
+    gaussian_distribution {
+      mean: 16.0
+      stddev: 1.0
+    }
+  }
+  visit_durations {
+    location_type: BUSINESS
+    gaussian_distribution {
+      mean: 16.0
+      stddev: 1.0
+    }
+  }
+}

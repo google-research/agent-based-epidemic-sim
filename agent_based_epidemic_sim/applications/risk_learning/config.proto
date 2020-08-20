@@ -16,8 +16,9 @@ syntax = "proto3";
 
 package abesim;
 
-import "agent_based_epidemic_sim/applications/home_work/config.proto";
+import "agent_based_epidemic_sim/agent_synthesis/population_profile.proto";
 import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
 
 // Configures a TracingPolicy that defines test, trace, and isolation
 // parameters.
@@ -37,10 +38,15 @@ message TracingPolicyProto {
   float positive_threshold = 5;
 }
 
-message ContactTracingHomeWorkSimulationConfig {
-  // Parameters for the home work config.
-  // NB: Distancing policy is ignored currently.
-  HomeWorkSimulationConfig home_work_config = 1;
-  // The tracing, testing, isolation policy config.
-  TracingPolicyProto tracing_policy = 2;
+// Top level configuration for the risk learning simulation.
+message RiskLearningSimulationConfig {
+  repeated string agent_file = 1;
+  repeated string location_file = 2;
+
+  google.protobuf.Timestamp init_time = 20;
+  google.protobuf.Duration step_size = 21;
+  int32 steps = 22;
+
+  TracingPolicyProto tracing_policy = 100;
+  repeated PopulationProfile profiles = 101;
 }

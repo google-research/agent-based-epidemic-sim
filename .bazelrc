@@ -1,1 +1,3 @@
-build --cxxopt=-std=c++17 --repo_env=CC=clang
+# --cxxopt=-fsized-deallocation is there because of a usage by the absl Cord
+# implementation.
+build --cxxopt=-std=c++17 --cxxopt=-fsized-deallocation --repo_env=CC=clang

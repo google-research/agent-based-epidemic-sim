@@ -15,7 +15,15 @@
 
 licenses(["notice"])  # Apache License 2.0
 
-exports_files(["LICENSE"])
+exports_files([
+    "LICENSE",
+    "crc32.BUILD",
+    "highwayhash.BUILD",
+    "net_zstd.BUILD",
+    "six.BUILD",
+    "snappy.BUILD",
+    "zlib.BUILD",
+])
 
 package(default_visibility = ["//visibility:public"])
 

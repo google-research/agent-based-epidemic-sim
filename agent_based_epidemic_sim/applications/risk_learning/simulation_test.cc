@@ -14,10 +14,13 @@
 
 #include "agent_based_epidemic_sim/applications/risk_learning/simulation.h"
 
+#include <fcntl.h>
+
 #include "absl/flags/flag.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_split.h"
 #include "absl/time/time.h"
-#include "agent_based_epidemic_sim/applications/home_work/config.pb.h"
+#include "agent_based_epidemic_sim/agent_synthesis/population_profile.pb.h"
 #include "agent_based_epidemic_sim/applications/risk_learning/config.pb.h"
 #include "agent_based_epidemic_sim/core/parse_text_proto.h"
 #include "agent_based_epidemic_sim/core/risk_score.h"
@@ -25,52 +28,80 @@
 #include "agent_based_epidemic_sim/port/status_matchers.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "riegeli/bytes/fd_writer.h"
+#include "riegeli/records/record_writer.h"
 
 namespace abesim {
 namespace {
+using RiegeliBytesSink = riegeli::FdWriter<>;
+constexpr int kWriteFlag = O_CREAT | O_WRONLY;
+
 constexpr char kConfigPath[] =
     "agent_based_epidemic_sim/applications/risk_learning/"
-    "config.pbtxt";
+    "testdata/config.pbtxt";
 
-constexpr char kExpectedHeader[] =
-    "distancing_stage_start,distancing_stage_essential_workers,"
-    "distancing_stage_start,distancing_stage_essential_workers,business_alpha,"
-    "business_beta,household_size,household_size_probability,household_size,"
-    "household_size_probability,household_size,household_size_probability,"
-    "household_size,household_size_probability,household_size,"
-    "household_size_probability,initial_prob_SUSCEPTIBLE,"
-    "initial_prob_INFECTIOUS,top_business_size,top_business_size,"
-    "top_business_size,top_business_size,top_business_size,timestep_end,agents,"
-    "SUSCEPTIBLE,EXPOSED,INFECTIOUS,RECOVERED,ASYMPTOMATIC,"
-    "PRE_SYMPTOMATIC_MILD,PRE_SYMPTOMATIC_SEVERE,SYMPTOMATIC_MILD,"
-    "SYMPTOMATIC_SEVERE,SYMPTOMATIC_HOSPITALIZED,SYMPTOMATIC_CRITICAL,"
-    "SYMPTOMATIC_HOSPITALIZED_RECOVERING,REMOVED,"
-    "home_0,home_1h,home_2h,home_4h,home_8h,home_16h,"
-    "work_0,work_1h,work_2h,work_4h,work_8h,work_16h,contact_1,contact_2,"
-    "contact_4,contact_8,contact_16,contact_32,contact_64,contact_128,"
-    "contact_256,contact_512";
-
-constexpr int kExpectedContentsLength = 60;
+void FillLocation(LocationProto& location, int64 uuid,
+                  LocationReference::Type type) {
+  LocationReference* ref = location.mutable_reference();
+  ref->set_uuid(uuid);
+  ref->set_type(type);
+  GraphParamLocation* params = location.mutable_graph_params();
+  params->set_degree(10);
+  params->set_nodes(100);
+}
+void FillAgent(AgentProto& agent, int64 uuid, HealthState::State initial,
+               const std::vector<LocationProto>& locations) {
+  agent.set_uuid(uuid);
+  agent.set_population_profile_id(1);
+  agent.set_initial_health_state(initial);
+  for (const LocationProto& location : locations) {
+    *agent.add_locations() = location.reference();
+  }
+}
 
 TEST(SimulationTest, RunsSimulation) {
   const std::string config_path = absl::StrCat("./", "/", kConfigPath);
   std::string contents;
   PANDEMIC_ASSERT_OK(file::GetContents(config_path, &contents));
-  ContactTracingHomeWorkSimulationConfig config =
-      ParseTextProtoOrDie<ContactTracingHomeWorkSimulationConfig>(contents);
-  config.mutable_home_work_config()->set_num_steps(1);
-  const std::string output_file_path =
-      absl::StrCat(getenv("TEST_TMPDIR"), "/", "output.csv");
-  RunSimulation(output_file_path, "", config, /*num_workers=*/1);
+  RiskLearningSimulationConfig config =
+      ParseTextProtoOrDie<RiskLearningSimulationConfig>(contents);
 
-  std::string output;
-  PANDEMIC_ASSERT_OK(file::GetContents(output_file_path, &output));
-  const std::vector<std::string> lines =
-      absl::StrSplit(output, '\n', absl::SkipEmpty());
-  EXPECT_EQ(kExpectedHeader, lines[0]);
-  const std::vector<std::string> first_row =
-      absl::StrSplit(lines[1], absl::ByString(","));
-  EXPECT_EQ(kExpectedContentsLength, first_row.size());
+  // Write some locations to a file.
+  std::vector<LocationProto> locations(2);
+  FillLocation(locations[0], 1000, LocationReference::HOUSEHOLD);
+  FillLocation(locations[1], 1001, LocationReference::BUSINESS);
+  config.add_location_file(
+      absl::StrCat(getenv("TEST_TMPDIR"), "/", "locations"));
+  {
+    riegeli::RecordWriter<RiegeliBytesSink> writer(
+        std::forward_as_tuple(config.location_file(0), kWriteFlag));
+    for (const LocationProto location : locations) {
+      writer.WriteRecord(location);
+    }
+    PANDEMIC_ASSERT_OK(writer.status());
+    writer.Close();
+  }
+
+  // Write some agents to a file.
+  std::vector<AgentProto> agents(100);
+  for (int i = 0; i < agents.size(); ++i) {
+    FillAgent(agents[i], i + 1,
+              i == 0 ? HealthState::INFECTIOUS : HealthState::SUSCEPTIBLE,
+              locations);
+  }
+  config.add_agent_file(absl::StrCat(getenv("TEST_TMPDIR"), "/", "agents"));
+  {
+    riegeli::RecordWriter<RiegeliBytesSink> writer(
+        std::forward_as_tuple(config.agent_file(0), kWriteFlag));
+    for (const AgentProto agent : agents) {
+      writer.WriteRecord(agent);
+    }
+    PANDEMIC_ASSERT_OK(writer.status());
+    writer.Close();
+  }
+
+  absl::Status status = RunSimulation(config, /*num_workers=*/1);
+  PANDEMIC_ASSERT_OK(status);
 }
 
 }  // namespace
