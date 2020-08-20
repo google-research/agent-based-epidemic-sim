@@ -68,6 +68,7 @@ cc_library(
         "aggregated_transmission_model.h",
     ],
     deps = [
+        ":constants",
         ":event",
         ":transmission_model",
         ":visit",
@@ -84,6 +85,42 @@ cc_test(
     ],
     deps = [
         ":aggregated_transmission_model",
+        ":visit",
+        "@com_google_absl//absl/time",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "hazard_transmission_model",
+    srcs = [
+        "hazard_transmission_model.cc",
+    ],
+    hdrs = [
+        "hazard_transmission_model.h",
+    ],
+    deps = [
+        ":constants",
+        ":event",
+        ":integral_types",
+        ":transmission_model",
+        "//agent_based_epidemic_sim/port:logging",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/random",
+        "@com_google_absl//absl/random:distributions",
+        "@com_google_absl//absl/time",
+        "@com_google_absl//absl/types:span",
+    ],
+)
+
+cc_test(
+    name = "hazard_transmission_model_test",
+    srcs = [
+        "hazard_transmission_model_test.cc",
+    ],
+    deps = [
+        ":event",
+        ":hazard_transmission_model",
         ":visit",
         "@com_google_absl//absl/time",
         "@com_google_googletest//:gtest_main",

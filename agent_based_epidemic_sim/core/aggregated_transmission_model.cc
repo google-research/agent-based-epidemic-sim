@@ -15,11 +15,10 @@
 #include "agent_based_epidemic_sim/core/aggregated_transmission_model.h"
 
 #include "absl/random/distributions.h"
+#include "agent_based_epidemic_sim/core/constants.h"
 
 namespace abesim {
 namespace {
-// TODO: Move into the visit message about the visiting agent.
-constexpr float kSusceptibility = 1;
 constexpr double kEpsilon = 1e-8;
 
 float ProbabilityExposureInfects(const Exposure& exposure,

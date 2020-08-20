@@ -8,6 +8,16 @@
 #include "agent_based_epidemic_sim/core/integral_types.h"
 
 namespace abesim {
+
+// Default transmissibility of a location used when calculating transmission
+// likelihood between two hosts at a given location.
+inline constexpr float kLocationTransmissibility = 1;
+
+// TODO: Move into the visit message about the visiting agent.
+// Default susceptibility of a host used when calculating transmission
+// likelihood between two hosts. Usually a function of the host's age.
+inline constexpr float kSusceptibility = 1;
+
 // Maximum number of proximity recordings for a given proximity trace. Each
 // recording reflects the distance between two hosts at a fixed interval from
 // the last recording. This effectively caps the maximum length of a given
