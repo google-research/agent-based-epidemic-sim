@@ -22,7 +22,6 @@
 #include <type_traits>
 
 #include "absl/memory/memory.h"
-#include "absl/random/random.h"
 #include "agent_based_epidemic_sim/core/constants.h"
 #include "agent_based_epidemic_sim/core/event.h"
 #include "agent_based_epidemic_sim/core/transmission_model.h"
@@ -75,7 +74,6 @@ class HazardTransmissionModel : public TransmissionModel {
   //  (https://www.medrxiv.org/content/10.1101/2020.07.17.20156539v1): 2.2x10e-3
   //  Mark Briers paper (https://arxiv.org/abs/2005.11057): 0.6 / 15
   float lambda_;
-  absl::BitGen gen_;
 
   // Generates a risk dosage for a given distance.
   std::function<float(float)> risk_at_distance_function_;

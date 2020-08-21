@@ -34,6 +34,7 @@
 #include "agent_based_epidemic_sim/core/location_discrete_event_simulator.h"
 #include "agent_based_epidemic_sim/core/micro_exposure_generator_builder.h"
 #include "agent_based_epidemic_sim/core/ptts_transition_model.h"
+#include "agent_based_epidemic_sim/core/random.h"
 #include "agent_based_epidemic_sim/core/risk_score.h"
 #include "agent_based_epidemic_sim/core/seir_agent.h"
 #include "agent_based_epidemic_sim/core/simulation.h"
@@ -70,8 +71,7 @@ int64 GetLocationUuidForTypeOrDie(const AgentProto& agent,
 }
 
 std::vector<LocationDuration> GetLocationDurations(
-    absl::BitGen* gen, const AgentProto& agent,
-    const PopulationProfile& population_profile) {
+    const AgentProto& agent, const PopulationProfile& population_profile) {
   std::vector<LocationDuration> durations;
   durations.reserve(population_profile.visit_durations_size());
   for (const VisitDuration& visit_duration :
@@ -80,10 +80,11 @@ std::vector<LocationDuration> GetLocationDurations(
         {.location_uuid =
              GetLocationUuidForTypeOrDie(agent, visit_duration.location_type()),
          .sample_duration =
-             [gen, mean = visit_duration.gaussian_distribution().mean(),
+             [mean = visit_duration.gaussian_distribution().mean(),
               stddev = visit_duration.gaussian_distribution().stddev()](
                  float adjustment) {
-               return absl::Gaussian<float>(*gen, mean * adjustment, stddev);
+               absl::BitGenRef gen = GetBitGen();
+               return absl::Gaussian<float>(gen, mean * adjustment, stddev);
              }});
   }
   return durations;
@@ -257,7 +258,6 @@ void RunSimulation(
   auto policy_generator = get_risk_score_generator(context.location_type);
   std::vector<std::unique_ptr<Agent>> seir_agents;
   seir_agents.reserve(context.agents.size());
-  absl::BitGen gen;
   for (const auto& agent : context.agents) {
     seir_agents.push_back(SEIRAgent::Create(
         agent.uuid(),
@@ -266,9 +266,8 @@ void RunSimulation(
         absl::make_unique<WrappedTransitionModel>(
             transition_models[agent.population_profile_id()].get()),
         absl::make_unique<DurationSpecifiedVisitGenerator>(GetLocationDurations(
-            &gen, agent,
-            context.population_profiles.population_profiles(
-                agent.population_profile_id()))),
+            agent, context.population_profiles.population_profiles(
+                       agent.population_profile_id()))),
         policy_generator->NextRiskScore()));
   }
   MicroExposureGeneratorBuilder meg_builder;

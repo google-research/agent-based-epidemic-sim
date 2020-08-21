@@ -52,7 +52,6 @@ class ToggleRiskScoreGenerator : public RiskScoreGenerator {
   ToggleRiskScoreGenerator(LocationTypeFn location_type,
                            std::vector<Tier> tiers);
 
-  absl::BitGen gen_;
   const std::vector<Tier> tiers_;
   const LocationTypeFn location_type_;
 };

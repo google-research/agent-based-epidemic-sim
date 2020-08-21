@@ -30,6 +30,16 @@ cc_library(
 )
 
 cc_library(
+    name = "random",
+    srcs = ["random.cc"],
+    hdrs = ["random.h"],
+    deps = [
+        "@com_google_absl//absl/random",
+        "@com_google_absl//absl/random:bit_gen_ref",
+    ],
+)
+
+cc_library(
     name = "risk_score",
     srcs = ["risk_score.cc"],
     hdrs = ["risk_score.h"],
@@ -70,6 +80,7 @@ cc_library(
     deps = [
         ":constants",
         ":event",
+        ":random",
         ":transmission_model",
         ":visit",
         "@com_google_absl//absl/random",
@@ -85,6 +96,7 @@ cc_test(
     ],
     deps = [
         ":aggregated_transmission_model",
+        ":random",
         ":visit",
         "@com_google_absl//absl/time",
         "@com_google_googletest//:gtest_main",
@@ -103,6 +115,7 @@ cc_library(
         ":constants",
         ":event",
         ":integral_types",
+        ":random",
         ":transmission_model",
         "//agent_based_epidemic_sim/port:logging",
         "@com_google_absl//absl/memory",
@@ -121,6 +134,7 @@ cc_test(
     deps = [
         ":event",
         ":hazard_transmission_model",
+        ":random",
         ":visit",
         "@com_google_absl//absl/time",
         "@com_google_googletest//:gtest_main",
@@ -135,6 +149,7 @@ cc_library(
     deps = [
         ":integral_types",
         ":parameter_distribution_cc_proto",
+        ":random",
         "//agent_based_epidemic_sim/port:logging",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/random",
@@ -201,6 +216,7 @@ cc_library(
     deps = [
         ":duration_specified_visit_generator",
         ":event",
+        ":random",
         ":risk_score",
         ":timestep",
         ":visit",
@@ -277,6 +293,7 @@ cc_library(
         ":integral_types",
         ":location",
         ":micro_exposure_generator",
+        ":random",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/random",
         "@com_google_absl//absl/random:distributions",
@@ -292,6 +309,7 @@ cc_test(
         ":exposure_generator",
         ":graph_location",
         ":pandemic_cc_proto",
+        ":random",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -359,6 +377,7 @@ cc_test(
     srcs = ["location_discrete_event_simulator_builder_test.cc"],
     deps = [
         ":location_discrete_event_simulator_builder",
+        ":random",
         ":uuid_generator",
         "@com_google_googletest//:gtest_main",
     ],
@@ -379,6 +398,7 @@ cc_library(
         ":event",
         ":exposure_generator",
         ":parameter_distribution_cc_proto",
+        ":random",
         "//agent_based_epidemic_sim/port:logging",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/random",
@@ -394,6 +414,7 @@ cc_test(
         ":event",
         ":exposure_generator",
         ":micro_exposure_generator",
+        ":random",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -410,6 +431,7 @@ cc_library(
         ":enum_indexed_array",
         ":event",
         ":ptts_transition_model_cc_proto",
+        ":random",
         ":transition_model",
         ":visit",
         "@com_google_absl//absl/container:flat_hash_map",
@@ -424,6 +446,7 @@ cc_test(
     srcs = ["ptts_transition_model_test.cc"],
     deps = [
         ":ptts_transition_model",
+        ":random",
         ":visit",
         "@com_google_absl//absl/time",
         "@com_google_googletest//:gtest_main",
@@ -489,6 +512,7 @@ cc_library(
     srcs = ["small_world_graph.cc"],
     hdrs = ["small_world_graph.h"],
     deps = [
+        ":random",
         "//agent_based_epidemic_sim/port:logging",
         "@com_google_absl//absl/container:inlined_vector",
         "@com_google_absl//absl/random",
@@ -500,6 +524,7 @@ cc_test(
     name = "small_world_graph_test",
     srcs = ["small_world_graph_test.cc"],
     deps = [
+        ":random",
         ":small_world_graph",
         "@com_google_googletest//:gtest_main",
     ],
@@ -681,6 +706,7 @@ cc_library(
     deps = [
         ":event",
         ":integral_types",
+        ":random",
         ":risk_score",
         ":timestep",
         ":visit",

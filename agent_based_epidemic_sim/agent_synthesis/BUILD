@@ -43,6 +43,7 @@ cc_library(
         "//agent_based_epidemic_sim/core:enum_indexed_array",
         "//agent_based_epidemic_sim/core:integral_types",
         "//agent_based_epidemic_sim/core:parameter_distribution_cc_proto",
+        "//agent_based_epidemic_sim/core:random",
         "//agent_based_epidemic_sim/core:uuid_generator",
         "//agent_based_epidemic_sim/port:logging",
         "@com_google_absl//absl/container:flat_hash_map",

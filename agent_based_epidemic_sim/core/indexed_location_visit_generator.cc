@@ -16,6 +16,7 @@
 
 #include "absl/random/uniform_real_distribution.h"
 #include "agent_based_epidemic_sim/core/duration_specified_visit_generator.h"
+#include "agent_based_epidemic_sim/core/random.h"
 
 namespace abesim {
 namespace {
@@ -29,9 +30,10 @@ IndexedLocationVisitGenerator::IndexedLocationVisitGenerator(
   for (const int64 location_uuid : location_uuids) {
     location_durations.push_back(
         {.location_uuid = location_uuid,
-         .sample_duration = [this](float adjustment) {
+         .sample_duration = [](float adjustment) {
+           absl::BitGenRef gen = GetBitGen();
            return absl::uniform_real_distribution<float>(
-               kEpsilon, adjustment - kEpsilon)(gen_);
+               kEpsilon, adjustment - kEpsilon)(gen);
          }});
   }
   visit_generator_ =

@@ -16,6 +16,7 @@
 
 #include "absl/random/distributions.h"
 #include "agent_based_epidemic_sim/core/constants.h"
+#include "agent_based_epidemic_sim/core/random.h"
 
 namespace abesim {
 namespace {
@@ -46,7 +47,7 @@ HealthTransition AggregatedTransmissionModel::GetInfectionOutcome(
   const float prob_infection = 1 - std::exp(sum_exposures);
   HealthTransition health_transition;
   health_transition.time = latest_exposure_time;
-  health_transition.health_state = absl::Bernoulli(gen_, prob_infection)
+  health_transition.health_state = absl::Bernoulli(GetBitGen(), prob_infection)
                                        ? HealthState::EXPOSED
                                        : HealthState::SUSCEPTIBLE;
   return health_transition;

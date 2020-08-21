@@ -25,6 +25,7 @@
 #include "agent_based_epidemic_sim/core/event.h"
 #include "agent_based_epidemic_sim/core/exposure_generator.h"
 #include "agent_based_epidemic_sim/core/parameter_distribution.pb.h"
+#include "agent_based_epidemic_sim/core/random.h"
 
 namespace abesim {
 
@@ -60,17 +61,18 @@ ProximityTrace MicroExposureGenerator::GenerateProximityTrace() {
   ProximityTrace full_length_proximity_trace;
   full_length_proximity_trace.values.fill(std::numeric_limits<float>::max());
 
-  int proximity_trace_length = absl::Uniform<int>(gen_, 1, kMaxTraceLength);
+  absl::BitGenRef gen = GetBitGen();
+  int proximity_trace_length = absl::Uniform<int>(gen, 1, kMaxTraceLength);
   for (int i = 0; i < proximity_trace_length; ++i) {
     full_length_proximity_trace.values[i] =
-        absl::Uniform<float>(gen_, 0.0f, 10.0f);
+        absl::Uniform<float>(gen, 0.0f, 10.0f);
   }
   return full_length_proximity_trace;
 }
 
 ProximityTrace MicroExposureGenerator::DrawProximityTrace() {
   return proximity_trace_distribution_[absl::Uniform<int>(
-      gen_, 0, proximity_trace_distribution_.size() - 1)];
+      GetBitGen(), 0, proximity_trace_distribution_.size() - 1)];
 }
 
 }  // namespace abesim

@@ -51,7 +51,6 @@ class DurationSpecifiedVisitGenerator : public VisitGenerator {
 
  private:
   std::vector<LocationDuration> location_durations_;
-  absl::BitGen gen_;
 };
 
 }  // namespace abesim

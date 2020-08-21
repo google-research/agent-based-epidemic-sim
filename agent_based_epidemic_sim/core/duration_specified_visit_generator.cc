@@ -16,6 +16,7 @@
 
 #include "absl/random/distributions.h"
 #include "absl/time/time.h"
+#include "agent_based_epidemic_sim/core/random.h"
 #include "agent_based_epidemic_sim/port/logging.h"
 
 namespace abesim {
@@ -25,10 +26,11 @@ void DurationSpecifiedVisitGenerator::GenerateVisits(
     std::vector<Visit>* visits) {
   DCHECK(visits != nullptr);
   std::vector<float> durations;
+  absl::BitGenRef gen = GetBitGen();
   for (const LocationDuration& location_duration : location_durations_) {
     auto adjustment = risk_score.GetVisitAdjustment(
         timestep, location_duration.location_uuid);
-    if (!absl::Bernoulli(gen_, adjustment.frequency_adjustment)) {
+    if (!absl::Bernoulli(gen, adjustment.frequency_adjustment)) {
       durations.push_back(0.0);
     } else {
       float sample =

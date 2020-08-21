@@ -50,7 +50,6 @@ class MicroExposureGenerator : public ExposureGenerator {
   ProximityTrace GenerateProximityTrace();
 
   std::vector<ProximityTrace> proximity_trace_distribution_;
-  absl::BitGen gen_;
 };
 
 }  // namespace abesim

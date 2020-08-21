@@ -54,7 +54,6 @@ class ShuffledLocationAgentSampler : public AgentSampler {
   AgentProto Next() override;
 
  private:
-  absl::BitGen gen_;
   std::unique_ptr<Samplers> samplers_;
   std::unique_ptr<UuidGenerator> uuid_generator_;
   std::unique_ptr<HealthStateSampler> health_state_sampler_;

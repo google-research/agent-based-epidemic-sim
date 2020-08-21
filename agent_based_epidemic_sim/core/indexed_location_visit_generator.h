@@ -40,7 +40,6 @@ class IndexedLocationVisitGenerator : public VisitGenerator {
                       std::vector<Visit>* visits) override;
 
  private:
-  absl::BitGen gen_;
   std::unique_ptr<VisitGenerator> visit_generator_;
 };
 

@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "absl/random/distributions.h"
+#include "agent_based_epidemic_sim/core/random.h"
 #include "agent_based_epidemic_sim/port/logging.h"
 
 namespace abesim {
@@ -96,6 +97,7 @@ SmallWorldGraph::GenerateWattsStrogatzGraph(int n, int k, float p) {
   // from all possible nodes while avoiding self-loops (w != u) and link
   // duplication (there is no edge (u, w') with w'=w at this point in the
   // algorithm).
+  absl::BitGenRef gen = GetBitGen();
   for (int u = 0; u < n; ++u) {
     if (ws->Degree(u) >= n - 1) {
       // u is already fully connected. Skip this rewiring
@@ -105,14 +107,13 @@ SmallWorldGraph::GenerateWattsStrogatzGraph(int n, int k, float p) {
       // Check if there is an edge (u, v) since could have been already rewired.
       if (!ws->HasEdge(u, v % n)) continue;
       // Rewire with probability 'p'
-      if (absl::Bernoulli(ws->bitgen_, p)) {
+      if (absl::Bernoulli(gen, p)) {
         int w = u;
         // Enforce no self-loops or duplicate edges. There is at least one
         // available node.
         while (w == u || ws->HasEdge(u, w)) {
           // Generate a uniform value between [0, n-1].
-          w = absl::Uniform<int>(absl::IntervalClosedClosed, ws->bitgen_, 0,
-                                 n - 1);
+          w = absl::Uniform<int>(absl::IntervalClosedClosed, gen, 0, n - 1);
         }
         // Rewire the edges.
         ws->RemoveEdge(u, v % n);

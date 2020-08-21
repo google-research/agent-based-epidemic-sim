@@ -17,7 +17,6 @@
 #ifndef AGENT_BASED_EPIDEMIC_SIM_CORE_AGGREGATED_TRANSMISSION_MODEL_H_
 #define AGENT_BASED_EPIDEMIC_SIM_CORE_AGGREGATED_TRANSMISSION_MODEL_H_
 
-#include "absl/random/random.h"
 #include "absl/types/span.h"
 #include "agent_based_epidemic_sim/core/event.h"
 #include "agent_based_epidemic_sim/core/transmission_model.h"
@@ -38,7 +37,6 @@ class AggregatedTransmissionModel : public TransmissionModel {
 
  private:
   const float transmissibility_;
-  absl::BitGen gen_;
 };
 
 }  // namespace abesim

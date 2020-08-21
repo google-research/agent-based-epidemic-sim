@@ -95,6 +95,7 @@ cc_library(
         "//agent_based_epidemic_sim/core:micro_exposure_generator",
         "//agent_based_epidemic_sim/core:observer",
         "//agent_based_epidemic_sim/core:ptts_transition_model",
+        "//agent_based_epidemic_sim/core:random",
         "//agent_based_epidemic_sim/core:risk_score",
         "//agent_based_epidemic_sim/core:seir_agent",
         "//agent_based_epidemic_sim/core:simulation",

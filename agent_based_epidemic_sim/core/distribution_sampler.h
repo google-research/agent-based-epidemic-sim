@@ -26,6 +26,7 @@
 #include "absl/random/random.h"
 #include "agent_based_epidemic_sim/core/integral_types.h"
 #include "agent_based_epidemic_sim/core/parameter_distribution.pb.h"
+#include "agent_based_epidemic_sim/core/random.h"
 #include "agent_based_epidemic_sim/port/logging.h"
 #include "google/protobuf/any.pb.h"
 
@@ -37,7 +38,10 @@ template <typename T>
 class DiscreteDistributionSampler {
  public:
   // Returns a value sampled from the distribution.
-  T Sample() { return values_[distribution_(gen_)]; }
+  T Sample() {
+    absl::BitGenRef gen = GetBitGen();
+    return values_[distribution_(gen)];
+  }
 
   // Creates a DiscreteDistributionSampler from the given distribution.
   static std::unique_ptr<DiscreteDistributionSampler<T>> FromProto(
@@ -57,7 +61,6 @@ class DiscreteDistributionSampler {
       : values_(std::move(values)), distribution_(std::move(distribution)) {}
   static auto ValueGetter();
 
-  absl::BitGen gen_;
   const std::vector<T> values_;
   absl::discrete_distribution<int> distribution_;
 };

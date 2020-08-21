@@ -52,8 +52,6 @@ class SmallWorldGraph {
   SmallWorldGraph(const SmallWorldGraph&) = delete;
   SmallWorldGraph& operator=(const SmallWorldGraph&) = delete;
 
-  absl::BitGen bitgen_;
-
   void AddEdge(int i, int j);
   void AddNode(int i);
   int Degree(int i) const;

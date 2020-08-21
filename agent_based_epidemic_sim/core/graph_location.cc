@@ -24,6 +24,7 @@
 #include "agent_based_epidemic_sim/core/event.h"
 #include "agent_based_epidemic_sim/core/exposure_generator.h"
 #include "agent_based_epidemic_sim/core/micro_exposure_generator_builder.h"
+#include "agent_based_epidemic_sim/core/random.h"
 
 namespace abesim {
 
@@ -55,9 +56,11 @@ class GraphLocation : public Location {
       symptom_factor[visit.agent_uuid] = visit.symptom_factor;
     }
 
+    absl::BitGenRef gen = GetBitGen();
+
     for (const std::pair<int64, int64>& edge : graph_) {
       // Randomly drop some potential contacts.
-      if (absl::Bernoulli(gen_, drop_probability_)) continue;
+      if (absl::Bernoulli(gen, drop_probability_)) continue;
 
       // If either of the participants are not present, no contact is generated.
       auto infectivity_a = infectivity.find(edge.first);
@@ -102,7 +105,6 @@ class GraphLocation : public Location {
   const absl::Duration visit_length_mean_;
   const absl::Duration visit_length_stddev_;
   std::unique_ptr<ExposureGenerator> exposure_generator_;
-  absl::BitGen gen_;
 };
 
 }  // namespace

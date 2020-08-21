@@ -23,6 +23,7 @@
 #include "agent_based_epidemic_sim/applications/home_work/location_type.h"
 #include "agent_based_epidemic_sim/applications/home_work/risk_score.h"
 #include "agent_based_epidemic_sim/core/integral_types.h"
+#include "agent_based_epidemic_sim/core/random.h"
 #include "agent_based_epidemic_sim/port/time_proto_util.h"
 
 namespace abesim {
@@ -98,7 +99,7 @@ class TogglingRiskScore : public RiskScore {
 }  // namespace
 
 std::unique_ptr<RiskScore> ToggleRiskScoreGenerator::NextRiskScore() {
-  return GetRiskScore(absl::Uniform(gen_, 0.0, 1.0));
+  return GetRiskScore(absl::Uniform(GetBitGen(), 0.0, 1.0));
 }
 
 std::unique_ptr<RiskScore> ToggleRiskScoreGenerator::GetRiskScore(

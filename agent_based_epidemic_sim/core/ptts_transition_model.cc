@@ -16,6 +16,7 @@
 
 #include "absl/time/time.h"
 #include "agent_based_epidemic_sim/core/event.h"
+#include "agent_based_epidemic_sim/core/random.h"
 
 namespace abesim {
 namespace {
@@ -49,14 +50,15 @@ std::unique_ptr<TransitionModel> PTTSTransitionModel::CreateFromProto(
 
 HealthTransition PTTSTransitionModel::GetNextHealthTransition(
     const HealthTransition& latest_transition) {
+  absl::BitGenRef gen = GetBitGen();
   absl::Duration dwell_time = absl::Hours(
-      24 * absl::Exponential(
-               gen_,
-               state_transition_diagram_[latest_transition.health_state].rate));
+      24 *
+      absl::Exponential(
+          gen, state_transition_diagram_[latest_transition.health_state].rate));
   HealthTransition next_transition;
   next_transition.health_state = HealthState::State(
       state_transition_diagram_[latest_transition.health_state].transitions(
-          gen_));
+          gen));
   next_transition.time = latest_transition.time + dwell_time;
   return next_transition;
 }

@@ -15,6 +15,7 @@
 #include "agent_based_epidemic_sim/agent_synthesis/shuffled_sampler.h"
 
 #include "agent_based_epidemic_sim/core/distribution_sampler.h"
+#include "agent_based_epidemic_sim/core/random.h"
 #include "agent_based_epidemic_sim/port/logging.h"
 
 namespace abesim {
@@ -26,7 +27,7 @@ ShuffledSampler::ShuffledSampler(
       slots_.push_back(key_val.first);
     }
   }
-  std::shuffle(slots_.begin(), slots_.end(), absl::BitGen());
+  std::shuffle(slots_.begin(), slots_.end(), GetBitGen());
 }
 
 int64 ShuffledSampler::Next() {

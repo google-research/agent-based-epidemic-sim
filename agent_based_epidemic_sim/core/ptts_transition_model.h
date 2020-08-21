@@ -75,7 +75,6 @@ class PTTSTransitionModel : public TransitionModel {
   // significance of multiple sequences being generated from the same
   // distribution sampler.
   StateTransitionDiagram state_transition_diagram_;
-  absl::BitGen gen_;
 };
 
 }  // namespace abesim
