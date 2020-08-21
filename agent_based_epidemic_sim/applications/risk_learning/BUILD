@@ -12,9 +12,23 @@ proto_library(
     ],
 )
 
+proto_library(
+    name = "exposures_per_test_result_proto",
+    srcs = ["exposures_per_test_result.proto"],
+    deps = [
+        "@com_google_protobuf//:duration_proto",
+        "@com_google_protobuf//:timestamp_proto",
+    ],
+)
+
 cc_proto_library(
     name = "config_cc_proto",
     deps = [":config_proto"],
+)
+
+cc_proto_library(
+    name = "exposures_per_test_result_cc_proto",
+    deps = [":exposures_per_test_result_proto"],
 )
 
 cc_library(

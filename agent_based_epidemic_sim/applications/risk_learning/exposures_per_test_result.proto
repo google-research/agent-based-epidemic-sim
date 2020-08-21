@@ -1,0 +1,70 @@
+// Copyright 2020 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package abesim;
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+
+// This message is used by downstream code for training the risk score model.
+//
+// This message contains a repeated field of ExposureResults that represent the
+// test result for a given agent along with all of the exposures (confirmed and
+// unconfirmed) in the temporal window defined by exposure_start_time and
+// exposure_end_time. In general, one output message will be written per
+// timestep in the eval.
+message ExposuresPerTestResult {
+  enum TestResult {
+    UNSPECIFIED_TEST_RESULT = 0;
+    POSITIVE = 1;
+    NEGATIVE = 2;
+  }
+  // In this construction, confirmed exposures are exposures to agents who have
+  // tested positive within the simulation and the positive test result has been
+  // reported. The result must be available for the source agent before the test
+  // result is reported to the agent who "owns" the ExposureResult. This
+  // attempts to approximate how test results are handled by Health Authorities
+  // (HAs) in the real world with incomplete information. Unconfirmed exposures
+  // are associated with all the source agents in the simulation who we know are
+  // positive. This included agents that are tested and not yet reported as well
+  // as untested.
+  enum ExposureType {
+    UNSPECIFIED_EXPOSURE_TYPE = 0;
+    CONFIRMED = 1;
+    UNCONFIRMED = 2;
+  }
+  message Exposure {
+    google.protobuf.Timestamp exposure_time = 1;
+    // Potentially empty if we do not have that information in the simulator.
+    google.protobuf.Duration duration_since_symptom_onset = 2;
+    google.protobuf.Duration proximity_trace_temporal_resolution = 3;
+    repeated float proximity_trace = 4;
+    ExposureType exposure_type = 5;
+    int64 source_uuid = 6;  // For debugging. Not used in learning.
+  }
+  message ExposureResult {
+    int64 agent_uuid = 1;
+    TestResult test_result = 2;
+    google.protobuf.Timestamp test_administered_time = 3;
+    google.protobuf.Timestamp test_received_time = 4;
+    repeated Exposure exposures = 5;
+  }
+  repeated ExposureResult exposure_results = 1;
+  // Each member exposure_results will contain exposures that occur between
+  // exposure_start_time and exposure_end_time.
+  google.protobuf.Timestamp exposure_start_time = 2;
+  google.protobuf.Timestamp exposure_end_time = 3;
+}
