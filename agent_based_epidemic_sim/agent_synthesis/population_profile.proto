@@ -89,6 +89,7 @@ message LocationReference {
     UNKNOWN = 0;
     HOUSEHOLD = 1;
     BUSINESS = 2;
+    RANDOM = 3;
   }
   int64 uuid = 1;
   Type type = 2;
