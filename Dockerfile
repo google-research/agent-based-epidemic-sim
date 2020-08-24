@@ -10,6 +10,7 @@ RUN echo "deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8
   && curl https://bazel.build/bazel-release.pub.gpg | apt-key add -
 RUN apt-get -y update
 RUN apt-get -y install bazel
+RUN apt-get -y install python3-distutils
 RUN printf "startup --output_user_root=/tmp/bazel_output\n" > /root/.bazelrc
 
 WORKDIR /root/agent_based_epidemic_sim
