@@ -121,7 +121,8 @@ TEST(HomeWorkSimulationObserverTest, ZerosReturnedForNoObservations) {
     HomeWorkSimulationObserverFactory observer_factory(
         file.get(),
         [](int64 uuid) {
-          return uuid == 0 ? LocationType::kHome : LocationType::kWork;
+          return uuid == 0 ? LocationReference::HOUSEHOLD
+                           : LocationReference::BUSINESS;
         },
         {});
     std::vector<std::unique_ptr<HomeWorkSimulationObserver>> observers;
@@ -152,7 +153,8 @@ TEST(HomeWorkSimulationObserverTest, PassthroughFields) {
     HomeWorkSimulationObserverFactory observer_factory(
         file.get(),
         [](int64 uuid) {
-          return uuid == 0 ? LocationType::kHome : LocationType::kWork;
+          return uuid == 0 ? LocationReference::HOUSEHOLD
+                           : LocationReference::BUSINESS;
         },
         passthrough);
     std::vector<std::unique_ptr<HomeWorkSimulationObserver>> observers;
@@ -181,7 +183,8 @@ TEST(HomeWorkSimulationObserverTest, CorrectValuesForObservations) {
     HomeWorkSimulationObserverFactory observer_factory(
         file.get(),
         [](int64 uuid) {
-          return uuid == 0 ? LocationType::kHome : LocationType::kWork;
+          return uuid == 0 ? LocationReference::HOUSEHOLD
+                           : LocationReference::BUSINESS;
         },
         {});
     std::vector<std::unique_ptr<HomeWorkSimulationObserver>> observers;

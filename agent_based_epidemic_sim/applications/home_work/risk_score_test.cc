@@ -32,8 +32,8 @@ absl::Time TestDay(int day) {
 
 std::vector<float> FrequencyAdjustments(
     const ToggleRiskScoreGenerator* const gen, const float essentialness,
-    const LocationType type, const std::vector<int>& days) {
-  int64 location_uuid = type == LocationType::kWork ? 0 : 1;
+    const LocationReference::Type type, const std::vector<int>& days) {
+  int64 location_uuid = type == LocationReference::BUSINESS ? 0 : 1;
   auto risk_score = gen->GetRiskScore(essentialness);
 
   std::vector<float> adjustments;
@@ -62,7 +62,7 @@ OVERLOAD_VECTOR_OSTREAM_OPS
 
 struct Case {
   float essentialness;
-  LocationType type;
+  LocationReference::Type type;
   std::vector<float> expected_frequency_adjustments;
 
   friend std::ostream& operator<<(std::ostream& strm, const Case& c) {
@@ -76,30 +76,31 @@ TEST(PublicPolicyTest, AppropriateFrequencyAdjustments) {
       BuildPolicy({{10, .6}, {3, .2}, {20, 1.0}, {15, .2}});
   auto generator_or =
       NewRiskScoreGenerator(config, [](const int64 location_uuid) {
-        return location_uuid == 0 ? LocationType::kWork : LocationType::kHome;
+        return location_uuid == 0 ? LocationReference::BUSINESS
+                                  : LocationReference::HOUSEHOLD;
       });
   PANDEMIC_ASSERT_OK(generator_or);
   ToggleRiskScoreGenerator* gen = generator_or->get();
 
   std::vector<int> test_days = {1, 3, 5, 10, 15, 20, 25};
   Case cases[] = {
-      {0.0, LocationType::kWork, {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}},
-      {0.1, LocationType::kWork, {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}},
-      {0.2, LocationType::kWork, {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}},
-      {0.21, LocationType::kWork, {1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0}},
-      {0.6, LocationType::kWork, {1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0}},
-      {0.61, LocationType::kWork, {1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0}},
-      {0.9, LocationType::kWork, {1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0}},
-      {1.0, LocationType::kWork, {1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0}},
+      {0.0, LocationReference::BUSINESS, {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}},
+      {0.1, LocationReference::BUSINESS, {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}},
+      {0.2, LocationReference::BUSINESS, {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}},
+      {0.21, LocationReference::BUSINESS, {1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0}},
+      {0.6, LocationReference::BUSINESS, {1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0}},
+      {0.61, LocationReference::BUSINESS, {1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0}},
+      {0.9, LocationReference::BUSINESS, {1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0}},
+      {1.0, LocationReference::BUSINESS, {1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0}},
       // We always go to home locations.
-      {0.0, LocationType::kHome, {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}},
-      {0.1, LocationType::kHome, {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}},
-      {0.2, LocationType::kHome, {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}},
-      {0.21, LocationType::kHome, {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}},
-      {0.6, LocationType::kHome, {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}},
-      {0.61, LocationType::kHome, {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}},
-      {0.9, LocationType::kHome, {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}},
-      {1.0, LocationType::kHome, {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}},
+      {0.0, LocationReference::HOUSEHOLD, {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}},
+      {0.1, LocationReference::HOUSEHOLD, {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}},
+      {0.2, LocationReference::HOUSEHOLD, {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}},
+      {0.21, LocationReference::HOUSEHOLD, {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}},
+      {0.6, LocationReference::HOUSEHOLD, {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}},
+      {0.61, LocationReference::HOUSEHOLD, {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}},
+      {0.9, LocationReference::HOUSEHOLD, {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}},
+      {1.0, LocationReference::HOUSEHOLD, {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}},
   };
   for (const Case& c : cases) {
     EXPECT_THAT(FrequencyAdjustments(gen, c.essentialness, c.type, test_days),
@@ -112,13 +113,14 @@ TEST(PublicPolicyTest, ZeroStagePolicy) {
   DistancingPolicy config;
   auto generator_or =
       NewRiskScoreGenerator(config, [](const int64 location_uuid) {
-        return location_uuid == 0 ? LocationType::kWork : LocationType::kHome;
+        return location_uuid == 0 ? LocationReference::BUSINESS
+                                  : LocationReference::HOUSEHOLD;
       });
   ToggleRiskScoreGenerator* gen = generator_or->get();
   std::vector<int> test_days = {1, 3, 5, 10, 15, 20, 25};
   Case cases[] = {
-      {1.0, LocationType::kWork, {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}},
-      {1.0, LocationType::kHome, {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}},
+      {1.0, LocationReference::BUSINESS, {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}},
+      {1.0, LocationReference::HOUSEHOLD, {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}},
   };
   for (const Case& c : cases) {
     EXPECT_THAT(FrequencyAdjustments(gen, c.essentialness, c.type, test_days),

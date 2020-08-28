@@ -60,13 +60,13 @@ float SymptomFactor(const HealthState::State health_state) {
 std::unique_ptr<SEIRAgent> SEIRAgent::CreateSusceptible(
     const int64 uuid, TransmissionModel* transmission_model,
     std::unique_ptr<TransitionModel> transition_model,
-    std::unique_ptr<VisitGenerator> visit_generator,
+    const VisitGenerator& visit_generator,
     std::unique_ptr<RiskScore> risk_score) {
   return SEIRAgent::Create(uuid,
                            {.time = absl::InfiniteFuture(),
                             .health_state = HealthState::SUSCEPTIBLE},
                            transmission_model, std::move(transition_model),
-                           std::move(visit_generator), std::move(risk_score));
+                           visit_generator, std::move(risk_score));
 }
 
 /* static */
@@ -74,11 +74,11 @@ std::unique_ptr<SEIRAgent> SEIRAgent::Create(
     const int64 uuid, const HealthTransition& health_transition,
     TransmissionModel* transmission_model,
     std::unique_ptr<TransitionModel> transition_model,
-    std::unique_ptr<VisitGenerator> visit_generator,
+    const VisitGenerator& visit_generator,
     std::unique_ptr<RiskScore> risk_score) {
   return absl::WrapUnique(new SEIRAgent(
       uuid, health_transition, transmission_model, std::move(transition_model),
-      std::move(visit_generator), std::move(risk_score)));
+      visit_generator, std::move(risk_score)));
 }
 
 void SEIRAgent::SplitAndAssignHealthStates(std::vector<Visit>* visits) const {
@@ -133,7 +133,7 @@ void SEIRAgent::ComputeVisits(const Timestep& timestep,
                               Broker<Visit>* visit_broker) const {
   thread_local std::vector<Visit> visits;
   visits.clear();
-  visit_generator_->GenerateVisits(timestep, *risk_score_, &visits);
+  visit_generator_.GenerateVisits(timestep, *risk_score_, &visits);
   SplitAndAssignHealthStates(&visits);
   visit_broker->Send(visits);
 }

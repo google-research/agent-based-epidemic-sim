@@ -31,9 +31,7 @@ namespace abesim {
 std::unique_ptr<Location> NewGraphLocation(
     int64 uuid, float drop_probability,
     std::vector<std::pair<int64, int64>> graph,
-    const absl::Duration visit_length_mean,
-    const absl::Duration visit_length_stddev,
-    std::unique_ptr<ExposureGenerator> exposure_generator);
+    const ExposureGenerator& exposure_generator);
 
 }  // namespace abesim
 

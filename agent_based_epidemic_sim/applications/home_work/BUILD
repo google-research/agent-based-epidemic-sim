@@ -73,7 +73,6 @@ cc_library(
         "simulation.cc",
     ],
     hdrs = [
-        "location_type.h",
         "observer.h",
         "risk_score.h",
         "simulation.h",
@@ -92,6 +91,7 @@ cc_library(
         "//agent_based_epidemic_sim/core:integral_types",
         "//agent_based_epidemic_sim/core:location",
         "//agent_based_epidemic_sim/core:location_discrete_event_simulator",
+        "//agent_based_epidemic_sim/core:location_type",
         "//agent_based_epidemic_sim/core:micro_exposure_generator",
         "//agent_based_epidemic_sim/core:observer",
         "//agent_based_epidemic_sim/core:ptts_transition_model",
@@ -100,6 +100,7 @@ cc_library(
         "//agent_based_epidemic_sim/core:seir_agent",
         "//agent_based_epidemic_sim/core:simulation",
         "//agent_based_epidemic_sim/core:uuid_generator",
+        "//agent_based_epidemic_sim/core:visit_generator",
         "//agent_based_epidemic_sim/core:wrapped_transition_model",
         "//agent_based_epidemic_sim/port:file_utils",
         "//agent_based_epidemic_sim/port:logging",

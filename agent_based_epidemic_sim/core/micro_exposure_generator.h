@@ -38,16 +38,16 @@ class MicroExposureGenerator : public ExposureGenerator {
   // symptom_factor pairs will correspond to the first and second Exposures
   // returned, respectively.
   ExposurePair Generate(const HostData& host_a,
-                        const HostData& host_b) override;
+                        const HostData& host_b) const override;
 
  private:
   // Draws a proximity trace from an in-memory, non-parametric distribution.
   // Represents the distances between two hosts at fixed intervals.
-  ProximityTrace DrawProximityTrace();
+  ProximityTrace DrawProximityTrace() const;
 
   // Generates a proximity trace by drawing from a uniform distribution.
   // Represents the distances between two hosts at fixed intervals.
-  ProximityTrace GenerateProximityTrace();
+  ProximityTrace GenerateProximityTrace() const;
 
   std::vector<ProximityTrace> proximity_trace_distribution_;
 };

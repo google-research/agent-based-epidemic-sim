@@ -45,9 +45,16 @@ void FillLocation(LocationProto& location, int64 uuid,
   LocationReference* ref = location.mutable_reference();
   ref->set_uuid(uuid);
   ref->set_type(type);
-  GraphParamLocation* params = location.mutable_graph_params();
-  params->set_degree(10);
-  params->set_nodes(100);
+  GraphLocation* graph = location.mutable_graph();
+  // Agent uuids are 1-100.
+  for (int i = 0; i < 100; ++i) {
+    for (int j = -2; j < 3; ++j) {
+      int64 uuid = (i + j + 100) % 100;
+      GraphLocation::Edge* edge = graph->add_edges();
+      edge->set_uuid_a(i + 1);
+      edge->set_uuid_b(uuid + 1);
+    }
+  }
 }
 void FillAgent(AgentProto& agent, int64 uuid, HealthState::State initial,
                const std::vector<LocationProto>& locations) {
@@ -75,7 +82,7 @@ TEST(SimulationTest, RunsSimulation) {
   {
     riegeli::RecordWriter<RiegeliBytesSink> writer(
         std::forward_as_tuple(config.location_file(0), kWriteFlag));
-    for (const LocationProto location : locations) {
+    for (const LocationProto& location : locations) {
       writer.WriteRecord(location);
     }
     PANDEMIC_ASSERT_OK(writer.status());
@@ -93,7 +100,7 @@ TEST(SimulationTest, RunsSimulation) {
   {
     riegeli::RecordWriter<RiegeliBytesSink> writer(
         std::forward_as_tuple(config.agent_file(0), kWriteFlag));
-    for (const AgentProto agent : agents) {
+    for (const AgentProto& agent : agents) {
       writer.WriteRecord(agent);
     }
     PANDEMIC_ASSERT_OK(writer.status());

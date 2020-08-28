@@ -18,10 +18,10 @@
 
 #include "absl/memory/memory.h"
 #include "absl/time/time.h"
-#include "agent_based_epidemic_sim/applications/home_work/location_type.h"
 #include "agent_based_epidemic_sim/applications/risk_learning/config.pb.h"
 #include "agent_based_epidemic_sim/applications/risk_learning/risk_score.h"
 #include "agent_based_epidemic_sim/core/integral_types.h"
+#include "agent_based_epidemic_sim/core/location_type.h"
 #include "agent_based_epidemic_sim/core/pandemic.pb.h"
 #include "agent_based_epidemic_sim/port/time_proto_util.h"
 
@@ -84,7 +84,7 @@ class LearningRiskScore : public RiskScore {
   VisitAdjustment GetVisitAdjustment(const Timestep& timestep,
                                      const int64 location_uuid) const override {
     const bool skip_visit =
-        location_type_(location_uuid) != LocationType::kHome &&
+        location_type_(location_uuid) != LocationReference::HOUSEHOLD &&
         (ShouldQuarantineFromContacts(timestep));
     return {
         .frequency_adjustment = skip_visit ? 0.0f : 1.0f,

@@ -29,7 +29,7 @@ class VisitGenerator {
  public:
   virtual void GenerateVisits(const Timestep& timestep,
                               const RiskScore& risk_score,
-                              std::vector<Visit>* visits) = 0;
+                              std::vector<Visit>* visits) const = 0;
   virtual ~VisitGenerator() = default;
 };
 

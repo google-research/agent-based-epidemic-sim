@@ -39,7 +39,7 @@ class FakeBroker : public Broker<InfectionOutcome> {
 };
 
 class FakeExposureGenerator : public ExposureGenerator {
-  ExposurePair Generate(const HostData& host_a, const HostData& host_b) {
+  ExposurePair Generate(const HostData& host_a, const HostData& host_b) const {
     return {.host_a = {.infectivity = host_b.infectivity},
             .host_b = {.infectivity = host_a.infectivity}};
   }
@@ -69,10 +69,10 @@ InfectionOutcome ExpectedOutcome(int64 agent, int64 source, float infectivity) {
 }
 
 TEST(GraphLocationTest, CompleteSampleGenerated) {
+  FakeExposureGenerator generator;
   auto location = NewGraphLocation(
       kLocationUUID, 0.0, {{0, 2}, {0, 4}, {1, 3}, {1, 5}, {2, 4}, {3, 5}},
-      absl::Hours(8), absl::Hours(2),
-      std::make_unique<FakeExposureGenerator>());
+      generator);
   FakeBroker broker;
   location->ProcessVisits(
       {
@@ -97,10 +97,10 @@ TEST(GraphLocationTest, CompleteSampleGenerated) {
 }
 
 TEST(GraphLocationTest, AllSamplesDropped) {
+  FakeExposureGenerator generator;
   auto location = NewGraphLocation(
       kLocationUUID, 1.0, {{0, 2}, {0, 4}, {1, 3}, {1, 5}, {2, 4}, {3, 5}},
-      absl::Hours(8), absl::Hours(2),
-      std::make_unique<FakeExposureGenerator>());
+      generator);
   FakeBroker broker;
   location->ProcessVisits(
       {

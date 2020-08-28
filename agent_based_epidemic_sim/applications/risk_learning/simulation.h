@@ -19,8 +19,8 @@
 
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
-#include "agent_based_epidemic_sim/applications/home_work/location_type.h"
 #include "agent_based_epidemic_sim/applications/risk_learning/config.pb.h"
+#include "agent_based_epidemic_sim/core/location_type.h"
 #include "agent_based_epidemic_sim/core/risk_score.h"
 
 namespace abesim {

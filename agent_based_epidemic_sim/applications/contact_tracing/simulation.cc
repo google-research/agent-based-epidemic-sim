@@ -19,8 +19,8 @@
 #include "absl/strings/string_view.h"
 #include "agent_based_epidemic_sim/applications/contact_tracing/config.pb.h"
 #include "agent_based_epidemic_sim/applications/contact_tracing/risk_score.h"
-#include "agent_based_epidemic_sim/applications/home_work/location_type.h"
 #include "agent_based_epidemic_sim/applications/home_work/simulation.h"
+#include "agent_based_epidemic_sim/core/location_type.h"
 #include "agent_based_epidemic_sim/core/risk_score.h"
 
 namespace abesim {

@@ -18,7 +18,7 @@
 
 #include "absl/time/time.h"
 #include "agent_based_epidemic_sim/applications/contact_tracing/config.pb.h"
-#include "agent_based_epidemic_sim/applications/home_work/location_type.h"
+#include "agent_based_epidemic_sim/core/location_type.h"
 #include "agent_based_epidemic_sim/core/parse_text_proto.h"
 #include "agent_based_epidemic_sim/core/risk_score.h"
 #include "agent_based_epidemic_sim/core/timestep.h"
@@ -39,8 +39,8 @@ absl::Time TimeFromDay(const int day) { return TimeFromDayAndHour(day, 0); }
 
 std::vector<float> FrequencyAdjustments(RiskScore& risk_score,
                                         absl::Span<const Exposure> exposures,
-                                        const LocationType type) {
-  int64 location_uuid = type == LocationType::kWork ? 0 : 1;
+                                        const LocationReference::Type type) {
+  int64 location_uuid = type == LocationReference::BUSINESS ? 0 : 1;
 
   auto exposure = exposures.begin();
   std::vector<float> adjustments;
@@ -63,7 +63,8 @@ class RiskScoreTest : public testing::Test {
   std::unique_ptr<RiskScore> GetRiskScore() {
     auto risk_score_or = CreateTracingRiskScore(
         GetTracingPolicyProto(), [](const int64 location_uuid) {
-          return location_uuid == 0 ? LocationType::kWork : LocationType::kHome;
+          return location_uuid == 0 ? LocationReference::BUSINESS
+                                    : LocationReference::HOUSEHOLD;
         });
     return std::move(risk_score_or.value());
   }
@@ -85,7 +86,7 @@ OVERLOAD_VECTOR_OSTREAM_OPS
 struct Case {
   HealthState::State initial_health_state;
   std::vector<Exposure> positive_exposures;
-  LocationType location_type;
+  LocationReference::Type location_type;
   std::vector<float> expected_adjustments;
 
   friend std::ostream& operator<<(std::ostream& strm, const Case& c) {
@@ -100,38 +101,38 @@ TEST_F(RiskScoreTest, GetVisitAdjustment) {
       {
           .initial_health_state = HealthState::SUSCEPTIBLE,
           .positive_exposures = {{.start_time = TimeFromDayAndHour(2, 4)}},
-          .location_type = LocationType::kWork,
+          .location_type = LocationReference::BUSINESS,
           .expected_adjustments = {1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0},
       },
       {
           .initial_health_state = HealthState::SUSCEPTIBLE,
           .positive_exposures = {},
-          .location_type = LocationType::kWork,
+          .location_type = LocationReference::BUSINESS,
           .expected_adjustments = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0},
       },
       // We always go to home locations.
       {
           .initial_health_state = HealthState::SUSCEPTIBLE,
           .positive_exposures = {{.start_time = TimeFromDay(1)}},
-          .location_type = LocationType::kHome,
+          .location_type = LocationReference::HOUSEHOLD,
           .expected_adjustments = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0},
       },
       {
           .initial_health_state = HealthState::EXPOSED,
           .positive_exposures = {},
-          .location_type = LocationType::kHome,
+          .location_type = LocationReference::HOUSEHOLD,
           .expected_adjustments = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0},
       },
       {
           .initial_health_state = HealthState::EXPOSED,
           .positive_exposures = {{.start_time = TimeFromDay(1)}},
-          .location_type = LocationType::kHome,
+          .location_type = LocationReference::HOUSEHOLD,
           .expected_adjustments = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0},
       },
       {
           .initial_health_state = HealthState::SUSCEPTIBLE,
           .positive_exposures = {},
-          .location_type = LocationType::kHome,
+          .location_type = LocationReference::HOUSEHOLD,
           .expected_adjustments = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0},
       },
   };

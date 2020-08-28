@@ -20,7 +20,7 @@
 #include "absl/strings/string_view.h"
 #include "agent_based_epidemic_sim/agent_synthesis/population_profile.pb.h"
 #include "agent_based_epidemic_sim/applications/home_work/config.pb.h"
-#include "agent_based_epidemic_sim/applications/home_work/location_type.h"
+#include "agent_based_epidemic_sim/core/location_type.h"
 #include "agent_based_epidemic_sim/core/risk_score.h"
 
 namespace abesim {

@@ -30,7 +30,7 @@
 namespace abesim {
 
 ExposurePair MicroExposureGenerator::Generate(const HostData& host_a,
-                                              const HostData& host_b) {
+                                              const HostData& host_b) const {
   const ProximityTrace proximity_trace = proximity_trace_distribution_.empty()
                                              ? GenerateProximityTrace()
                                              : DrawProximityTrace();
@@ -57,7 +57,7 @@ ExposurePair MicroExposureGenerator::Generate(const HostData& host_a,
           }};
 }
 
-ProximityTrace MicroExposureGenerator::GenerateProximityTrace() {
+ProximityTrace MicroExposureGenerator::GenerateProximityTrace() const {
   ProximityTrace full_length_proximity_trace;
   full_length_proximity_trace.values.fill(std::numeric_limits<float>::max());
 
@@ -70,7 +70,7 @@ ProximityTrace MicroExposureGenerator::GenerateProximityTrace() {
   return full_length_proximity_trace;
 }
 
-ProximityTrace MicroExposureGenerator::DrawProximityTrace() {
+ProximityTrace MicroExposureGenerator::DrawProximityTrace() const {
   return proximity_trace_distribution_[absl::Uniform<int>(
       GetBitGen(), 0, proximity_trace_distribution_.size() - 1)];
 }

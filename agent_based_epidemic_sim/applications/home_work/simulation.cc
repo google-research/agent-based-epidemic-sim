@@ -39,6 +39,7 @@
 #include "agent_based_epidemic_sim/core/seir_agent.h"
 #include "agent_based_epidemic_sim/core/simulation.h"
 #include "agent_based_epidemic_sim/core/uuid_generator.h"
+#include "agent_based_epidemic_sim/core/visit_generator.h"
 #include "agent_based_epidemic_sim/core/wrapped_transition_model.h"
 #include "agent_based_epidemic_sim/port/file_utils.h"
 #include "agent_based_epidemic_sim/port/logging.h"
@@ -226,8 +227,8 @@ SimulationContext GetSimulationContext(const HomeWorkSimulationConfig& config) {
       });
   context.location_type = [business_uuids =
                                std::move(business_uuids)](int64 uuid) {
-    return business_uuids.contains(uuid) ? LocationType::kWork
-                                         : LocationType::kHome;
+    return business_uuids.contains(uuid) ? LocationReference::BUSINESS
+                                         : LocationReference::HOUSEHOLD;
   };
   return context;
 }
@@ -257,18 +258,21 @@ void RunSimulation(
   }
   auto policy_generator = get_risk_score_generator(context.location_type);
   std::vector<std::unique_ptr<Agent>> seir_agents;
+  std::vector<std::unique_ptr<VisitGenerator>> visit_generators;
   seir_agents.reserve(context.agents.size());
+  visit_generators.reserve(context.agents.size());
   for (const auto& agent : context.agents) {
+    visit_generators.push_back(
+        absl::make_unique<DurationSpecifiedVisitGenerator>(GetLocationDurations(
+            agent, context.population_profiles.population_profiles(
+                       agent.population_profile_id()))));
     seir_agents.push_back(SEIRAgent::Create(
         agent.uuid(),
         {.time = init_time, .health_state = agent.initial_health_state()},
         transmission_model.get(),
         absl::make_unique<WrappedTransitionModel>(
             transition_models[agent.population_profile_id()].get()),
-        absl::make_unique<DurationSpecifiedVisitGenerator>(GetLocationDurations(
-            agent, context.population_profiles.population_profiles(
-                       agent.population_profile_id()))),
-        policy_generator->NextRiskScore()));
+        *visit_generators.back(), policy_generator->NextRiskScore()));
   }
   MicroExposureGeneratorBuilder meg_builder;
   std::vector<std::unique_ptr<Location>> location_des;

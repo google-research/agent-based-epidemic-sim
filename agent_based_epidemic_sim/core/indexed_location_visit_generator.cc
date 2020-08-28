@@ -40,9 +40,9 @@ IndexedLocationVisitGenerator::IndexedLocationVisitGenerator(
       absl::make_unique<DurationSpecifiedVisitGenerator>(location_durations);
 }
 
-void IndexedLocationVisitGenerator::GenerateVisits(const Timestep& timestep,
-                                                   const RiskScore& risk_score,
-                                                   std::vector<Visit>* visits) {
+void IndexedLocationVisitGenerator::GenerateVisits(
+    const Timestep& timestep, const RiskScore& risk_score,
+    std::vector<Visit>* visits) const {
   visit_generator_->GenerateVisits(timestep, risk_score, visits);
 }
 

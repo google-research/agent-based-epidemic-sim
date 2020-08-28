@@ -19,7 +19,7 @@
 
 #include "absl/random/random.h"
 #include "agent_based_epidemic_sim/applications/home_work/config.pb.h"
-#include "agent_based_epidemic_sim/applications/home_work/location_type.h"
+#include "agent_based_epidemic_sim/core/location_type.h"
 #include "agent_based_epidemic_sim/core/risk_score.h"
 #include "agent_based_epidemic_sim/port/statusor.h"
 

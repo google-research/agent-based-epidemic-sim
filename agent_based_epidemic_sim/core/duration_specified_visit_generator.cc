@@ -23,7 +23,7 @@ namespace abesim {
 
 void DurationSpecifiedVisitGenerator::GenerateVisits(
     const Timestep& timestep, const RiskScore& risk_score,
-    std::vector<Visit>* visits) {
+    std::vector<Visit>* visits) const {
   DCHECK(visits != nullptr);
   std::vector<float> durations;
   absl::BitGenRef gen = GetBitGen();

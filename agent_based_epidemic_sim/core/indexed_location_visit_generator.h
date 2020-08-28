@@ -37,7 +37,7 @@ class IndexedLocationVisitGenerator : public VisitGenerator {
       const std::vector<int64>& location_uuids);
 
   void GenerateVisits(const Timestep& timestep, const RiskScore& risk_score,
-                      std::vector<Visit>* visits) override;
+                      std::vector<Visit>* visits) const override;
 
  private:
   std::unique_ptr<VisitGenerator> visit_generator_;

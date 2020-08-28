@@ -20,9 +20,9 @@
 #include "absl/random/distributions.h"
 #include "absl/time/time.h"
 #include "agent_based_epidemic_sim/applications/home_work/config.pb.h"
-#include "agent_based_epidemic_sim/applications/home_work/location_type.h"
 #include "agent_based_epidemic_sim/applications/home_work/risk_score.h"
 #include "agent_based_epidemic_sim/core/integral_types.h"
+#include "agent_based_epidemic_sim/core/location_type.h"
 #include "agent_based_epidemic_sim/core/random.h"
 #include "agent_based_epidemic_sim/port/time_proto_util.h"
 
@@ -71,7 +71,9 @@ class TogglingRiskScore : public RiskScore {
 
  private:
   bool SkipVisit(const Timestep& timestep, const int64 location_uuid) const {
-    if (location_type_(location_uuid) != LocationType::kWork) return false;
+    if (location_type_(location_uuid) != LocationReference::BUSINESS) {
+      return false;
+    }
     auto iter =
         std::lower_bound(toggles_.begin(), toggles_.end(), timestep.end_time());
     if (iter == toggles_.begin()) {

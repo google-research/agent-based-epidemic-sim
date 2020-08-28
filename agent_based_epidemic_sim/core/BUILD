@@ -53,6 +53,15 @@ cc_library(
 )
 
 cc_library(
+    name = "location_type",
+    hdrs = ["location_type.h"],
+    deps = [
+        ":integral_types",
+        "//agent_based_epidemic_sim/agent_synthesis:population_profile_cc_proto",
+    ],
+)
+
+cc_library(
     name = "agent",
     hdrs = [
         "agent.h",
@@ -258,7 +267,6 @@ cc_library(
         "exposure_generator_builder.h",
     ],
     deps = [
-        ":constants",
         ":event",
         "@com_google_absl//absl/time",
     ],

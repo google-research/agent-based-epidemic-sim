@@ -20,16 +20,12 @@
 #include <functional>
 #include <initializer_list>
 
+#include "agent_based_epidemic_sim/agent_synthesis/population_profile.pb.h"
 #include "agent_based_epidemic_sim/core/integral_types.h"
 
 namespace abesim {
 
-enum class LocationType : uint8 { kHome, kWork };
-
-constexpr std::initializer_list<LocationType> kAllLocationTypes = {
-    LocationType::kHome, LocationType::kWork};
-
-using LocationTypeFn = std::function<LocationType(int64 uuid)>;
+using LocationTypeFn = std::function<LocationReference::Type(int64 uuid)>;
 
 }  // namespace abesim
 

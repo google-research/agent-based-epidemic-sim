@@ -18,6 +18,7 @@
 
 #include "absl/strings/str_format.h"
 #include "absl/time/time.h"
+#include "agent_based_epidemic_sim/agent_synthesis/population_profile.pb.h"
 #include "agent_based_epidemic_sim/core/agent.h"
 #include "agent_based_epidemic_sim/core/enum_indexed_array.h"
 #include "agent_based_epidemic_sim/port/proto_enum_utils.h"
@@ -123,7 +124,8 @@ void HomeWorkSimulationObserverFactory::Aggregate(
       agents += n;
     }
     for (auto iter : observer->agent_location_type_durations_) {
-      for (LocationType location_type : kAllLocationTypes) {
+      for (LocationReference::Type location_type :
+           EnumerateEnumValues<LocationReference::Type>()) {
         agent_location_type_durations_[iter.first][location_type] +=
             iter.second[location_type];
       }
@@ -142,13 +144,20 @@ void HomeWorkSimulationObserverFactory::Aggregate(
 
   LocationArray<Histogram<absl::Duration, kDurationBuckets>> location_histogram;
   for (const auto iter : agent_location_type_durations_) {
-    for (LocationType i : kAllLocationTypes) {
+    for (LocationReference::Type i :
+         EnumerateEnumValues<LocationReference::Type>()) {
       if (iter.second[i] == absl::ZeroDuration()) continue;
       location_histogram[i].Add(iter.second[i], absl::Hours(1));
     }
   }
-  for (const auto& location_type : location_histogram) {
-    location_type.AppendValuesToString(&line);
+  for (LocationReference::Type i :
+       EnumerateEnumValues<LocationReference::Type>()) {
+    // In the home_work simulation we only care about household and business
+    // locations.
+    if (i != LocationReference::HOUSEHOLD && i != LocationReference::BUSINESS) {
+      continue;
+    }
+    location_histogram[i].AppendValuesToString(&line);
   }
 
   Histogram<size_t, kContactBuckets> contact_histogram;

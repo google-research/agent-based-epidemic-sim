@@ -22,8 +22,8 @@ cc_library(
     hdrs = ["risk_score.h"],
     deps = [
         ":config_cc_proto",
-        "//agent_based_epidemic_sim/applications/home_work:simulation",
         "//agent_based_epidemic_sim/core:integral_types",
+        "//agent_based_epidemic_sim/core:location_type",
         "//agent_based_epidemic_sim/core:pandemic_cc_proto",
         "//agent_based_epidemic_sim/core:risk_score",
         "//agent_based_epidemic_sim/port:statusor",
@@ -41,6 +41,7 @@ cc_library(
         ":config_cc_proto",
         ":risk_score",
         "//agent_based_epidemic_sim/applications/home_work:simulation",
+        "//agent_based_epidemic_sim/core:location_type",
         "//agent_based_epidemic_sim/core:risk_score",
         "@com_google_absl//absl/strings",
     ],
@@ -52,7 +53,7 @@ cc_test(
     deps = [
         ":config_cc_proto",
         ":risk_score",
-        "//agent_based_epidemic_sim/applications/home_work:simulation",
+        "//agent_based_epidemic_sim/core:location_type",
         "//agent_based_epidemic_sim/core:parse_text_proto",
         "//agent_based_epidemic_sim/core:risk_score",
         "//agent_based_epidemic_sim/core:timestep",

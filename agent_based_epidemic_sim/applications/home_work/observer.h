@@ -20,9 +20,10 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/time/time.h"
-#include "agent_based_epidemic_sim/applications/home_work/location_type.h"
+#include "agent_based_epidemic_sim/agent_synthesis/population_profile.pb.h"
 #include "agent_based_epidemic_sim/core/enum_indexed_array.h"
 #include "agent_based_epidemic_sim/core/integral_types.h"
+#include "agent_based_epidemic_sim/core/location_type.h"
 #include "agent_based_epidemic_sim/core/observer.h"
 #include "agent_based_epidemic_sim/port/file_utils.h"
 
@@ -32,8 +33,8 @@ template <typename T>
 using HealthArray =
     EnumIndexedArray<T, HealthState::State, HealthState::State_ARRAYSIZE>;
 template <typename T>
-using LocationArray =
-    EnumIndexedArray<T, LocationType, kAllLocationTypes.size()>;
+using LocationArray = EnumIndexedArray<T, LocationReference::Type,
+                                       LocationReference::Type_ARRAYSIZE>;
 
 class HomeWorkSimulationObserver : public AgentInfectionObserver,
                                    public LocationVisitObserver {
@@ -65,8 +66,7 @@ class HomeWorkSimulationObserverFactory
   // Use pass_through_fields to append a set of field values to every line
   // of the csv output, each entry is a pair of {field_name, field_value}.
   explicit HomeWorkSimulationObserverFactory(
-      file::FileWriter* output,
-      std::function<LocationType(int64)> location_type,
+      file::FileWriter* output, LocationTypeFn location_type,
       const std::vector<std::pair<std::string, std::string>>&
           pass_through_fields);
 

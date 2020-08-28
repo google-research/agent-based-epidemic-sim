@@ -18,7 +18,7 @@
 #define AGENT_BASED_EPIDEMIC_SIM_APPLICATIONS_CONTACT_TRACING_RISK_SCORE_H_
 
 #include "agent_based_epidemic_sim/applications/contact_tracing/config.pb.h"
-#include "agent_based_epidemic_sim/applications/home_work/location_type.h"
+#include "agent_based_epidemic_sim/core/location_type.h"
 #include "agent_based_epidemic_sim/core/risk_score.h"
 #include "agent_based_epidemic_sim/port/statusor.h"
 

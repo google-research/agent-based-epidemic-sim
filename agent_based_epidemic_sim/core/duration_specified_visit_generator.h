@@ -17,6 +17,8 @@
 #ifndef AGENT_BASED_EPIDEMIC_SIM_CORE_DURATION_SPECIFIED_VISIT_GENERATOR_H_
 #define AGENT_BASED_EPIDEMIC_SIM_CORE_DURATION_SPECIFIED_VISIT_GENERATOR_H_
 
+#include <memory>
+
 #include "absl/random/random.h"
 #include "absl/time/time.h"
 #include "agent_based_epidemic_sim/core/event.h"
@@ -47,7 +49,7 @@ class DurationSpecifiedVisitGenerator : public VisitGenerator {
       : location_durations_(location_durations) {}
 
   void GenerateVisits(const Timestep& timestep, const RiskScore& risk_score,
-                      std::vector<Visit>* visits) override;
+                      std::vector<Visit>* visits) const override;
 
  private:
   std::vector<LocationDuration> location_durations_;

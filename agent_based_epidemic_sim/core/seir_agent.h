@@ -50,7 +50,7 @@ class SEIRAgent : public Agent {
   static std::unique_ptr<SEIRAgent> CreateSusceptible(
       const int64 uuid, TransmissionModel* transmission_model,
       std::unique_ptr<TransitionModel> transition_model,
-      std::unique_ptr<VisitGenerator> visit_generator,
+      const VisitGenerator& visit_generator,
       std::unique_ptr<RiskScore> risk_score);
 
   // Constructs an agent with a specified health state transition.
@@ -58,7 +58,7 @@ class SEIRAgent : public Agent {
       const int64 uuid, const HealthTransition& health_transition,
       TransmissionModel* transmission_model,
       std::unique_ptr<TransitionModel> transition_model,
-      std::unique_ptr<VisitGenerator> visit_generator,
+      const VisitGenerator& visit_generator,
       std::unique_ptr<RiskScore> risk_score);
 
   SEIRAgent(const SEIRAgent&) = delete;
@@ -105,7 +105,7 @@ class SEIRAgent : public Agent {
   SEIRAgent(const int64 uuid, const HealthTransition& initial_health_transition,
             TransmissionModel* transmission_model,
             std::unique_ptr<TransitionModel> transition_model,
-            std::unique_ptr<VisitGenerator> visit_generator,
+            const VisitGenerator& visit_generator,
             std::unique_ptr<RiskScore> risk_score)
       : uuid_(uuid),
         last_contact_report_considered_(contacts_.end()),
@@ -116,7 +116,7 @@ class SEIRAgent : public Agent {
         }),
         transmission_model_(transmission_model),
         transition_model_(std::move(transition_model)),
-        visit_generator_(std::move(visit_generator)),
+        visit_generator_(visit_generator),
         risk_score_(std::move(risk_score)) {
     next_health_transition_ = initial_health_transition;
     health_transitions_.push_back({.time = absl::InfinitePast(),
@@ -196,7 +196,7 @@ class SEIRAgent : public Agent {
   // visit_generator will likely be initialized uniquely for the agent, but may
   // be shared among "equivalence" classes of agents.
   std::unique_ptr<TransitionModel> transition_model_;
-  std::unique_ptr<VisitGenerator> visit_generator_;
+  const VisitGenerator& visit_generator_;
   std::unique_ptr<RiskScore> risk_score_;
 };
 

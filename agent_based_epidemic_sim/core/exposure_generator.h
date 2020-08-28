@@ -42,7 +42,7 @@ class ExposureGenerator {
   // Returns a pair of Exposures mirroring a single exposure event between a
   // pair of hosts.
   virtual ExposurePair Generate(const HostData& host_a,
-                                const HostData& host_b) = 0;
+                                const HostData& host_b) const = 0;
 };
 
 }  // namespace abesim
