@@ -26,15 +26,12 @@
 #include "agent_based_epidemic_sim/core/risk_score.h"
 #include "agent_based_epidemic_sim/port/file_utils.h"
 #include "agent_based_epidemic_sim/port/status_matchers.h"
+#include "agent_based_epidemic_sim/util/records.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "riegeli/bytes/fd_writer.h"
-#include "riegeli/records/record_writer.h"
 
 namespace abesim {
 namespace {
-using RiegeliBytesSink = riegeli::FdWriter<>;
-constexpr int kWriteFlag = O_CREAT | O_WRONLY;
 
 constexpr char kConfigPath[] =
     "agent_based_epidemic_sim/applications/risk_learning/"
@@ -80,8 +77,7 @@ TEST(SimulationTest, RunsSimulation) {
   config.add_location_file(
       absl::StrCat(getenv("TEST_TMPDIR"), "/", "locations"));
   {
-    riegeli::RecordWriter<RiegeliBytesSink> writer(
-        std::forward_as_tuple(config.location_file(0), kWriteFlag));
+    auto writer = MakeRecordWriter(config.location_file(0));
     for (const LocationProto& location : locations) {
       writer.WriteRecord(location);
     }
@@ -98,8 +94,7 @@ TEST(SimulationTest, RunsSimulation) {
   }
   config.add_agent_file(absl::StrCat(getenv("TEST_TMPDIR"), "/", "agents"));
   {
-    riegeli::RecordWriter<RiegeliBytesSink> writer(
-        std::forward_as_tuple(config.agent_file(0), kWriteFlag));
+    auto writer = MakeRecordWriter(config.agent_file(0));
     for (const AgentProto& agent : agents) {
       writer.WriteRecord(agent);
     }

@@ -72,12 +72,11 @@ cc_library(
         "//agent_based_epidemic_sim/core:transmission_model",
         "//agent_based_epidemic_sim/core:visit_generator",
         "//agent_based_epidemic_sim/port:time_proto_util",
+        "//agent_based_epidemic_sim/util:records",
         "@com_google_absl//absl/container:fixed_array",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
-        "@com_google_riegeli//riegeli/bytes:fd_reader",
-        "@com_google_riegeli//riegeli/records:record_reader",
     ],
 )
 
@@ -110,13 +109,12 @@ cc_test(
         "//agent_based_epidemic_sim/core:risk_score",
         "//agent_based_epidemic_sim/port:file_utils",
         "//agent_based_epidemic_sim/port:status_matchers",
+        "//agent_based_epidemic_sim/util:records",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
         "@com_google_googletest//:gtest_main",
-        "@com_google_riegeli//riegeli/bytes:fd_writer",
-        "@com_google_riegeli//riegeli/records:record_writer",
     ],
 )
 

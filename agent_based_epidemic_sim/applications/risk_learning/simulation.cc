@@ -44,14 +44,10 @@
 #include "agent_based_epidemic_sim/core/transmission_model.h"
 #include "agent_based_epidemic_sim/core/visit_generator.h"
 #include "agent_based_epidemic_sim/port/time_proto_util.h"
-#include "riegeli/bytes/fd_reader.h"
-#include "riegeli/records/record_reader.h"
+#include "agent_based_epidemic_sim/util/records.h"
 
 namespace abesim {
 namespace {
-
-using RiegeliBytesSource = riegeli::FdReader<>;
-constexpr int kReadFlag = O_RDONLY;
 
 struct PopulationProfileData {
   const PopulationProfile* profile;
@@ -117,8 +113,7 @@ absl::Status RunSimulation(const RiskLearningSimulationConfig& config,
   std::vector<std::unique_ptr<Location>> locations;
   std::vector<std::pair<int64, int64>> edges;
   for (const std::string& location_file : config.location_file()) {
-    riegeli::RecordReader<RiegeliBytesSource> reader(
-        std::forward_as_tuple(location_file, kReadFlag));
+    auto reader = MakeRecordReader(location_file);
     LocationProto proto;
     while (reader.ReadRecord(proto)) {
       location_types[proto.reference().uuid()] = proto.reference().type();
@@ -158,8 +153,7 @@ absl::Status RunSimulation(const RiskLearningSimulationConfig& config,
   // Read in agents.
   std::vector<std::unique_ptr<Agent>> agents;
   for (const std::string& agent_file : config.agent_file()) {
-    riegeli::RecordReader<RiegeliBytesSource> reader(
-        std::forward_as_tuple(agent_file, kReadFlag));
+    auto reader = MakeRecordReader(agent_file);
     AgentProto proto;
     while (reader.ReadRecord(proto)) {
       auto profile_iter = profile_data.find(proto.population_profile_id());
