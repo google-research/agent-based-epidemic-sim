@@ -119,12 +119,12 @@
 #include <type_traits>
 
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "agent_based_epidemic_sim/port/deps/source_location.h"
 #include "agent_based_epidemic_sim/port/deps/status_builder.h"
 #include "agent_based_epidemic_sim/port/deps/status_macros.h"
-#include "agent_based_epidemic_sim/port/deps/statusor.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -136,7 +136,7 @@ inline const absl::Status& GetStatus(const absl::Status& status) {
 }
 
 template <typename T>
-inline const absl::Status& GetStatus(const ::abesim::StatusOr<T>& status) {
+inline const absl::Status& GetStatus(const absl::StatusOr<T>& status) {
   return status.status();
 }
 
@@ -149,8 +149,8 @@ template <typename StatusOrType>
 class IsOkAndHoldsMatcherImpl
     : public ::testing::MatcherInterface<StatusOrType> {
  public:
-  typedef typename std::remove_reference<StatusOrType>::type::element_type
-      value_type;
+  typedef
+      typename std::remove_reference<StatusOrType>::type::value_type value_type;
 
   template <typename InnerMatcher>
   explicit IsOkAndHoldsMatcherImpl(InnerMatcher&& inner_matcher)
@@ -176,13 +176,13 @@ class IsOkAndHoldsMatcherImpl
     }
 
     ::testing::StringMatchResultListener inner_listener;
-    const bool matches = inner_matcher_.MatchAndExplain(
-        actual_value.ValueOrDie(), &inner_listener);
+    const bool matches =
+        inner_matcher_.MatchAndExplain(actual_value.value(), &inner_listener);
     const std::string inner_explanation = inner_listener.str();
     if (inner_explanation != "") {
       *result_listener << "which contains value "
-                       << ::testing::PrintToString(actual_value.ValueOrDie())
-                       << ", " << inner_explanation;
+                       << ::testing::PrintToString(actual_value.value()) << ", "
+                       << inner_explanation;
     }
     return matches;
   }

@@ -18,10 +18,10 @@
 #define AGENT_BASED_EPIDEMIC_SIM_APPLICATIONS_HOME_WORK_RISK_SCORE_H_
 
 #include "absl/random/random.h"
+#include "absl/status/statusor.h"
 #include "agent_based_epidemic_sim/applications/home_work/config.pb.h"
 #include "agent_based_epidemic_sim/core/location_type.h"
 #include "agent_based_epidemic_sim/core/risk_score.h"
-#include "agent_based_epidemic_sim/port/statusor.h"
 
 namespace abesim {
 
@@ -37,7 +37,7 @@ class ToggleRiskScoreGenerator : public RiskScoreGenerator {
   std::unique_ptr<RiskScore> GetRiskScore(float essentialness) const;
 
  private:
-  friend StatusOr<std::unique_ptr<ToggleRiskScoreGenerator>>
+  friend absl::StatusOr<std::unique_ptr<ToggleRiskScoreGenerator>>
   NewRiskScoreGenerator(const DistancingPolicy& config,
                         LocationTypeFn location_type);
 
@@ -56,7 +56,7 @@ class ToggleRiskScoreGenerator : public RiskScoreGenerator {
   const LocationTypeFn location_type_;
 };
 
-StatusOr<std::unique_ptr<ToggleRiskScoreGenerator>> NewRiskScoreGenerator(
+absl::StatusOr<std::unique_ptr<ToggleRiskScoreGenerator>> NewRiskScoreGenerator(
     const DistancingPolicy& config, LocationTypeFn location_type);
 
 }  // namespace abesim

@@ -136,7 +136,7 @@
     (void)_; /* error_expression is allowed to not use this variable */     \
     return (error_expression);                                              \
   }                                                                         \
-  lhs = std::move(statusor).ValueOrDie()
+  lhs = std::move(statusor).value()
 
 // Internal helper for concatenating macro values.
 #define PANDEMIC_STATUS_MACROS_IMPL_CONCAT_INNER_(x, y) x##y

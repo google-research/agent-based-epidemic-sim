@@ -63,14 +63,6 @@ cc_library(
 )
 
 cc_library(
-    name = "statusor",
-    hdrs = ["statusor.h"],
-    deps = [
-        "//agent_based_epidemic_sim/port/deps:status",
-    ],
-)
-
-cc_library(
     name = "time_proto_util",
     hdrs = ["time_proto_util.h"],
     deps = [

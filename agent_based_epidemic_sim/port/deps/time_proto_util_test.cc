@@ -35,14 +35,14 @@ google::protobuf::Duration MakeGoogleApiDuration(int64 s, int32 ns) {
 
 // Returns the max absl::Duration that can be represented as
 // google::protobuf::Duration. Same as
-// DecodeGoogleApiProto(MakeGoogleApiDurationProtoMax()).ValueOrDie().
+// DecodeGoogleApiProto(MakeGoogleApiDurationProtoMax()).value().
 inline absl::Duration MakeGoogleApiDurationMax() {
   return absl::Seconds(315576000000) + absl::Nanoseconds(999999999);
 }
 
 // Returns the min absl::Duration that can be represented as
 // google::protobuf::Duration. Same as
-// DecodeGoogleApiProto(MakeGoogleApiDurationProtoMin()).ValueOrDie().
+// DecodeGoogleApiProto(MakeGoogleApiDurationProtoMin()).value().
 inline absl::Duration MakeGoogleApiDurationMin() {
   return absl::Seconds(-315576000000) + absl::Nanoseconds(-999999999);
 }
@@ -72,7 +72,7 @@ inline absl::Time MakeGoogleApiTimeMax() {
 
 // Returns the min absl::Time that can be represented as
 // google::protobuf::Timestamp. Same as
-// DecodeGoogleApiProto(MakeGoogleApiTimestampProtoMin()).ValueOrDie().
+// DecodeGoogleApiProto(MakeGoogleApiTimestampProtoMin()).value().
 inline absl::Time MakeGoogleApiTimeMin() {
   return absl::UnixEpoch() + absl::Seconds(-62135596800);
 }
@@ -94,7 +94,7 @@ void RoundTripGoogleApi(T v, int64 expected_sec, int32 expected_nsec) {
   // auto status = EncodeGoogleApiProto(v,
   // const auto sor_proto = EncodeGoogleApiProto(v);
   // ASSERT_OK(sor_proto);
-  // const auto& proto = sor_proto.ValueOrDie();
+  // const auto& proto = sor_proto.value();
   // EXPECT_EQ(proto.seconds(), expected_sec);
   // EXPECT_EQ(proto.nanos(), expected_nsec);
 
@@ -108,7 +108,7 @@ void RoundTripGoogleApi(T v, int64 expected_sec, int32 expected_nsec) {
   // Complete the round-trip by decoding the proto back to a absl::Duration.
   const auto sor_duration = DecodeGoogleApiProto(out_proto);
   PANDEMIC_ASSERT_OK(sor_duration);
-  const auto& duration = sor_duration.ValueOrDie();
+  const auto& duration = sor_duration.value();
   EXPECT_EQ(duration, v);
 }
 
@@ -127,7 +127,7 @@ void RoundTripGoogleApi(T v, int64 expected_sec, int32 expected_nsec) {
 //   // Complete the round-trip by decoding the proto back to a absl::Timestamp.
 //   const auto sor_timestamp = DecodeGoogleApiProto(proto);
 //   PANDEMIC_ASSERT_OK(sor_timestamp);
-//   const auto& timestamp = sor_timestamp.ValueOrDie();
+//   const auto& timestamp = sor_timestamp.value();
 //   EXPECT_EQ(timestamp, v);
 // }
 

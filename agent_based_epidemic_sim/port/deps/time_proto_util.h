@@ -18,8 +18,8 @@
 #define AGENT_BASED_EPIDEMIC_SIM_PORT_DEPS_TIME_PROTO_UTIL_H_
 
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/time/time.h"
-#include "agent_based_epidemic_sim/port/deps/statusor.h"
 #include "google/protobuf/duration.pb.h"
 #include "google/protobuf/timestamp.pb.h"
 
@@ -54,13 +54,13 @@ absl::Status EncodeGoogleApiProto(absl::Time t,
 // Decodes the given protobuf and returns an absl::Time, or returns an error
 // status if the argument is invalid according to
 // (broken link)
-StatusOr<absl::Time> DecodeGoogleApiProto(
+absl::StatusOr<absl::Time> DecodeGoogleApiProto(
     const google::protobuf::Timestamp& proto);
 
 // Decodes the given protobuf and returns an absl::Duration, or returns an error
 // status if the argument is invalid according to
 // (broken link)
-StatusOr<absl::Duration> DecodeGoogleApiProto(
+absl::StatusOr<absl::Duration> DecodeGoogleApiProto(
     const google::protobuf::Duration& proto);
 
 }  // namespace abesim

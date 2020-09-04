@@ -15,10 +15,10 @@
 #include "agent_based_epidemic_sim/port/deps/time_proto_util.h"
 
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/time/time.h"
 #include "agent_based_epidemic_sim/core/integral_types.h"
-#include "agent_based_epidemic_sim/port/deps/statusor.h"
 #include "google/protobuf/timestamp.pb.h"
 
 namespace abesim {
@@ -81,14 +81,14 @@ absl::Status EncodeGoogleApiProto(absl::Time t,
   return Validate(*proto);
 }
 
-StatusOr<absl::Duration> DecodeGoogleApiProto(
+absl::StatusOr<absl::Duration> DecodeGoogleApiProto(
     const google::protobuf::Duration& proto) {
   absl::Status status = Validate(proto);
   if (!status.ok()) return status;
   return absl::Seconds(proto.seconds()) + absl::Nanoseconds(proto.nanos());
 }
 
-StatusOr<absl::Time> DecodeGoogleApiProto(
+absl::StatusOr<absl::Time> DecodeGoogleApiProto(
     const google::protobuf::Timestamp& proto) {
   absl::Status status = Validate(proto);
   if (!status.ok()) return status;

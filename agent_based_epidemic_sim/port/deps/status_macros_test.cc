@@ -19,10 +19,10 @@
 
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "agent_based_epidemic_sim/port/deps/source_location.h"
 #include "agent_based_epidemic_sim/port/deps/status_builder.h"
-#include "agent_based_epidemic_sim/port/deps/statusor.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -47,13 +47,13 @@ abesim::StatusBuilder ReturnErrorBuilder(absl::string_view msg) {
                                PANDEMIC_LOC);
 }
 
-abesim::StatusOr<int> ReturnStatusOrValue(int v) { return v; }
+absl::StatusOr<int> ReturnStatusOrValue(int v) { return v; }
 
-abesim::StatusOr<int> ReturnStatusOrError(absl::string_view msg) {
+absl::StatusOr<int> ReturnStatusOrError(absl::string_view msg) {
   return absl::Status(absl::StatusCode::kUnknown, msg);
 }
 
-abesim::StatusOr<std::unique_ptr<int>> ReturnStatusOrPtrValue(int v) {
+absl::StatusOr<std::unique_ptr<int>> ReturnStatusOrPtrValue(int v) {
   return absl::make_unique<int>(v);
 }
 

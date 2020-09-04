@@ -18,10 +18,10 @@
 #include <vector>
 
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "agent_based_epidemic_sim/port/deps/source_location.h"
 #include "agent_based_epidemic_sim/port/deps/status_matchers.h"
-#include "agent_based_epidemic_sim/port/deps/statusor.h"
 #include "agent_based_epidemic_sim/port/deps/test_payload.pb.h"
 #include "gmock/gmock.h"
 #include "google/protobuf/descriptor.h"
@@ -44,7 +44,7 @@ const SourceLocation kLoc = PANDEMIC_LOC;
 
 // Converts a StatusBuilder to a StatusOr<T>.
 template <typename T>
-StatusOr<T> ToStatusOr(const StatusBuilder& s) {
+absl::StatusOr<T> ToStatusOr(const StatusBuilder& s) {
   return s;
 }
 

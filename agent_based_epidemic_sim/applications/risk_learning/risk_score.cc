@@ -146,7 +146,7 @@ class LearningRiskScore : public RiskScore {
 
 }  // namespace
 
-StatusOr<std::unique_ptr<RiskScore>> CreateLearningRiskScore(
+absl::StatusOr<std::unique_ptr<RiskScore>> CreateLearningRiskScore(
     const TracingPolicyProto& proto, LocationTypeFn location_type) {
   LearningRiskScoreConfig config;
   auto test_validity_duration_or =

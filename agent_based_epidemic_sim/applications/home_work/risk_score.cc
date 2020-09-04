@@ -122,7 +122,7 @@ ToggleRiskScoreGenerator::ToggleRiskScoreGenerator(LocationTypeFn location_type,
                                                    std::vector<Tier> tiers)
     : tiers_(std::move(tiers)), location_type_(std::move(location_type)) {}
 
-StatusOr<std::unique_ptr<ToggleRiskScoreGenerator>> NewRiskScoreGenerator(
+absl::StatusOr<std::unique_ptr<ToggleRiskScoreGenerator>> NewRiskScoreGenerator(
     const DistancingPolicy& config, LocationTypeFn location_type) {
   struct DistancingStage {
     absl::Time start_time;

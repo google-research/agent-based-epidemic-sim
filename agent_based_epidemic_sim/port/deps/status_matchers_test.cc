@@ -15,8 +15,8 @@
 #include "agent_based_epidemic_sim/port/deps/status_matchers.h"
 
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "agent_based_epidemic_sim/port/deps/status_macros.h"
-#include "agent_based_epidemic_sim/port/deps/statusor.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -32,9 +32,9 @@ absl::Status AbortedStatus() {
   return absl::Status(absl::StatusCode::kAborted, "aborted");
 }
 
-abesim::StatusOr<int> OkStatusOr(int n) { return n; }
+absl::StatusOr<int> OkStatusOr(int n) { return n; }
 
-abesim::StatusOr<int> AbortedStatusOr() { return AbortedStatus(); }
+absl::StatusOr<int> AbortedStatusOr() { return AbortedStatus(); }
 
 TEST(StatusMatcher, Macros) {
   PANDEMIC_EXPECT_OK(OkStatus());

@@ -26,9 +26,9 @@ cc_library(
         "//agent_based_epidemic_sim/core:location_type",
         "//agent_based_epidemic_sim/core:pandemic_cc_proto",
         "//agent_based_epidemic_sim/core:risk_score",
-        "//agent_based_epidemic_sim/port:statusor",
         "//agent_based_epidemic_sim/port:time_proto_util",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/time",
     ],
 )
