@@ -83,10 +83,7 @@ SmallWorldGraph::GenerateWattsStrogatzGraph(int n, int k, float p) {
     for (int v = u + 1; v <= u + k / 2; ++v) {
       ws->AddEdge(u, v % n);
     }
-    // Add k/2 edges to the left for node 'u'.
-    for (int v = u - 1; v < u - 1 - k / 2; --v) {
-      ws->AddEdge(u, v % n);
-    }
+    // Edges to k/2 left neighbors will be added when u assumes those indices.
   }
 
   // 3. Rewire an edge with probability 'p'.
