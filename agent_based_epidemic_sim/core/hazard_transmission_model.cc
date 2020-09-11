@@ -39,6 +39,11 @@ HealthTransition HazardTransmissionModel::GetInfectionOutcome(
   absl::Time latest_exposure_time = absl::InfinitePast();
   float sum_dose = 0;
   for (const Exposure* exposure : exposures) {
+    if (exposure->infectivity == 0 || exposure->symptom_factor == 0 ||
+        exposure->location_transmissibility == 0 ||
+        exposure->susceptibility == 0) {
+      continue;
+    }
     latest_exposure_time = std::max(latest_exposure_time,
                                     exposure->start_time + exposure->duration);
     for (const float& proximity : exposure->proximity_trace.values) {

@@ -17,17 +17,24 @@
 #ifndef AGENT_BASED_EPIDEMIC_SIM_APPLICATIONS_RISK_LEARNING_SIMULATION_H_
 #define AGENT_BASED_EPIDEMIC_SIM_APPLICATIONS_RISK_LEARNING_SIMULATION_H_
 
+#include <memory>
+
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "agent_based_epidemic_sim/applications/risk_learning/config.pb.h"
 #include "agent_based_epidemic_sim/core/location_type.h"
 #include "agent_based_epidemic_sim/core/risk_score.h"
+#include "agent_based_epidemic_sim/core/simulation.h"
 
 namespace abesim {
 
 // Runs a home-work-home simulation from config.
 absl::Status RunSimulation(const RiskLearningSimulationConfig& config,
                            int num_workers);
+
+absl::StatusOr<std::unique_ptr<Simulation>> BuildSimulation(
+    const RiskLearningSimulationConfig& config, int num_workers);
 
 }  // namespace abesim
 

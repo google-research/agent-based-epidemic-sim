@@ -1,5 +1,9 @@
 # Libraries for contact tracing simulation.
 
+package(default_visibility = [
+    "//agent_based_epidemic_sim:internal",
+])
+
 licenses(["notice"])
 
 proto_library(
@@ -58,6 +62,7 @@ cc_library(
         "//agent_based_epidemic_sim/agent_synthesis:population_profile_cc_proto",
         "//agent_based_epidemic_sim/core:agent",
         "//agent_based_epidemic_sim/core:duration_specified_visit_generator",
+        "//agent_based_epidemic_sim/core:event",
         "//agent_based_epidemic_sim/core:graph_location",
         "//agent_based_epidemic_sim/core:hazard_transmission_model",
         "//agent_based_epidemic_sim/core:location_type",
@@ -75,7 +80,9 @@ cc_library(
         "//agent_based_epidemic_sim/util:records",
         "@com_google_absl//absl/container:fixed_array",
         "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ],
 )

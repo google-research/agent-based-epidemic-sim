@@ -22,6 +22,7 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/memory/memory.h"
 #include "absl/synchronization/mutex.h"
+#include "absl/time/clock.h"
 #include "absl/types/span.h"
 #include "agent_based_epidemic_sim/core/broker.h"
 #include "agent_based_epidemic_sim/core/event.h"
@@ -35,16 +36,16 @@ namespace abesim {
 
 namespace {
 
-const int kWorkChunkSize = 128;
-const int kPerThreadBrokerBuffer = 256;
+const int kWorkChunkSize = 4096;
+const int kPerThreadBrokerBuffer = kWorkChunkSize * 8;
 
 auto CompareUuid = [](const auto& a, const auto& b) {
   return a->uuid() < b->uuid();
 };
 
-int GetDestId(const Visit& visit) { return visit.location_uuid; }
-int GetDestId(const InfectionOutcome& outcome) { return outcome.agent_uuid; }
-int GetDestId(const ContactReport& report) { return report.to_agent_uuid; }
+int64 GetDestId(const Visit& visit) { return visit.location_uuid; }
+int64 GetDestId(const InfectionOutcome& outcome) { return outcome.agent_uuid; }
+int64 GetDestId(const ContactReport& report) { return report.to_agent_uuid; }
 
 bool CompareDestId(const Visit& a, const Visit& b) {
   if (a.location_uuid != b.location_uuid) {
@@ -78,7 +79,8 @@ template <typename Msg>
 std::pair<absl::Span<const Msg>, absl::Span<Msg>> SplitMessages(
     int64 uuid, absl::Span<Msg> messages) {
   DCHECK(messages.empty() || GetDestId(messages[0]) >= uuid)
-      << "Message found for non-local entity.";
+      << "Message found for non-local entity: " << GetDestId(messages[0])
+      << " msg: " << messages[0];
   int idx = 0;
   for (; idx < messages.size() && GetDestId(messages[idx]) == uuid; ++idx) {
   }
@@ -99,6 +101,9 @@ class BaseSimulation : public Simulation {
   void Step(const int steps, absl::Duration step_duration) final {
     Timestep timestep(time_, step_duration);
     for (int step = 0; step < steps; ++step) {
+      VLOG(1) << "Running step (" << timestep.start_time() << ", "
+              << timestep.end_time() << ")";
+      auto agent_start = absl::Now();
       RunAgentPhase(
           timestep,
           [&timestep](const absl::Span<const std::unique_ptr<Agent>> agents,
@@ -125,6 +130,8 @@ class BaseSimulation : public Simulation {
             DCHECK(outcomes.empty()) << "Unprocessed InfectionOutcomes";
             DCHECK(reports.empty()) << "Unprocessed ContactReports";
           });
+      VLOG(1) << "Agent phase took " << absl::Now() - agent_start;
+      auto location_start = absl::Now();
       RunLocationPhase(
           timestep,
           [](const absl::Span<const std::unique_ptr<Location>> locations,
@@ -139,6 +146,7 @@ class BaseSimulation : public Simulation {
               location->ProcessVisits(location_visits, broker);
             }
           });
+      VLOG(1) << "Location phase took " << absl::Now() - location_start;
       observer_manager_.AggregateForTimestep(timestep);
       timestep.Advance();
     }
@@ -261,7 +269,8 @@ class Chunker {
 
   template <typename Msg>
   int Chunk(const Msg& msg) const {
-    auto iter = chunk_map_.find(GetDestId(msg));
+    int64 dest = GetDestId(msg);
+    auto iter = chunk_map_.find(dest);
     DCHECK(iter != chunk_map_.end());
     return iter->second;
   }
@@ -306,7 +315,8 @@ class WorkQueueBroker : public Broker<Msg> {
   void Send(const absl::Span<const Msg> msgs) override {
     absl::MutexLock l(&mu_);
     for (const Msg& msg : msgs) {
-      send_[chunker_.Chunk(msg)].push_back(msg);
+      int chunk = chunker_.Chunk(msg);
+      send_[chunk].push_back(msg);
     }
     sent_msgs_ = true;
   }
@@ -363,8 +373,11 @@ void ParallelAgentPhase(const Timestep& timestep, Executor& executor,
           my_outcomes = absl::MakeSpan(outcomes[chunk]);
           my_reports = absl::MakeSpan(reports[chunk]);
         }
+        auto start = absl::Now();
         fn(my_agents, my_outcomes, my_reports, observers[w],
            worker.visit_broker.get(), worker.report_broker.get());
+        VLOG(2) << "Processed agent chunk on worker " << w << " in "
+                << absl::Now() - start;
       }
       worker.visit_broker->Flush();
       worker.report_broker->Flush();
