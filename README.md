@@ -69,6 +69,18 @@ different contact tracing strategies, including digital complements to contact
 tracing, on the spread of disease. Work on this application is ongoing and it is
 not yet ready to run.
 
+## Configuration Generator
+
+There is a configuration generator which pulls data from the
+[COVID-19 Open Data repository][3] to seed the simulations with empirical data
+for a given time and location. For example, to generate a config file for the
+home-work application using the known number of infections, recovered and
+deceased persons from Spain on May 1, run the following command:
+```shell
+python3 agent_based_epidemic_sim/configuration_generator/config.py \
+  --region-code ES --date 2020-05-01 --sim home_work config.pbtxt
+```
+
 ## Tests
 
 ### Native build (Linux)
@@ -86,6 +98,13 @@ docker run -t --rm \
   $USER/abesim bazel test agent_based_epidemic_sim/...
 ```
 
+### Configuration Generator
+The tests must be run from within the `configuration_generator` folder:
+```shell
+cd agent_based_epidemic_sim/configuration_generator
+python3 -m unittest
+```
+
 ## Acknowledgements
 
 The computational model used by the simulator is inspired in part by the
@@ -94,3 +113,4 @@ The computational model used by the simulator is inspired in part by the
 
 [1]: http://charm.cs.uiuc.edu/research/episim
 [2]: https://github.com/BDI-pathogens/OpenABM-Covid19
+[3]: https://github.com/GoogleCloudPlatform/covid-19-open-data
