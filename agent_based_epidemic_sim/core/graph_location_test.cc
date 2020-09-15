@@ -47,14 +47,17 @@ class FakeExposureGenerator : public ExposureGenerator {
 
 static constexpr int kLocationUUID = 1;
 
-Visit GenerateVisit(int64 agent, HealthState::State health_state) {
+Visit GenerateVisit(int64 agent, HealthState::State health_state,
+                    int random_location_edges = 1) {
   return {
       .location_uuid = kLocationUUID,
       .agent_uuid = agent,
       .health_state = health_state,
       .infectivity = (health_state == HealthState::INFECTIOUS) ? 1.0f : 0.0f,
       .symptom_factor = (health_state == HealthState::INFECTIOUS) ? 1.0f : 0.0f,
-  };
+      .location_dynamics{
+          .random_location_edges = random_location_edges,
+      }};
 }
 InfectionOutcome ExpectedOutcome(int64 agent, int64 source, float infectivity) {
   return {
@@ -113,6 +116,70 @@ TEST(GraphLocationTest, AllSamplesDropped) {
       },
       &broker);
   EXPECT_TRUE(broker.visits().empty());
+}
+
+TEST(AgentUuidsFromRandomLocationVisits, Basic) {
+  std::vector<int64> agent_uuids;
+  internal::AgentUuidsFromRandomLocationVisits(
+      {
+          GenerateVisit(0, HealthState::SUSCEPTIBLE, 2),
+          GenerateVisit(1, HealthState::SUSCEPTIBLE, 3),
+          GenerateVisit(2, HealthState::INFECTIOUS, 1),
+          // Note: agent 3 does not make a visit.
+          GenerateVisit(4, HealthState::SUSCEPTIBLE, 4),
+          GenerateVisit(5, HealthState::INFECTIOUS, 2),
+      },
+      agent_uuids);
+  EXPECT_THAT(agent_uuids, testing::UnorderedElementsAreArray(
+                               {0, 0, 1, 1, 1, 2, 4, 4, 4, 4, 5, 5}));
+}
+
+TEST(AgentUuidsFromRandomLocationVisits, ClearsOutputArg) {
+  // Tests that pre-existing values are removed from agent_uuids.
+  std::vector<int64> agent_uuids = {1, 2, 3};
+  internal::AgentUuidsFromRandomLocationVisits(
+      {
+          GenerateVisit(0, HealthState::SUSCEPTIBLE, 2),
+          GenerateVisit(1, HealthState::SUSCEPTIBLE, 3),
+          GenerateVisit(2, HealthState::INFECTIOUS, 1),
+          // Note: agent 3 does not make a visit.
+          GenerateVisit(4, HealthState::SUSCEPTIBLE, 4),
+          GenerateVisit(5, HealthState::INFECTIOUS, 2),
+      },
+      agent_uuids);
+  EXPECT_THAT(agent_uuids, testing::UnorderedElementsAreArray(
+                               {0, 0, 1, 1, 1, 2, 4, 4, 4, 4, 5, 5}));
+}
+
+TEST(ConnectAdjacentNodes, Basic) {
+  std::vector<std::pair<int64, int64>> graph;
+  internal::ConnectAdjacentNodes({1, 2, 3, 4, 5, 6, 7}, graph);
+  EXPECT_THAT(graph, testing::ElementsAreArray({
+                         testing::Pair(1, 2),
+                         testing::Pair(3, 4),
+                         testing::Pair(5, 6),
+                     }));
+}
+
+TEST(ConnectAdjacentNodes, EdgesAreSortedAndDistinct) {
+  // Tests that the graph's edges are sorted and distinct.
+  std::vector<std::pair<int64, int64>> graph;
+  internal::ConnectAdjacentNodes({2, 1, 3, 1, 3, 4, 1, 2}, graph);
+  EXPECT_THAT(graph, testing::ElementsAreArray({
+                         testing::Pair(1, 2),
+                         testing::Pair(1, 3),
+                         testing::Pair(3, 4),
+                     }));
+}
+
+TEST(ConnectAdjacentNodes, NoSelfEdges) {
+  // Tests that the graph does not include self-edges.
+  std::vector<std::pair<int64, int64>> graph;
+  internal::ConnectAdjacentNodes({1, 1, 2, 3, 3, 4}, graph);
+  EXPECT_THAT(graph, testing::ElementsAreArray({
+                         testing::Pair(1, 2),
+                         testing::Pair(3, 4),
+                     }));
 }
 
 }  // namespace

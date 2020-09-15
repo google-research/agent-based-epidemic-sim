@@ -38,6 +38,9 @@ message PopulationProfile {
   float infectiousness = 5;
   // The duration spent in visits to each location type.
   repeated VisitDuration visit_durations = 6;
+  // Distribution that determines the number of edges assigned to each agent
+  // with this profile when visiting a random location.
+  NegativeBinomialDistribution random_visit_params = 7;
 }
 
 message PopulationProfiles {

@@ -19,13 +19,14 @@
 
 #include <memory>
 
+#include "absl/types/span.h"
 #include "agent_based_epidemic_sim/core/exposure_generator.h"
 #include "agent_based_epidemic_sim/core/integral_types.h"
 #include "agent_based_epidemic_sim/core/location.h"
 
 namespace abesim {
 
-// Create a new location that samples edges from the given graph of possible
+// Creates a new location that samples edges from the given graph of possible
 // agent  connections.  drop_probability indicates the probability that a given
 // connection should be ignored on each ProcessVisits call.
 std::unique_ptr<Location> NewGraphLocation(
@@ -33,6 +34,29 @@ std::unique_ptr<Location> NewGraphLocation(
     std::vector<std::pair<int64, int64>> graph,
     const ExposureGenerator& exposure_generator);
 
+// Creates a new location that dynamically connects visiting agents. On each
+// call to ProcessVisits, samples edges between all agents with visits to the
+// location. The number of edges for each agent is taken from the
+// VisitLocationDynamics of each agents visit message.
+std::unique_ptr<Location> NewRandomGraphLocation(
+    int64 uuid, const ExposureGenerator& exposure_generator);
+
+// Internal namespace exposed for testing.
+
+namespace internal {
+
+// Extracts a list of agent UUIDs from visits. An agent is repeated once for
+// each edge needed by it.
+void AgentUuidsFromRandomLocationVisits(absl::Span<const Visit> visits,
+                                        std::vector<int64>& agent_uuids);
+
+// Constructs a graph by adding edges between adjacent elements of agent_uuids,
+// except where adjacent elements are identical.
+// E.g. given [a, b, a, c, c, c, d] constructs graph with edges [a-b, a-c, c-d].
+void ConnectAdjacentNodes(absl::Span<const int64> agent_uuids,
+                          std::vector<std::pair<int64, int64>>& graph);
+
+}  // namespace internal
 }  // namespace abesim
 
 #endif  // AGENT_BASED_EPIDEMIC_SIM_CORE_GRAPH_LOCATION_H_

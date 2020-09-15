@@ -17,12 +17,14 @@
 #include <fcntl.h>
 
 #include <memory>
+#include <random>
 #include <string>
 #include <vector>
 
 #include "absl/container/fixed_array.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/memory/memory.h"
+#include "absl/random/bit_gen_ref.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
@@ -44,6 +46,7 @@
 #include "agent_based_epidemic_sim/core/simulation.h"
 #include "agent_based_epidemic_sim/core/transition_model.h"
 #include "agent_based_epidemic_sim/core/transmission_model.h"
+#include "agent_based_epidemic_sim/core/visit.h"
 #include "agent_based_epidemic_sim/core/visit_generator.h"
 #include "agent_based_epidemic_sim/port/time_proto_util.h"
 #include "agent_based_epidemic_sim/util/records.h"
@@ -140,6 +143,10 @@ class RiskLearningSimulation : public Simulation {
                                                  *result->micro_generator_));
             break;
           }
+          case LocationProto::kRandom:
+            locations.push_back(NewRandomGraphLocation(
+                proto.reference().uuid(), *result->micro_generator_));
+            break;
           default:
             return absl::InvalidArgumentError(absl::StrCat(
                 "Invalid location ", i, ": ", proto.DebugString()));
@@ -173,6 +180,7 @@ class RiskLearningSimulation : public Simulation {
               absl::StrCat("Invalid population profile id for agent: ",
                            proto.DebugString()));
         }
+        const PopulationProfileData& agent_profile = profile_iter->second;
         // TODO: It is wasteful that we are making a new transition model
         // for each agent.  To fix this we need to make GetNextHealthTransition
         // thread safe.  This is complicated by the fact that
@@ -183,10 +191,10 @@ class RiskLearningSimulation : public Simulation {
         agents.push_back(SEIRAgent::CreateSusceptible(
             proto.uuid(), result->transmission_model_.get(),
             PTTSTransitionModel::CreateFromProto(
-                profile_iter->second.profile->transition_model()),
-            GetVisitGenerator(proto, *profile_iter->second.profile,
+                agent_profile.profile->transition_model()),
+            GetVisitGenerator(proto, *agent_profile.profile,
                               result->visit_gen_cache_),
-            std::move(*risk_score_or)));
+            std::move(*risk_score_or), GenerateVisitDynamics(agent_profile)));
       }
       absl::Status status = reader.status();
       if (!status.ok()) return status;
@@ -209,6 +217,17 @@ class RiskLearningSimulation : public Simulation {
   RiskLearningSimulation()
       : get_location_type_(
             [this](int64 uuid) { return location_types_[uuid]; }) {}
+
+  static VisitLocationDynamics GenerateVisitDynamics(
+      const PopulationProfileData& profile) {
+    auto random_location_edges = std::negative_binomial_distribution<int>(
+        profile.profile->random_visit_params().r(),
+        profile.profile->random_visit_params().p());
+    absl::BitGenRef gen = GetBitGen();
+    return {
+        .random_location_edges = random_location_edges(gen),
+    };
+  }
 
   std::unique_ptr<MicroExposureGenerator> micro_generator_;
   std::unique_ptr<HazardTransmissionModel> transmission_model_;

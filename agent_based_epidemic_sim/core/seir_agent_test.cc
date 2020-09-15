@@ -160,12 +160,12 @@ TEST(SEIRAgentTest, ComputesVisits) {
             .health_state = HealthState::INFECTIOUS,
             .infectivity = kInfectivityArray[1]}};
   EXPECT_CALL(*visit_broker, Send(Eq(expected_visits)));
-  auto agent =
-      SEIRAgent::Create(kUuid,
-                        {.time = absl::FromUnixSeconds(-43200LL),
-                         .health_state = HealthState::EXPOSED},
-                        &transmission_model, std::move(transition_model),
-                        *visit_generator, std::move(risk_score));
+  auto agent = SEIRAgent::Create(
+      kUuid,
+      {.time = absl::FromUnixSeconds(-43200LL),
+       .health_state = HealthState::EXPOSED},
+      &transmission_model, std::move(transition_model), *visit_generator,
+      std::move(risk_score), VisitLocationDynamics());
   agent->ProcessInfectionOutcomes(timestep, {});
   agent->ComputeVisits(timestep, visit_broker.get());
 }
@@ -195,7 +195,7 @@ TEST(SEIRAgentTest, InitializesSusceptibleState) {
   EXPECT_CALL(*visit_broker, Send(Eq(expected_visits)));
   auto agent = SEIRAgent::CreateSusceptible(
       kUuid, &transmission_model, std::move(transition_model), *visit_generator,
-      std::move(risk_score));
+      std::move(risk_score), VisitLocationDynamics());
   agent->ComputeVisits(timestep, visit_broker.get());
 }
 
@@ -227,12 +227,12 @@ TEST(SEIRAgentTest, InitializesNonSusceptibleState) {
             .health_state = HealthState::EXPOSED,
             .infectivity = kInfectivityArray[0]}};
   EXPECT_CALL(*visit_broker, Send(Eq(expected_visits)));
-  auto agent =
-      SEIRAgent::Create(kUuid,
-                        {.time = absl::FromUnixSeconds(-1LL),
-                         .health_state = HealthState::EXPOSED},
-                        &transmission_model, std::move(transition_model),
-                        *visit_generator, std::move(risk_score));
+  auto agent = SEIRAgent::Create(
+      kUuid,
+      {.time = absl::FromUnixSeconds(-1LL),
+       .health_state = HealthState::EXPOSED},
+      &transmission_model, std::move(transition_model), *visit_generator,
+      std::move(risk_score), VisitLocationDynamics());
   agent->ProcessInfectionOutcomes(timestep, {});
   agent->ComputeVisits(timestep, visit_broker.get());
 }
@@ -280,12 +280,12 @@ TEST(SEIRAgentTest, RespectsTimestepBasedDwellTimeAndFiltersZeroIntervals) {
             .infectivity = kInfectivityArray[1]},
   };
   EXPECT_CALL(*visit_broker, Send(Eq(expected_visits)));
-  auto agent =
-      SEIRAgent::Create(kUuid,
-                        {.time = absl::FromUnixSeconds(-1LL),
-                         .health_state = HealthState::EXPOSED},
-                        &transmission_model, std::move(transition_model),
-                        *visit_generator, std::move(risk_score));
+  auto agent = SEIRAgent::Create(
+      kUuid,
+      {.time = absl::FromUnixSeconds(-1LL),
+       .health_state = HealthState::EXPOSED},
+      &transmission_model, std::move(transition_model), *visit_generator,
+      std::move(risk_score), VisitLocationDynamics());
   agent->ProcessInfectionOutcomes(timestep, {});
   agent->ComputeVisits(timestep, visit_broker.get());
 }
@@ -309,7 +309,7 @@ TEST(SEIRAgentTest, ProcessesInfectionOutcomesIgnoresIfAlreadyExposed) {
 
   auto agent = SEIRAgent::CreateSusceptible(
       kUuid, &transmission_model, std::move(transition_model), *visit_generator,
-      std::move(risk_score));
+      std::move(risk_score), VisitLocationDynamics());
 
   const Timestep timestep(absl::UnixEpoch(), absl::Hours(24));
   {
@@ -352,7 +352,7 @@ TEST(SEIRAgentTest, ProcessesInfectionOutcomesRemainsSusceptible) {
           Return(HealthTransition{.health_state = HealthState::SUSCEPTIBLE}));
   auto agent = SEIRAgent::CreateSusceptible(
       kUuid, &transmission_model, std::move(transition_model), *visit_generator,
-      std::move(risk_score));
+      std::move(risk_score), VisitLocationDynamics());
 
   const Timestep timestep(absl::UnixEpoch(), absl::Hours(24));
   std::vector<InfectionOutcome> infection_outcomes{
@@ -378,7 +378,7 @@ TEST(SEIRAgentTest, ProcessesInfectionOutcomesMultipleExposuresSameContact) {
   EXPECT_CALL(transmission_model, GetInfectionOutcome(_)).Times(1);
   auto agent = SEIRAgent::CreateSusceptible(
       kUuid, &transmission_model, std::move(transition_model), *visit_generator,
-      std::move(risk_score));
+      std::move(risk_score), VisitLocationDynamics());
 
   const Timestep timestep(absl::UnixEpoch(), absl::Hours(24));
   std::vector<InfectionOutcome> infection_outcomes{
@@ -406,7 +406,7 @@ TEST(SEIRAgentTest, ProcessInfectionOutcomesRejectsWrongUuid) {
   }};
   auto agent = SEIRAgent::CreateSusceptible(
       kUuid, &transmission_model, std::move(transition_model), *visit_generator,
-      std::move(risk_score));
+      std::move(risk_score), VisitLocationDynamics());
   const Timestep timestep(absl::UnixEpoch(), absl::Hours(24));
   ASSERT_DEBUG_DEATH(
       agent->ProcessInfectionOutcomes(timestep, infection_outcomes), "");
@@ -421,7 +421,7 @@ TEST(SEIRAgentTest, ProcessInfectionOutcomesReturnsNoOpIfNonePresent) {
   const int64 kUuid = 42LL;
   auto agent = SEIRAgent::CreateSusceptible(
       kUuid, &transmission_model, std::move(transition_model), *visit_generator,
-      std::move(risk_score));
+      std::move(risk_score), VisitLocationDynamics());
   const Timestep timestep(absl::UnixEpoch(), absl::Hours(24));
   agent->ProcessInfectionOutcomes(timestep, {});
 }
@@ -492,7 +492,7 @@ TEST(SEIRAgentTest,
 
   auto agent = SEIRAgent::CreateSusceptible(
       kUuid, &transmission_model, std::move(transition_model), *visit_generator,
-      std::move(risk_score));
+      std::move(risk_score), VisitLocationDynamics());
 
   Timestep timestep(absl::UnixEpoch(), absl::Hours(24));
   agent->ProcessInfectionOutcomes(timestep, outcomes);
@@ -542,12 +542,12 @@ TEST(SEIRAgentTest, PositiveTest) {
   EXPECT_CALL(*risk_score, GetTestResult(_)).WillOnce(Return(expected_result));
 
   MockTransmissionModel transmission_model;
-  auto agent =
-      SEIRAgent::Create(kUuid,
-                        {.time = absl::FromUnixSeconds(-1LL),
-                         .health_state = HealthState::INFECTIOUS},
-                        &transmission_model, std::move(transition_model),
-                        *visit_generator, std::move(risk_score));
+  auto agent = SEIRAgent::Create(
+      kUuid,
+      {.time = absl::FromUnixSeconds(-1LL),
+       .health_state = HealthState::INFECTIOUS},
+      &transmission_model, std::move(transition_model), *visit_generator,
+      std::move(risk_score), VisitLocationDynamics());
 
   auto contact_report_broker = absl::make_unique<MockBroker<ContactReport>>();
   const std::vector<ContactReport> expected_contact_reports{
@@ -600,7 +600,7 @@ TEST(SEIRAgentTest, NegativeTestResult) {
 
   auto agent = SEIRAgent::CreateSusceptible(
       kUuid, &transmission_model, std::move(transition_model), *visit_generator,
-      std::move(risk_score));
+      std::move(risk_score), VisitLocationDynamics());
 
   auto contact_report_broker = absl::make_unique<MockBroker<ContactReport>>();
   EXPECT_CALL(*contact_report_broker, Send(testing::_)).Times(0);
@@ -794,9 +794,10 @@ TEST(SEIRAgentTest, SendContactReports) {
         .Times(1);
   }
 
-  auto agent = SEIRAgent::Create(kUuid, initial_transition, &transmission_model,
-                                 std::move(transition_model), *visit_generator,
-                                 std::move(risk_score));
+  auto agent =
+      SEIRAgent::Create(kUuid, initial_transition, &transmission_model,
+                        std::move(transition_model), *visit_generator,
+                        std::move(risk_score), VisitLocationDynamics());
 
   agent->ProcessInfectionOutcomes(timestep1, outcomes1);
   agent->UpdateContactReports(timestep1, {}, contact_report_broker.get());
@@ -827,7 +828,7 @@ TEST(SEIRAgentTest, UpdateContactReportsRejectsWrongUuid) {
       {.from_agent_uuid = kUuid, .to_agent_uuid = kUuid + 1}};
   auto agent = SEIRAgent::CreateSusceptible(
       kUuid, &transmission_model, std::move(transition_model), *visit_generator,
-      std::move(risk_score));
+      std::move(risk_score), VisitLocationDynamics());
   auto broker = absl::make_unique<MockBroker<ContactReport>>();
   Timestep timestep(absl::UnixEpoch(), absl::Hours(24));
   ASSERT_DEBUG_DEATH(

@@ -50,6 +50,12 @@ struct HealthInterval {
 static_assert(absl::is_trivially_copy_constructible<HealthInterval>::value,
               "Event must be trivially copyable.");
 
+// Parameters of an agent's behavior during a visit.
+struct VisitLocationDynamics {
+  // Number of edges to other agents at a random location.
+  int random_location_edges = 0;
+};
+
 // A visit to a given location in time of an agent.
 struct Visit {
   int64 location_uuid;
@@ -59,6 +65,7 @@ struct Visit {
   HealthState::State health_state;
   float infectivity;
   float symptom_factor;
+  VisitLocationDynamics location_dynamics;
 
   friend bool operator==(const Visit& a, const Visit& b) {
     return (a.location_uuid == b.location_uuid &&

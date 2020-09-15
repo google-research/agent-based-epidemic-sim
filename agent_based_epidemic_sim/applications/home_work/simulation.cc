@@ -272,7 +272,8 @@ void RunSimulation(
         transmission_model.get(),
         absl::make_unique<WrappedTransitionModel>(
             transition_models[agent.population_profile_id()].get()),
-        *visit_generators.back(), policy_generator->NextRiskScore()));
+        *visit_generators.back(), policy_generator->NextRiskScore(),
+        VisitLocationDynamics()));
   }
   MicroExposureGeneratorBuilder meg_builder;
   std::vector<std::unique_ptr<Location>> location_des;

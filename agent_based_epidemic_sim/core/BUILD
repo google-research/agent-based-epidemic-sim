@@ -304,8 +304,10 @@ cc_library(
         ":random",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/random",
+        "@com_google_absl//absl/random:bit_gen_ref",
         "@com_google_absl//absl/random:distributions",
         "@com_google_absl//absl/time",
+        "@com_google_absl//absl/types:span",
     ],
 )
 
