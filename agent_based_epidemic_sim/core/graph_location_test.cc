@@ -59,12 +59,14 @@ Visit GenerateVisit(int64 agent, HealthState::State health_state,
           .random_location_edges = random_location_edges,
       }};
 }
-InfectionOutcome ExpectedOutcome(int64 agent, int64 source, float infectivity) {
+InfectionOutcome ExpectedOutcome(int64 agent, int64 source, float infectivity,
+                                 float transmissibility) {
   return {
       .agent_uuid = agent,
       .exposure =
           {
               .infectivity = infectivity,
+              .location_transmissibility = transmissibility,
           },
       .exposure_type = InfectionOutcomeProto::CONTACT,
       .source_uuid = source,
@@ -74,8 +76,8 @@ InfectionOutcome ExpectedOutcome(int64 agent, int64 source, float infectivity) {
 TEST(GraphLocationTest, CompleteSampleGenerated) {
   FakeExposureGenerator generator;
   auto location = NewGraphLocation(
-      kLocationUUID, 0.0, {{0, 2}, {0, 4}, {1, 3}, {1, 5}, {2, 4}, {3, 5}},
-      generator);
+      kLocationUUID, []() { return 0.75; }, 0.0,
+      {{0, 2}, {0, 4}, {1, 3}, {1, 5}, {2, 4}, {3, 5}}, generator);
   FakeBroker broker;
   location->ProcessVisits(
       {
@@ -88,22 +90,22 @@ TEST(GraphLocationTest, CompleteSampleGenerated) {
       },
       &broker);
   EXPECT_THAT(broker.visits(), testing::UnorderedElementsAreArray({
-                                   ExpectedOutcome(0, 2, 1.0),  //
-                                   ExpectedOutcome(2, 0, 0.0),  //
-                                   ExpectedOutcome(0, 4, 0.0),  //
-                                   ExpectedOutcome(4, 0, 0.0),  //
-                                   ExpectedOutcome(1, 5, 1.0),  //
-                                   ExpectedOutcome(5, 1, 0.0),  //
-                                   ExpectedOutcome(2, 4, 0.0),  //
-                                   ExpectedOutcome(4, 2, 1.0),  //
+                                   ExpectedOutcome(0, 2, 1.0, 0.75),  //
+                                   ExpectedOutcome(2, 0, 0.0, 0.75),  //
+                                   ExpectedOutcome(0, 4, 0.0, 0.75),  //
+                                   ExpectedOutcome(4, 0, 0.0, 0.75),  //
+                                   ExpectedOutcome(1, 5, 1.0, 0.75),  //
+                                   ExpectedOutcome(5, 1, 0.0, 0.75),  //
+                                   ExpectedOutcome(2, 4, 0.0, 0.75),  //
+                                   ExpectedOutcome(4, 2, 1.0, 0.75),  //
                                }));
 }
 
 TEST(GraphLocationTest, AllSamplesDropped) {
   FakeExposureGenerator generator;
   auto location = NewGraphLocation(
-      kLocationUUID, 1.0, {{0, 2}, {0, 4}, {1, 3}, {1, 5}, {2, 4}, {3, 5}},
-      generator);
+      kLocationUUID, []() { return 0.75; }, 1.0,
+      {{0, 2}, {0, 4}, {1, 3}, {1, 5}, {2, 4}, {3, 5}}, generator);
   FakeBroker broker;
   location->ProcessVisits(
       {

@@ -29,9 +29,13 @@ namespace abesim {
 // Creates a new location that samples edges from the given graph of possible
 // agent  connections.  drop_probability indicates the probability that a given
 // connection should be ignored on each ProcessVisits call.
+// location_transmissibility is a function that returns the transmissibility
+// factor of this location and should be a floating ponit number between 0
+// and 1.  It is taken as a function because the value may change from one
+// timestep to another.
 std::unique_ptr<Location> NewGraphLocation(
-    int64 uuid, float drop_probability,
-    std::vector<std::pair<int64, int64>> graph,
+    int64 uuid, std::function<float()> location_transmissibility,
+    float drop_probability, std::vector<std::pair<int64, int64>> graph,
     const ExposureGenerator& exposure_generator);
 
 // Creates a new location that dynamically connects visiting agents. On each
@@ -39,7 +43,8 @@ std::unique_ptr<Location> NewGraphLocation(
 // location. The number of edges for each agent is taken from the
 // VisitLocationDynamics of each agents visit message.
 std::unique_ptr<Location> NewRandomGraphLocation(
-    int64 uuid, const ExposureGenerator& exposure_generator);
+    int64 uuid, std::function<float()> location_transmissibility,
+    const ExposureGenerator& exposure_generator);
 
 // Internal namespace exposed for testing.
 

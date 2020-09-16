@@ -103,7 +103,11 @@ const VisitGenerator& GetVisitGenerator(
 class RiskLearningSimulation : public Simulation {
  public:
   void Step(int steps, absl::Duration step_duration) override {
+    current_changepoint_ = (config_.changepoints_size() > current_step_)
+                               ? config_.changepoints(current_step_)
+                               : 1.0f;
     sim_->Step(steps, step_duration);
+    current_step_++;
   }
   void AddObserverFactory(ObserverFactoryBase* factory) override {
     sim_->AddObserverFactory(factory);
@@ -114,7 +118,13 @@ class RiskLearningSimulation : public Simulation {
 
   static absl::StatusOr<std::unique_ptr<Simulation>> Build(
       const RiskLearningSimulationConfig& config, int num_workers) {
-    auto result = absl::WrapUnique(new RiskLearningSimulation);
+    auto result = absl::WrapUnique(new RiskLearningSimulation(config));
+
+    std::function<float()> home_transmissibility = []() -> float {
+      return 1.0;
+    };
+    std::function<float()> work_random_transmissibility =
+        [sim = result.get()]() -> float { return sim->current_changepoint_; };
 
     // TODO: Load these values from config.
     std::vector<ProximityTrace> proximity_traces = {
@@ -131,6 +141,10 @@ class RiskLearningSimulation : public Simulation {
       while (reader.ReadRecord(proto)) {
         result->location_types_[proto.reference().uuid()] =
             proto.reference().type();
+        auto transmissibility =
+            (proto.reference().type() == LocationReference::HOUSEHOLD)
+                ? home_transmissibility
+                : work_random_transmissibility;
         switch (proto.location_case()) {
           case LocationProto::kGraph: {
             std::vector<std::pair<int64, int64>> edges;
@@ -138,14 +152,15 @@ class RiskLearningSimulation : public Simulation {
             for (const GraphLocation::Edge& edge : proto.graph().edges()) {
               edges.push_back({edge.uuid_a(), edge.uuid_b()});
             }
-            locations.push_back(NewGraphLocation(proto.reference().uuid(), 0.0,
-                                                 std::move(edges),
-                                                 *result->micro_generator_));
+            locations.push_back(NewGraphLocation(
+                proto.reference().uuid(), transmissibility, 0.0,
+                std::move(edges), *result->micro_generator_));
             break;
           }
           case LocationProto::kRandom:
             locations.push_back(NewRandomGraphLocation(
-                proto.reference().uuid(), *result->micro_generator_));
+                proto.reference().uuid(), transmissibility,
+                *result->micro_generator_));
             break;
           default:
             return absl::InvalidArgumentError(absl::StrCat(
@@ -214,9 +229,10 @@ class RiskLearningSimulation : public Simulation {
   }
 
  private:
-  RiskLearningSimulation()
-      : get_location_type_(
-            [this](int64 uuid) { return location_types_[uuid]; }) {}
+  RiskLearningSimulation(const RiskLearningSimulationConfig& config)
+      : config_(config), get_location_type_([this](int64 uuid) {
+          return location_types_[uuid];
+        }) {}
 
   static VisitLocationDynamics GenerateVisitDynamics(
       const PopulationProfileData& profile) {
@@ -229,6 +245,7 @@ class RiskLearningSimulation : public Simulation {
     };
   }
 
+  const RiskLearningSimulationConfig config_;
   std::unique_ptr<MicroExposureGenerator> micro_generator_;
   std::unique_ptr<HazardTransmissionModel> transmission_model_;
   absl::flat_hash_map<int64, LocationReference::Type> location_types_;
@@ -240,6 +257,8 @@ class RiskLearningSimulation : public Simulation {
   absl::flat_hash_map<std::string, std::unique_ptr<VisitGenerator>>
       visit_gen_cache_;
   std::unique_ptr<Simulation> sim_;
+  int current_step_ = 0;
+  float current_changepoint_ = 1.0;
 };
 
 absl::StatusOr<std::unique_ptr<Simulation>> BuildSimulation(

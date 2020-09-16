@@ -126,6 +126,7 @@ cc_library(
         ":integral_types",
         ":random",
         ":transmission_model",
+        "//agent_based_epidemic_sim/agent_synthesis:population_profile_cc_proto",
         "//agent_based_epidemic_sim/port:logging",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/random",

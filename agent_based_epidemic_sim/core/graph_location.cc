@@ -35,11 +35,13 @@ namespace {
 
 class GraphLocation : public Location {
  public:
-  GraphLocation(int64 uuid, float drop_probability,
+  GraphLocation(int64 uuid, std::function<float()> location_transmissibility,
+                float drop_probability,
                 std::vector<std::pair<int64, int64>> graph,
                 const ExposureGenerator& exposure_generator)
       : graph_(std::move(graph)),
         uuid_(uuid),
+        location_transmissibility_(std::move(location_transmissibility)),
         drop_probability_(drop_probability),
         exposure_generator_(exposure_generator) {}
 
@@ -82,7 +84,10 @@ class GraphLocation : public Location {
 
       ExposurePair host_exposures =
           exposure_generator_.Generate(host_a, host_b);
-
+      host_exposures.host_a.location_transmissibility =
+          location_transmissibility_();
+      host_exposures.host_b.location_transmissibility =
+          location_transmissibility_();
       infection_broker->Send(
           {{
                .agent_uuid = edge.first,
@@ -106,14 +111,18 @@ class GraphLocation : public Location {
   virtual void MaybeUpdateGraph(absl::Span<const Visit> visits) {}
 
   const int64 uuid_;
+  const std::function<float()> location_transmissibility_;
   const float drop_probability_;
   const ExposureGenerator& exposure_generator_;
 };
 
 class RandomGraphLocation : public GraphLocation {
  public:
-  RandomGraphLocation(int64 uuid, const ExposureGenerator& exposure_generator)
-      : GraphLocation(uuid, /* drop_probability = */ 0.0, /* graph = */ {},
+  RandomGraphLocation(int64 uuid,
+                      std::function<float()> location_transmissibility,
+                      const ExposureGenerator& exposure_generator)
+      : GraphLocation(uuid, std::move(location_transmissibility),
+                      /* drop_probability = */ 0.0, /* graph = */ {},
                       exposure_generator) {}
 
  private:
@@ -166,16 +175,19 @@ void ConnectAdjacentNodes(absl::Span<const int64> agent_uuids,
 }  // namespace internal
 
 std::unique_ptr<Location> NewGraphLocation(
-    int64 uuid, float drop_probability,
-    std::vector<std::pair<int64, int64>> graph,
+    int64 uuid, std::function<float()> location_transmissibility,
+    float drop_probability, std::vector<std::pair<int64, int64>> graph,
     const ExposureGenerator& exposure_generator) {
-  return absl::make_unique<GraphLocation>(uuid, drop_probability,
-                                          std::move(graph), exposure_generator);
+  return absl::make_unique<GraphLocation>(
+      uuid, std::move(location_transmissibility), drop_probability,
+      std::move(graph), exposure_generator);
 }
 
 std::unique_ptr<Location> NewRandomGraphLocation(
-    int64 uuid, const ExposureGenerator& exposure_generator) {
-  return absl::make_unique<RandomGraphLocation>(uuid, exposure_generator);
+    int64 uuid, std::function<float()> location_transmissibility,
+    const ExposureGenerator& exposure_generator) {
+  return absl::make_unique<RandomGraphLocation>(
+      uuid, std::move(location_transmissibility), exposure_generator);
 }
 
 }  // namespace abesim

@@ -49,4 +49,7 @@ message RiskLearningSimulationConfig {
 
   TracingPolicyProto tracing_policy = 100;
   repeated PopulationProfile profiles = 101;
+  // Changepoints are the time varying parameters used to set the infectivity
+  // of work and random locations.
+  repeated float changepoints = 102;
 }
