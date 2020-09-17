@@ -8,6 +8,7 @@ step_size {
 }
 steps: 2
 
+n_seed_infections: 30
 
 tracing_policy {
   test_validity_duration {

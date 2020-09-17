@@ -52,4 +52,6 @@ message RiskLearningSimulationConfig {
   // Changepoints are the time varying parameters used to set the infectivity
   // of work and random locations.
   repeated float changepoints = 102;
+  // Number of infections that exist at the beginning of the simulation.
+  float n_seed_infections = 103;
 }

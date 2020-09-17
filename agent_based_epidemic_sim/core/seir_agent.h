@@ -98,9 +98,12 @@ class SEIRAgent : public Agent {
                                               health_transitions_.size());
   }
 
-  // For use in testing.
   HealthTransition NextHealthTransition() const {
     return next_health_transition_;
+  }
+
+  void SetNextHealthTransition(HealthTransition transition) {
+    next_health_transition_ = transition;
   }
 
  private:

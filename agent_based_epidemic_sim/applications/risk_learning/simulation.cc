@@ -220,6 +220,23 @@ class RiskLearningSimulation : public Simulation {
     if (!time_or.ok()) return time_or.status();
     const auto init_time = time_or.value();
 
+    // Sample initial infections.
+    int infected = 0;
+    absl::BitGenRef gen = GetBitGen();
+    while (infected < config.n_seed_infections()) {
+      size_t idx = absl::Uniform<size_t>(gen, 0, agents.size());
+      SEIRAgent* agent = static_cast<SEIRAgent*>(agents[idx].get());
+      if (agent->NextHealthTransition().health_state !=
+          HealthState::SUSCEPTIBLE) {
+        continue;
+      }
+      infected++;
+      agent->SetNextHealthTransition({
+          .time = init_time,
+          .health_state = HealthState::EXPOSED,
+      });
+    }
+
     result->sim_ = num_workers > 1
                        ? ParallelSimulation(init_time, std::move(agents),
                                             std::move(locations), num_workers)
