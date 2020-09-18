@@ -221,6 +221,10 @@ class RiskLearningSimulation : public Simulation {
     const auto init_time = time_or.value();
 
     // Sample initial infections.
+    if (config.n_seed_infections() > agents.size()) {
+      return absl::InvalidArgumentError(
+          "The number of seed infections is larger than the number of agents.");
+    }
     int infected = 0;
     absl::BitGenRef gen = GetBitGen();
     while (infected < config.n_seed_infections()) {
