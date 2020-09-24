@@ -1,6 +1,7 @@
 absl-py
+dataclasses
 jax
 jaxlib
 numpy
-scipy
 pandas
+scipy
