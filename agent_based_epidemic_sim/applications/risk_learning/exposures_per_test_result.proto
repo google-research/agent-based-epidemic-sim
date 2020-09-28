@@ -61,6 +61,9 @@ message ExposuresPerTestResult {
     google.protobuf.Timestamp test_administered_time = 3;
     google.protobuf.Timestamp test_received_time = 4;
     repeated Exposure exposures = 5;
+    // Users should check if symptom_onset_time is set: it may not be applicable
+    // for asymptomatic agents
+    google.protobuf.Timestamp symptom_onset_time = 6;
   }
   repeated ExposureResult exposure_results = 1;
   // Each member exposure_results will contain exposures that occur between
