@@ -14,53 +14,87 @@
 
 #include "agent_based_epidemic_sim/core/ptts_transition_model.h"
 
+#include <algorithm>
+#include <random>
+
+#include "absl/memory/memory.h"
+#include "absl/meta/type_traits.h"
+#include "absl/random/distributions.h"
 #include "absl/time/time.h"
+#include "agent_based_epidemic_sim/core/enum_indexed_array.h"
 #include "agent_based_epidemic_sim/core/event.h"
+#include "agent_based_epidemic_sim/core/pandemic.pb.h"
+#include "agent_based_epidemic_sim/core/ptts_transition_model.pb.h"
 #include "agent_based_epidemic_sim/core/random.h"
 
 namespace abesim {
-namespace {
 
-PTTSTransitionModel::TransitionProbabilities FromProto(
-    const PTTSTransitionModelProto::TransitionProbabilities& proto) {
-  EnumIndexedArray<float, HealthState::State, HealthState::State_ARRAYSIZE>
-      indexed_transitions{};
-  for (const auto& transition_probability : proto.transition_probability()) {
-    indexed_transitions[transition_probability.health_state()] =
-        transition_probability.transition_probability();
+PTTSTransitionModel::PTTSTransitionModel(std::vector<Edge> edges)
+    : edges_(std::move(edges)) {
+  std::sort(edges_.begin(), edges_.end(), [](const Edge& a, const Edge& b) {
+    if (a.src != b.src) return a.src < b.src;
+    return a.weight < b.weight;
+  });
+  // Normalize the edge weights.
+  EnumIndexedArray<float, HealthState::State, HealthState::State_ARRAYSIZE> w{};
+  for (const Edge& e : edges_) {
+    DCHECK_GT(e.weight, 0.0) << "Zero weight edge in PTTSTransition model.";
+    w[e.src] += e.weight;
   }
-  return {.transitions = absl::discrete_distribution<int>(
-              indexed_transitions.begin(), indexed_transitions.end()),
-          .rate = proto.rate()};
+  for (Edge& e : edges_) {
+    e.weight /= w[e.src];
+  }
 }
-}  // namespace
 
 /* static */
 std::unique_ptr<TransitionModel> PTTSTransitionModel::CreateFromProto(
     const PTTSTransitionModelProto& proto) {
-  PTTSTransitionModel::StateTransitionDiagram state_transition_diagram;
+  std::vector<Edge> edges;
 
-  for (const auto& transition_probabilities :
+  for (const PTTSTransitionModelProto::TransitionProbabilities& src :
        proto.state_transition_diagram()) {
-    state_transition_diagram[transition_probabilities.health_state()] =
-        FromProto(transition_probabilities);
+    for (const PTTSTransitionModelProto::TransitionProbability& dst :
+         src.transition_probability()) {
+      const float b = dst.sd_days_to_transition() *
+                      dst.sd_days_to_transition() /
+                      dst.mean_days_to_transition();
+      const float a = dst.mean_days_to_transition() / b;
+      edges.push_back({.src = src.health_state(),
+                       .dst = dst.health_state(),
+                       .weight = dst.transition_probability(),
+                       .days = std::gamma_distribution<float>(a, b)});
+    }
   }
-  return absl::make_unique<PTTSTransitionModel>(state_transition_diagram);
+  return absl::WrapUnique(new PTTSTransitionModel(std::move(edges)));
 }
 
 HealthTransition PTTSTransitionModel::GetNextHealthTransition(
     const HealthTransition& latest_transition) {
   absl::BitGenRef gen = GetBitGen();
-  absl::Duration dwell_time = absl::Hours(
-      24 *
-      absl::Exponential(
-          gen, state_transition_diagram_[latest_transition.health_state].rate));
-  HealthTransition next_transition;
-  next_transition.health_state = HealthState::State(
-      state_transition_diagram_[latest_transition.health_state].transitions(
-          gen));
-  next_transition.time = latest_transition.time + dwell_time;
-  return next_transition;
+  auto edge = std::lower_bound(
+      edges_.begin(), edges_.end(), latest_transition.health_state,
+      [](const Edge& e, const HealthState::State& s) { return e.src < s; });
+  if (edge == edges_.end() || edge->src != latest_transition.health_state) {
+    // There is no transition out of the current state, so we will return a
+    // self transition that occurs in the infinite future.
+    return {
+        .time = absl::InfiniteFuture(),
+        .health_state = latest_transition.health_state,
+    };
+  }
+  // The maximum number of edges out of any state is 3, so a linear search here
+  // is fine, especially since we put the highest weight edges first.
+  float s = absl::Uniform(gen, 0.0, 1.0);
+  while (true) {
+    s -= edge->weight;
+    if (s <= 0.0) break;
+    edge++;
+  }
+
+  return {
+      .time = latest_transition.time + absl::Hours(24 * edge->days(gen)),
+      .health_state = edge->dst,
+  };
 }
 
 }  // namespace abesim

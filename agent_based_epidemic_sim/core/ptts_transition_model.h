@@ -42,23 +42,8 @@ namespace abesim {
 // Thread safety is the responsibility of callers.
 class PTTSTransitionModel : public TransitionModel {
  public:
-  struct TransitionProbabilities {
-    // The transition probabilities for the next states.
-    absl::discrete_distribution<int> transitions;
-    // The rate parameter of the exponential distribution modeling dwell time in
-    // the current state.
-    float rate = 0.0f;
-  };
-  using StateTransitionDiagram =
-      EnumIndexedArray<TransitionProbabilities, HealthState::State,
-                       HealthState::State_ARRAYSIZE>;
-
   static std::unique_ptr<TransitionModel> CreateFromProto(
       const PTTSTransitionModelProto& proto);
-
-  explicit PTTSTransitionModel(
-      const StateTransitionDiagram& state_transition_diagram)
-      : state_transition_diagram_(state_transition_diagram) {}
 
   PTTSTransitionModel(const PTTSTransitionModel&) = delete;
   PTTSTransitionModel& operator=(const PTTSTransitionModel&) = delete;
@@ -67,14 +52,14 @@ class PTTSTransitionModel : public TransitionModel {
       const HealthTransition& latest_transition) override;
 
  private:
-  // State transition model and probabilities.
-  // TODO: Consider wrapping transition_probabilities_ and transitions_
-  // in an object so their behavior (distribution sequence) can be mocked.
-  // absl::discrete_distribution does not support mocks/mocked sequences.
-  // Possibly, this should be a unique_ptr per owner -- need to consider the
-  // significance of multiple sequences being generated from the same
-  // distribution sampler.
-  StateTransitionDiagram state_transition_diagram_;
+  struct Edge {
+    HealthState::State src;
+    HealthState::State dst;
+    float weight = 0.0;
+    std::gamma_distribution<float> days;
+  };
+  PTTSTransitionModel(std::vector<Edge> edges);
+  std::vector<Edge> edges_;
 };
 
 }  // namespace abesim

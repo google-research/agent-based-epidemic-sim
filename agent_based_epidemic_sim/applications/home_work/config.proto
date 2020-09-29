@@ -126,6 +126,8 @@ message PTTSTransitionPrior {
     // There should be an entry in the discrete prior for every possible
     // detination state.
     DiscretePrior transition_probability_prior = 2;
+    // TODO: We should allow priors over mean/sd transition times
+    // per edge, matching the way it's handled in PTTSTransitionModelProto.
     ContinuousPrior rate_prior = 3;
   }
   repeated TransitionProbabilitiesPrior state_transition_diagram_prior = 1;

@@ -22,12 +22,15 @@ message PTTSTransitionModelProto {
   message TransitionProbability {
     HealthState.State health_state = 1;
     float transition_probability = 2;
+
+    // The mean and std deviation of the time it takes to transition from
+    // the current state to health_state.
+    float mean_days_to_transition = 3;
+    float sd_days_to_transition = 4;
   }
   message TransitionProbabilities {
     HealthState.State health_state = 1;
     repeated TransitionProbability transition_probability = 2;
-    // The rate at which an agent transitions to the next state.
-    float rate = 3;
   }
   // The state transition diagram.
   repeated TransitionProbabilities state_transition_diagram = 1;

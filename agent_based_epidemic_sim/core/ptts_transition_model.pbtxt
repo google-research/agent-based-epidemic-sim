@@ -1,80 +1,30 @@
 state_transition_diagram {
-  health_state: SUSCEPTIBLE
-  transition_probability {
-    health_state: SUSCEPTIBLE
-    transition_probability: 1
-  }
-  transition_probability {
-    health_state: EXPOSED
-    transition_probability: 0
-  }
-  transition_probability {
-    health_state: INFECTIOUS
-    transition_probability: 0
-  }
-  transition_probability {
-    health_state: RECOVERED
-    transition_probability: 0
-  }
-  rate: 1
-}
-state_transition_diagram {
   health_state: EXPOSED
-  transition_probability {
-    health_state: SUSCEPTIBLE
-    transition_probability: 0
-  }
-  transition_probability {
-    health_state: EXPOSED
-    transition_probability: 0
-  }
   transition_probability {
     health_state: INFECTIOUS
     transition_probability: 0.8
+    mean_days_to_transition: 2
+    sd_days_to_transition: 2
   }
   transition_probability {
     health_state: RECOVERED
     transition_probability: 0.2
+    mean_days_to_transition: 2
+    sd_days_to_transition: 2
   }
-  rate: 0.5
 }
 state_transition_diagram {
   health_state: INFECTIOUS
   transition_probability {
     health_state: SUSCEPTIBLE
     transition_probability: 1
-  }
-  transition_probability {
-    health_state: EXPOSED
-    transition_probability: 0
-  }
-  transition_probability {
-    health_state: INFECTIOUS
-    transition_probability: 0
+    mean_days_to_transition: 5
+    sd_days_to_transition: 5
   }
   transition_probability {
     health_state: RECOVERED
     transition_probability: 1
+    mean_days_to_transition: 5
+    sd_days_to_transition: 5
   }
-  rate: 0.2
-}
-state_transition_diagram {
-  health_state: RECOVERED
-  transition_probability {
-    health_state: SUSCEPTIBLE
-    transition_probability: 0
-  }
-  transition_probability {
-    health_state: EXPOSED
-    transition_probability: 0
-  }
-  transition_probability {
-    health_state: INFECTIOUS
-    transition_probability: 0
-  }
-  transition_probability {
-    health_state: RECOVERED
-    transition_probability: 1
-  }
-  rate: 1
 }
