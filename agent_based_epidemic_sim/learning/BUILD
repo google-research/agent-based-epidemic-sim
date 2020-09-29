@@ -34,7 +34,6 @@ py_library(
     srcs = ["ens_simulator.py"],
     srcs_version = "PY3",
     deps = [
-        requirement("dataclasses"),
         requirement("numpy"),
         requirement("scipy"),
     ],
@@ -48,5 +47,6 @@ py_test(
     deps = [
         ":ens_simulator",
         requirement("absl-py"),
+        requirement("six"),
     ],
 )

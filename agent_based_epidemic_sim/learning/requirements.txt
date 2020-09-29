@@ -5,3 +5,4 @@ jaxlib
 numpy
 pandas
 scipy
+six
