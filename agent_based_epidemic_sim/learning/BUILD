@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-load("@rules_python//python:defs.bzl", "py_binary")
+load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
 load("@pip//:requirements.bzl", "requirement")
 
 licenses(["notice"])
@@ -26,5 +26,27 @@ py_binary(
         requirement("numpy"),
         requirement("pandas"),
         requirement("scipy"),
+    ],
+)
+
+py_library(
+    name = "ens_simulator",
+    srcs = ["ens_simulator.py"],
+    srcs_version = "PY3",
+    deps = [
+        requirement("numpy"),
+        requirement("scipy"),
+    ],
+)
+
+py_test(
+    name = "ens_simulator_test",
+    srcs = ["ens_simulator_test.py"],
+    python_version = "PY3",
+    srcs_version = "PY3",
+    deps = [
+        ":ens_simulator",
+        requirement("absl-py"),
+        requirement("six"),
     ],
 )
