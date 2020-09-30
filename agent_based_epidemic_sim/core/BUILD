@@ -18,8 +18,6 @@ package(default_visibility = [
     "//agent_based_epidemic_sim:internal",
 ])
 
-exports_files(["LICENSE"])
-
 cc_library(
     name = "timestep",
     srcs = ["timestep.cc"],
