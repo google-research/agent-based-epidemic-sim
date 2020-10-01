@@ -451,13 +451,13 @@ TEST(SEIRAgentTest,
   std::vector<ContactReport> contact_reports = {
       {.from_agent_uuid = 12LL,
        .to_agent_uuid = kUuid,
-       .test_result = {.probability = 0.5}},
+       .test_result = {.outcome = TestOutcome::POSITIVE}},
       {.from_agent_uuid = 13LL,
        .to_agent_uuid = kUuid,
-       .test_result = {.probability = 0.75}},
+       .test_result = {.outcome = TestOutcome::NEGATIVE}},
       {.from_agent_uuid = 15LL,
        .to_agent_uuid = kUuid,
-       .test_result = {.probability = 0.95}},
+       .test_result = {.outcome = TestOutcome::POSITIVE}},
   };
   auto outcomes = OutcomesFromContacts(kUuid, contacts);
 
@@ -537,7 +537,7 @@ TEST(SEIRAgentTest, PositiveTest) {
   TestResult expected_result = {
       .time_requested = absl::UnixEpoch(),
       .time_received = absl::UnixEpoch(),
-      .probability = 1.0,
+      .outcome = TestOutcome::POSITIVE,
   };
   EXPECT_CALL(*risk_score, GetTestResult(_)).WillOnce(Return(expected_result));
 
@@ -572,7 +572,7 @@ TEST(SEIRAgentTest, NegativeTestResult) {
   const TestResult contact_test_result{
       .time_requested = absl::FromUnixSeconds(0LL),
       .time_received = absl::FromUnixSeconds(129600LL),
-      .probability = 1.0f};
+      .outcome = TestOutcome::POSITIVE};
   std::vector<ContactReport> contact_reports{
       {.from_agent_uuid = 314LL,
        .to_agent_uuid = kUuid,
@@ -645,7 +645,7 @@ TEST(SEIRAgentTest, SendContactReports) {
   const TestResult expected_test_result1{
       .time_requested = TimeFromDay(0),
       .time_received = TimeFromDay(0),
-      .probability = 1.0f,
+      .outcome = TestOutcome::POSITIVE,
   };
   EXPECT_CALL(*risk_score, GetTestResult(timestep1))
       .WillOnce(Return(expected_test_result1));
@@ -722,7 +722,7 @@ TEST(SEIRAgentTest, SendContactReports) {
   const TestResult expected_test_result2{
       .time_requested = TimeFromDay(3),
       .time_received = TimeFromDay(4),
-      .probability = 1.0f,
+      .outcome = TestOutcome::POSITIVE,
   };
   EXPECT_CALL(*risk_score, GetTestResult(timestep4))
       .WillOnce(Return(expected_test_result2));
@@ -752,7 +752,7 @@ TEST(SEIRAgentTest, SendContactReports) {
   const TestResult expected_test_result3{
       .time_requested = TimeFromDay(7),
       .time_received = TimeFromDay(8),
-      .probability = 1.0f,
+      .outcome = TestOutcome::POSITIVE,
   };
   EXPECT_CALL(*risk_score, GetTestResult(timestep5))
       .WillOnce(Return(expected_test_result3));

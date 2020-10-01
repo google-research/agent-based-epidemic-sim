@@ -49,7 +49,7 @@ std::vector<float> FrequencyAdjustments(RiskScore& risk_score,
     while (exposure != exposures.end() &&
            timestep.end_time() > exposure->start_time) {
       risk_score.AddExposureNotification({.exposure = *exposure},
-                                         {.probability = 1.0});
+                                         {.outcome = TestOutcome::POSITIVE});
       exposure++;
     }
     adjustments.push_back(risk_score.GetVisitAdjustment(timestep, location_uuid)
@@ -76,7 +76,6 @@ class RiskScoreTest : public testing::Test {
       contact_retention_duration { seconds: 1209600 }
       quarantine_duration { seconds: 1209600 }
       test_latency { seconds: 86400 }
-      positive_threshold: .9
     )");
   }
 };
@@ -159,7 +158,7 @@ TEST_F(RiskScoreTest, GetTestResult) {
         risk_score->GetTestResult(Timestep(TimeFromDay(1), absl::Hours(24)));
     TestResult expected = {.time_requested = absl::InfiniteFuture(),
                            .time_received = absl::InfiniteFuture(),
-                           .probability = 0.0};
+                           .outcome = TestOutcome::UNSPECIFIED_TEST_RESULT};
     EXPECT_EQ(result, expected);
   }
 
@@ -168,7 +167,7 @@ TEST_F(RiskScoreTest, GetTestResult) {
       {
           .time_requested = TimeFromDay(1),
           .time_received = TimeFromDay(2),
-          .probability = 0.0,
+          .outcome = TestOutcome::NEGATIVE,
       });
   {
     // Negative results don't matter.
@@ -176,7 +175,7 @@ TEST_F(RiskScoreTest, GetTestResult) {
         risk_score->GetTestResult(Timestep(TimeFromDay(2), absl::Hours(24)));
     TestResult expected = {.time_requested = absl::InfiniteFuture(),
                            .time_received = absl::InfiniteFuture(),
-                           .probability = 0.0};
+                           .outcome = TestOutcome::UNSPECIFIED_TEST_RESULT};
     EXPECT_EQ(result, expected);
   }
 
@@ -185,7 +184,7 @@ TEST_F(RiskScoreTest, GetTestResult) {
       {
           .time_requested = TimeFromDay(2),
           .time_received = TimeFromDay(3),
-          .probability = 1.0,
+          .outcome = TestOutcome::POSITIVE,
       });
   {
     // On positive contact reports we perform a test, but if we're not sick
@@ -194,7 +193,7 @@ TEST_F(RiskScoreTest, GetTestResult) {
         risk_score->GetTestResult(Timestep(TimeFromDay(4), absl::Hours(24)));
     TestResult expected = {.time_requested = TimeFromDay(3),
                            .time_received = TimeFromDay(4),
-                           .probability = 0.0};
+                           .outcome = TestOutcome::NEGATIVE};
     EXPECT_EQ(result, expected);
   }
 
@@ -203,7 +202,7 @@ TEST_F(RiskScoreTest, GetTestResult) {
       {
           .time_requested = TimeFromDay(8),
           .time_received = TimeFromDay(9),
-          .probability = 1.0,
+          .outcome = TestOutcome::POSITIVE,
       });
   {
     // Another positive contact that is within the test validity period will
@@ -212,7 +211,7 @@ TEST_F(RiskScoreTest, GetTestResult) {
         risk_score->GetTestResult(Timestep(TimeFromDay(10), absl::Hours(24)));
     TestResult expected = {.time_requested = TimeFromDay(3),
                            .time_received = TimeFromDay(4),
-                           .probability = 0.0};
+                           .outcome = TestOutcome::NEGATIVE};
     EXPECT_EQ(result, expected);
   }
 
@@ -223,7 +222,7 @@ TEST_F(RiskScoreTest, GetTestResult) {
       {
           .time_requested = TimeFromDay(12),
           .time_received = TimeFromDay(13),
-          .probability = 1.0,
+          .outcome = TestOutcome::POSITIVE,
       });
   {
     // Another positive contact after the validity period expires will perform
@@ -233,7 +232,7 @@ TEST_F(RiskScoreTest, GetTestResult) {
         risk_score->GetTestResult(Timestep(TimeFromDay(14), absl::Hours(24)));
     TestResult expected = {.time_requested = TimeFromDay(13),
                            .time_received = TimeFromDay(14),
-                           .probability = 1.0};
+                           .outcome = TestOutcome::POSITIVE};
     EXPECT_EQ(result, expected);
   }
 }
@@ -252,7 +251,7 @@ TEST_F(RiskScoreTest, GetsContactTracingPolicy) {
   risk_score->AddExposureNotification({}, {
                                               .time_requested = TimeFromDay(3),
                                               .time_received = TimeFromDay(6),
-                                              .probability = 1.0,
+                                              .outcome = TestOutcome::POSITIVE,
                                           });
 
   // If the test isn't received yet (will be received on day 7) don't send.

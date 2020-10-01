@@ -33,8 +33,6 @@ message TracingPolicyProto {
   // May be generalized in the future to account for randomness, different test
   // types.
   google.protobuf.Duration test_latency = 4;
-  // The (inclusive) threshold above which a test is presumed positive.
-  float positive_threshold = 5;
 }
 
 message ContactTracingHomeWorkSimulationConfig {

@@ -56,7 +56,7 @@ class TogglingRiskScore : public RiskScore {
     return {
         .time_requested = absl::InfiniteFuture(),
         .time_received = absl::InfiniteFuture(),
-        .probability = 0.0,
+        .outcome = TestOutcome::NEGATIVE,
     };
   }
 

@@ -118,7 +118,7 @@ class SEIRAgent : public Agent {
         last_test_result_sent_({
             .time_requested = absl::InfiniteFuture(),
             .time_received = absl::InfiniteFuture(),
-            .probability = 0.0,
+            .outcome = TestOutcome::NEGATIVE,
         }),
         transmission_model_(transmission_model),
         transition_model_(std::move(transition_model)),

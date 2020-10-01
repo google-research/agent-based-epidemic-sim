@@ -28,6 +28,7 @@
 #include "absl/types/variant.h"
 #include "agent_based_epidemic_sim/core/constants.h"
 #include "agent_based_epidemic_sim/core/integral_types.h"
+#include "agent_based_epidemic_sim/core/pandemic.pb.h"
 #include "agent_based_epidemic_sim/core/visit.h"
 #include "agent_based_epidemic_sim/port/logging.h"
 #include "agent_based_epidemic_sim/util/ostream_overload.h"
@@ -253,12 +254,11 @@ static_assert(absl::is_trivially_copy_constructible<InfectionOutcome>::value,
 struct TestResult {
   absl::Time time_requested;
   absl::Time time_received;
-  float probability;
+  TestOutcome::Outcome outcome;
 
   friend bool operator==(const TestResult& a, const TestResult& b) {
     return (a.time_requested == b.time_requested &&
-            a.time_received == b.time_received &&
-            a.probability == b.probability);
+            a.time_received == b.time_received && a.outcome == b.outcome);
   }
 
   friend bool operator!=(const TestResult& a, const TestResult& b) {
@@ -268,8 +268,8 @@ struct TestResult {
   friend std::ostream& operator<<(std::ostream& strm,
                                   const TestResult& test_result) {
     return strm << "{" << test_result.time_requested << ", "
-                << test_result.time_received << ", " << test_result.probability
-                << "}";
+                << test_result.time_received << ", "
+                << TestOutcome::Outcome_Name(test_result.outcome) << "}";
   }
 };
 

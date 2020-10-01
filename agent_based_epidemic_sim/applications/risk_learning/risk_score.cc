@@ -34,7 +34,6 @@ struct LearningRiskScoreConfig {
   absl::Duration contact_retention_duration;
   absl::Duration quarantine_duration;
   absl::Duration test_latency;
-  float positive_threshold;
 };
 
 // A policy that implements testing, tracing, and isolation guidelines.
@@ -57,7 +56,7 @@ class LearningRiskScore : public RiskScore {
   void AddExposureNotification(const Contact& contact,
                                const TestResult& result) override {
     // We don't take action on negative tests.
-    if (result.probability < 1.0) return;
+    if (result.outcome != TestOutcome::POSITIVE) return;
 
     absl::Time new_contact_time =
         contact.exposure.start_time + contact.exposure.duration;
@@ -77,7 +76,9 @@ class LearningRiskScore : public RiskScore {
     test_results_.push_back({
         .time_requested = result.time_received,
         .time_received = request_time + tracing_policy_.test_latency,
-        .probability = request_time < infection_onset_time_ ? 0.0f : 1.0f,
+        .outcome = request_time >= infection_onset_time_
+                       ? TestOutcome::POSITIVE
+                       : TestOutcome::NEGATIVE,
     });
   }
 
@@ -98,14 +99,15 @@ class LearningRiskScore : public RiskScore {
     }
     return {.time_requested = absl::InfiniteFuture(),
             .time_received = absl::InfiniteFuture(),
-            .probability = 0};
+            .outcome = TestOutcome::UNSPECIFIED_TEST_RESULT};
   }
 
   ContactTracingPolicy GetContactTracingPolicy(
       const Timestep& timestep) const override {
     TestResult result = GetTestResult(timestep);
     bool should_report =
-        result.probability > 0 && result.time_received <= timestep.end_time() &&
+        result.outcome == TestOutcome::POSITIVE &&
+        result.time_received <= timestep.end_time() &&
         result.time_requested + tracing_policy_.contact_retention_duration >=
             timestep.start_time();
 
@@ -119,8 +121,7 @@ class LearningRiskScore : public RiskScore {
  private:
   bool HasActiveTest(absl::Time request_time) const {
     return !test_results_.empty() &&
-           (test_results_.back().probability >
-                tracing_policy_.positive_threshold ||
+           (test_results_.back().outcome == TestOutcome::POSITIVE ||
             test_results_.back().time_requested +
                     tracing_policy_.test_validity_duration >
                 request_time);
@@ -172,7 +173,6 @@ absl::StatusOr<std::unique_ptr<RiskScore>> CreateLearningRiskScore(
     return test_latency_or.status();
   }
   config.test_latency = *test_latency_or;
-  config.positive_threshold = proto.positive_threshold();
   return absl::make_unique<LearningRiskScore>(location_type, config);
 }
 

@@ -56,8 +56,10 @@ void LearningHistoryAndTestingObserverFactory::Aggregate(
         last_state = health_transition.health_state;
       }
       for (const auto& test_result : history_and_tests.test_results) {
-        absl::StrAppend(&test_line, ",", test_result.probability, ",",
-                        absl::FormatTime(test_result.time_received));
+        absl::StrAppend(
+            &test_line, ",",
+            test_result.outcome == TestOutcome::POSITIVE ? 1.0 : 0.0, ",",
+            absl::FormatTime(test_result.time_received));
       }
       absl::StrAppend(&history_line, "\n");
       absl::StrAppend(&test_line, "\n");

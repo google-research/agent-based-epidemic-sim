@@ -204,6 +204,7 @@ cc_library(
     deps = [
         ":constants",
         ":integral_types",
+        ":pandemic_cc_proto",
         ":visit",
         "//agent_based_epidemic_sim/port:logging",
         "//agent_based_epidemic_sim/util:ostream_overload",

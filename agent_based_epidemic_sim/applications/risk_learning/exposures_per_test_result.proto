@@ -16,6 +16,7 @@ syntax = "proto3";
 
 package abesim;
 
+import "agent_based_epidemic_sim/core/pandemic.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 
@@ -27,11 +28,6 @@ import "google/protobuf/timestamp.proto";
 // exposure_end_time. In general, one output message will be written per
 // timestep in the eval.
 message ExposuresPerTestResult {
-  enum TestResult {
-    UNSPECIFIED_TEST_RESULT = 0;
-    POSITIVE = 1;
-    NEGATIVE = 2;
-  }
   // In this construction, confirmed exposures are exposures to agents who have
   // tested positive within the simulation and the positive test result has been
   // reported. The result must be available for the source agent before the test
@@ -57,7 +53,7 @@ message ExposuresPerTestResult {
   }
   message ExposureResult {
     int64 agent_uuid = 1;
-    TestResult test_result = 2;
+    abesim.TestOutcome.Outcome outcome = 2;
     google.protobuf.Timestamp test_administered_time = 3;
     google.protobuf.Timestamp test_received_time = 4;
     repeated Exposure exposures = 5;

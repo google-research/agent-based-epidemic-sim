@@ -114,5 +114,4 @@ tracing_policy {
   test_latency {
     seconds: 86400
   }
-  positive_threshold: 1.0
 }

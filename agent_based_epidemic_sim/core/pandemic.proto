@@ -38,6 +38,14 @@ message HealthState {
   State state = 1;
 }
 
+message TestOutcome {
+  enum Outcome {
+    UNSPECIFIED_TEST_RESULT = 0;
+    POSITIVE = 1;
+    NEGATIVE = 2;
+  }
+}
+
 // VisitProto represents a single visit of an agent to a location.
 message VisitProto {
   int64 location_uuid = 1;
@@ -52,8 +60,8 @@ message ContactReportProto {
   int64 to_agent_uuid = 2;
   google.protobuf.Timestamp test_time_requested = 3;
   google.protobuf.Timestamp test_time_received = 4;
-  float test_probability = 6;
-  reserved 5;  // deprecated fields.
+  TestOutcome.Outcome outcome = 7;
+  reserved 5, 6;  // deprecated fields.
 }
 
 message ExposureProto {

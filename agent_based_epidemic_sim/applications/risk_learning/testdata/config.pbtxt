@@ -1,4 +1,3 @@
-
 # agent_file and location_file are set in simulation_test.cc.
 init_time {
   seconds: 0
@@ -23,7 +22,6 @@ tracing_policy {
   test_latency {
     seconds: 86400
   }
-  positive_threshold: 1.0
 }
 
 # What follows is the population profiles for different age groups.
@@ -1346,7 +1344,6 @@ profiles {
     }
   }
 }
-
 
 changepoints: 1.
 changepoints: 1.

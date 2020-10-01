@@ -20,6 +20,7 @@ proto_library(
     name = "exposures_per_test_result_proto",
     srcs = ["exposures_per_test_result.proto"],
     deps = [
+        "//agent_based_epidemic_sim/core:pandemic_proto",
         "@com_google_protobuf//:duration_proto",
         "@com_google_protobuf//:timestamp_proto",
     ],
