@@ -536,6 +536,7 @@ cc_test(
         ":constants",
         ":event",
         ":integral_types",
+        ":pandemic_cc_proto",
         ":risk_score",
         ":seir_agent",
         ":timestep",

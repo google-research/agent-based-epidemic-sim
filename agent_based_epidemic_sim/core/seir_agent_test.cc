@@ -19,6 +19,7 @@
 #include "agent_based_epidemic_sim/core/constants.h"
 #include "agent_based_epidemic_sim/core/event.h"
 #include "agent_based_epidemic_sim/core/integral_types.h"
+#include "agent_based_epidemic_sim/core/pandemic.pb.h"
 #include "agent_based_epidemic_sim/core/risk_score.h"
 #include "agent_based_epidemic_sim/core/timestep.h"
 #include "agent_based_epidemic_sim/core/transition_model.h"
@@ -234,6 +235,46 @@ TEST(SEIRAgentTest, InitializesNonSusceptibleState) {
       &transmission_model, std::move(transition_model), *visit_generator,
       std::move(risk_score), VisitLocationDynamics());
   agent->ProcessInfectionOutcomes(timestep, {});
+  agent->ComputeVisits(timestep, visit_broker.get());
+}
+
+TEST(SEIRAgentTest, SetsInfectivityCorrectly) {
+  auto transition_model = absl::make_unique<MockTransitionModel>();
+  auto visit_generator = absl::make_unique<MockVisitGenerator>();
+  auto visit_broker = absl::make_unique<MockBroker<Visit>>();
+  MockTransmissionModel transmission_model;
+  auto risk_score = NewNullRiskScore();
+  const Timestep timestep(absl::UnixEpoch(), absl::Hours(24));
+  const int64 kUuid = 42LL;
+  std::vector<Visit> visits{Visit{.location_uuid = 0LL,
+                                  .start_time = absl::FromUnixSeconds(43202LL),
+                                  .end_time = absl::FromUnixSeconds(43203LL)}};
+  EXPECT_CALL(*visit_generator,
+              GenerateVisits(timestep, Ref(*risk_score), NotNull()))
+      .WillOnce(SetArgPointee<2>(visits));
+  std::vector<Visit> expected_visits{
+      Visit{.location_uuid = 0LL,
+            .agent_uuid = kUuid,
+            .start_time = absl::FromUnixSeconds(43202LL),
+            .end_time = absl::FromUnixSeconds(43203LL),
+            .health_state = HealthState::EXPOSED,
+            .infectivity = kInfectivityArray[1]}};
+  EXPECT_CALL(*visit_broker, Send(Eq(expected_visits)));
+  auto agent = SEIRAgent::Create(
+      kUuid,
+      {.time = absl::FromUnixSeconds(-1LL),
+       .health_state = HealthState::SUSCEPTIBLE},
+      &transmission_model, std::move(transition_model), *visit_generator,
+      std::move(risk_score), VisitLocationDynamics());
+  InfectionOutcome infection_outcome = {
+      .agent_uuid = kUuid,
+      .exposure = {},
+      .exposure_type = InfectionOutcomeProto::CONTACT};
+  EXPECT_CALL(transmission_model, GetInfectionOutcome(_))
+      .Times(1)
+      .WillOnce(Return(HealthTransition{.time = absl::FromUnixSeconds(1LL),
+                                        .health_state = HealthState::EXPOSED}));
+  agent->ProcessInfectionOutcomes(timestep, {infection_outcome});
   agent->ComputeVisits(timestep, visit_broker.get());
 }
 
