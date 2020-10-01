@@ -479,6 +479,29 @@ cc_library(
 )
 
 cc_library(
+    name = "exposure_store",
+    srcs = ["exposure_store.cc"],
+    hdrs = ["exposure_store.h"],
+    deps = [
+        ":event",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/time",
+    ],
+)
+
+cc_test(
+    name = "exposure_store_test",
+    srcs = ["exposure_store_test.cc"],
+    deps = [
+        ":event",
+        ":exposure_store",
+        "@com_google_absl//absl/time",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "seir_agent",
     srcs = [
         "seir_agent.cc",
