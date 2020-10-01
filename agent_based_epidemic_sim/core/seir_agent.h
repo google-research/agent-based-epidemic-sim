@@ -144,7 +144,6 @@ class SEIRAgent : public Agent {
   void AssignVisitDynamics(std::vector<Visit>* visits) const;
 
   void SendContactReports(const Timestep& timestep,
-                          absl::Span<const ContactReport> received_reports,
                           Broker<ContactReport>* broker);
 
   absl::Duration DurationSinceFirstInfection(

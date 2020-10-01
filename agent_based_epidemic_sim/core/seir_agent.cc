@@ -172,12 +172,11 @@ void SEIRAgent::UpdateContactReports(
     if (contact == contact_set_.end()) continue;
     risk_score_->AddExposureNotification(**contact, contact_report.test_result);
   }
-  SendContactReports(timestep, contact_reports, broker);
+  SendContactReports(timestep, broker);
 }
 
-void SEIRAgent::SendContactReports(
-    const Timestep& timestep, absl::Span<const ContactReport> received_reports,
-    Broker<ContactReport>* broker) {
+void SEIRAgent::SendContactReports(const Timestep& timestep,
+                                   Broker<ContactReport>* broker) {
   const RiskScore::ContactTracingPolicy& contact_tracing_policy =
       risk_score_->GetContactTracingPolicy(timestep);
   if (contact_tracing_policy.report_recursively) {
