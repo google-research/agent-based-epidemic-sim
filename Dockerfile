@@ -12,5 +12,3 @@ RUN apt-get -y update
 RUN apt-get -y install bazel
 RUN apt-get -y install python3 python-is-python3 python3-distutils
 RUN printf "startup --output_user_root=/tmp/bazel_output\n" > /root/.bazelrc
-
-WORKDIR /root/agent_based_epidemic_sim

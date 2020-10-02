@@ -1,0 +1,12 @@
+on: [pull_request]
+
+jobs:
+  run_tests_job:
+    runs-on: ubuntu-latest
+    name: run_tests
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Run tests
+        uses: ./ # Uses an action in the root directory
+        id: run_tests

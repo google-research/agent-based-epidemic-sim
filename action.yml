@@ -1,0 +1,11 @@
+name: 'run_tests'
+description: 'Run all tests.'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  entrypoint: 'bazel'
+  args:
+  - 'test'
+  - '--test_output=errors'
+  - 'agent_based_epidemic_sim/...'
+

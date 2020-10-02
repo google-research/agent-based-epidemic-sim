@@ -53,7 +53,8 @@ bazel-bin/agent_based_epidemic_sim/applications/home_work/main \
 ```shell
 docker build -t $USER/abesim .
 
-docker run -t --rm -v $PWD:/root/agent_based_epidemic_sim:cached \
+docker run -t --rm -w /root/agent_based_epidemic_sim \
+  -v $PWD:/root/agent_based_epidemic_sim:cached \
   -v /tmp/output:/tmp/output:delegated \
   -v /tmp/bazel_output:/tmp/bazel_output:delegated \
   $USER/abesim \
@@ -92,7 +93,7 @@ bazel test agent_based_epidemic_sim/...
 ```shell
 docker build -t $USER/abesim .
 
-docker run -t --rm \
+docker run -t --rm -w /root/agent_based_epidemic_sim \
   -v $PWD:/root/agent_based_epidemic_sim:cached  \
   -v /tmp/bazel_output:/tmp/bazel_output:delegated \
   $USER/abesim bazel test agent_based_epidemic_sim/...
