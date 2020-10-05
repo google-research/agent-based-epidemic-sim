@@ -53,20 +53,19 @@ class TracingRiskScore : public RiskScore {
     }
   }
   void AddExposures(absl::Span<const Exposure* const> exposures) override {}
-  void AddExposureNotification(const Contact& contact,
-                               const TestResult& result) override {
+  void AddExposureNotification(const Exposure& exposure,
+                               const ContactReport& notification) override {
     // We don't take action on negative tests.
-    if (result.outcome != TestOutcome::POSITIVE) return;
+    if (notification.test_result.outcome != TestOutcome::POSITIVE) return;
 
-    absl::Time new_contact_time =
-        contact.exposure.start_time + contact.exposure.duration;
+    absl::Time new_contact_time = exposure.start_time + exposure.duration;
     // If we already know about a contact that happened after this new
     // notification, we aren't going to take action based on this.
     if (latest_contact_time_ >= new_contact_time) return;
 
     latest_contact_time_ = new_contact_time;
 
-    absl::Time request_time = result.time_received;
+    absl::Time request_time = notification.test_result.time_received;
 
     // This means that if we receive an exposure notification for a contact
     // that happened within test_validity_duration of the last time we started
@@ -74,7 +73,7 @@ class TracingRiskScore : public RiskScore {
     if (HasActiveTest(request_time)) return;
 
     test_results_.push_back({
-        .time_requested = result.time_received,
+        .time_requested = notification.test_result.time_received,
         .time_received = request_time + tracing_policy_.test_latency,
         .outcome = request_time >= infection_onset_time_
                        ? TestOutcome::POSITIVE

@@ -31,8 +31,8 @@ class RiskScore {
   // Informs the RiskScore of new exposures.
   virtual void AddExposures(absl::Span<const Exposure* const> exposures) = 0;
   // Informs the RiskScore of received exposure notifications.
-  virtual void AddExposureNotification(const Contact& contact,
-                                       const TestResult& result) = 0;
+  virtual void AddExposureNotification(const Exposure& exposure,
+                                       const ContactReport& notification) = 0;
 
   struct VisitAdjustment {
     float frequency_adjustment;

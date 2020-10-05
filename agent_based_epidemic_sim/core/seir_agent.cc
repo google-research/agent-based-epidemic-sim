@@ -170,7 +170,7 @@ void SEIRAgent::UpdateContactReports(
   for (const ContactReport& contact_report : contact_reports) {
     auto contact = contact_set_.find(contact_report.from_agent_uuid);
     if (contact == contact_set_.end()) continue;
-    risk_score_->AddExposureNotification(**contact, contact_report.test_result);
+    risk_score_->AddExposureNotification((*contact)->exposure, contact_report);
   }
   SendContactReports(timestep, broker);
 }

@@ -117,7 +117,8 @@ class MockRiskScore : public RiskScore {
   MOCK_METHOD(void, AddExposures, (absl::Span<const Exposure* const> exposures),
               (override));
   MOCK_METHOD(void, AddExposureNotification,
-              (const Contact& contact, const TestResult& result), (override));
+              (const Exposure& exposure, const ContactReport& notification),
+              (override));
   MOCK_METHOD(VisitAdjustment, GetVisitAdjustment,
               (const Timestep& timestep, int64 location_uuid),
               (const, override));

@@ -25,8 +25,8 @@ class NullRiskScore : public RiskScore {
  public:
   void AddHealthStateTransistion(HealthTransition transition) override {}
   void AddExposures(absl::Span<const Exposure* const> exposures) override {}
-  void AddExposureNotification(const Contact& contact,
-                               const TestResult& result) override {}
+  void AddExposureNotification(const Exposure& contact,
+                               const ContactReport& notification) override {}
 
   VisitAdjustment GetVisitAdjustment(const Timestep& timestep,
                                      int64 location_uuid) const override {

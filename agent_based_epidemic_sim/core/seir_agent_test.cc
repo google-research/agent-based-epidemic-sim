@@ -80,7 +80,8 @@ class MockRiskScore : public RiskScore {
   MOCK_METHOD(void, AddExposures, (absl::Span<const Exposure* const> exposures),
               (override));
   MOCK_METHOD(void, AddExposureNotification,
-              (const Contact& contact, const TestResult& result), (override));
+              (const Exposure& contact, const ContactReport& notification),
+              (override));
   MOCK_METHOD(VisitAdjustment, GetVisitAdjustment,
               (const Timestep& timestep, int64 location_uuid),
               (const, override));
@@ -526,10 +527,10 @@ TEST(SEIRAgentTest,
   // risk score.
   // Only the contact_report form agents 12 and 15 are reported because the
   // agent had no matching exposure for agent 13.
-  EXPECT_CALL(*risk_score, AddExposureNotification(
-                               contacts[0], contact_reports[0].test_result));
-  EXPECT_CALL(*risk_score, AddExposureNotification(
-                               contacts[1], contact_reports[2].test_result));
+  EXPECT_CALL(*risk_score, AddExposureNotification(contacts[0].exposure,
+                                                   contact_reports[0]));
+  EXPECT_CALL(*risk_score, AddExposureNotification(contacts[1].exposure,
+                                                   contact_reports[2]));
 
   auto agent = SEIRAgent::CreateSusceptible(
       kUuid, &transmission_model, std::move(transition_model), *visit_generator,
@@ -629,8 +630,8 @@ TEST(SEIRAgentTest, NegativeTestResult) {
       OutcomesFromContacts(kUuid, contacts);
   EXPECT_CALL(*risk_score,
               AddExposures(testing::ElementsAre(&outcomes[0].exposure)));
-  EXPECT_CALL(*risk_score,
-              AddExposureNotification(contacts[0], contact_test_result));
+  EXPECT_CALL(*risk_score, AddExposureNotification(contacts[0].exposure,
+                                                   contact_reports[0]));
 
   EXPECT_CALL(*risk_score, GetContactTracingPolicy(_))
       .WillOnce(Return(RiskScore::ContactTracingPolicy{.send_report = false}));
