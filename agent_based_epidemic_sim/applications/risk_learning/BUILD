@@ -26,6 +26,12 @@ proto_library(
     ],
 )
 
+py_proto_library(
+    name = "exposures_per_test_result_py_pb2",
+    api_version = 2,
+    deps = [":exposures_per_test_result_proto"],
+)
+
 cc_proto_library(
     name = "config_cc_proto",
     deps = [":config_proto"],
