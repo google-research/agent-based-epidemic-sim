@@ -26,6 +26,7 @@
 #include "agent_based_epidemic_sim/core/broker.h"
 #include "agent_based_epidemic_sim/core/event.h"
 #include "agent_based_epidemic_sim/core/integral_types.h"
+#include "agent_based_epidemic_sim/core/pandemic.pb.h"
 #include "agent_based_epidemic_sim/core/risk_score.h"
 #include "agent_based_epidemic_sim/core/transition_model.h"
 #include "agent_based_epidemic_sim/core/transmission_model.h"
@@ -34,8 +35,9 @@
 
 namespace abesim {
 
-constexpr std::array<HealthState::State, 2> kNotInfectedHealthStates = {
-    HealthState::SUSCEPTIBLE, HealthState::REMOVED};
+constexpr std::array<HealthState::State, 4> kNotInfectedHealthStates = {
+    HealthState::SUSCEPTIBLE, HealthState::REMOVED, HealthState::RECOVERED,
+    HealthState::EXPOSED};
 
 inline bool IsInfectedState(const HealthState::State& subject_health_state) {
   return std::find(kNotInfectedHealthStates.begin(),

@@ -516,6 +516,7 @@ cc_library(
         ":constants",
         ":event",
         ":integral_types",
+        ":pandemic_cc_proto",
         ":risk_score",
         ":transition_model",
         ":transmission_model",

@@ -132,7 +132,10 @@ TEST(SEIRAgentTest, ComputesVisits) {
                                   .end_time = absl::FromUnixSeconds(57600LL)},
                             Visit{.location_uuid = 0LL,
                                   .start_time = absl::FromUnixSeconds(57600LL),
-                                  .end_time = absl::FromUnixSeconds(86400LL)}};
+                                  .end_time = absl::FromUnixSeconds(86400LL)},
+                            Visit{.location_uuid = 1LL,
+                                  .start_time = absl::FromUnixSeconds(86401LL),
+                                  .end_time = absl::FromUnixSeconds(86402LL)}};
   EXPECT_CALL(*visit_generator,
               GenerateVisits(timestep, Ref(*risk_score), NotNull()))
       .WillOnce(SetArgPointee<2>(visits));
@@ -142,17 +145,23 @@ TEST(SEIRAgentTest, ComputesVisits) {
             .start_time = absl::FromUnixSeconds(0LL),
             .end_time = absl::FromUnixSeconds(28800LL),
             .health_state = HealthState::EXPOSED,
-            .infectivity = kInfectivityArray[1]},
+            .infectivity = 0},
       Visit{.location_uuid = 1LL,
             .agent_uuid = kUuid,
             .start_time = absl::FromUnixSeconds(28800LL),
             .end_time = absl::FromUnixSeconds(43200LL),
             .health_state = HealthState::EXPOSED,
-            .infectivity = kInfectivityArray[1]},
+            .infectivity = 0},
       Visit{.location_uuid = 0LL,
             .agent_uuid = kUuid,
             .start_time = absl::FromUnixSeconds(57600LL),
             .end_time = absl::FromUnixSeconds(86400LL),
+            .health_state = HealthState::INFECTIOUS,
+            .infectivity = kInfectivityArray[0]},
+      Visit{.location_uuid = 1LL,
+            .agent_uuid = kUuid,
+            .start_time = absl::FromUnixSeconds(86401LL),
+            .end_time = absl::FromUnixSeconds(86402LL),
             .health_state = HealthState::INFECTIOUS,
             .infectivity = kInfectivityArray[1]},
       Visit{.location_uuid = 1LL,
@@ -160,7 +169,7 @@ TEST(SEIRAgentTest, ComputesVisits) {
             .start_time = absl::FromUnixSeconds(43200LL),
             .end_time = absl::FromUnixSeconds(57600LL),
             .health_state = HealthState::INFECTIOUS,
-            .infectivity = kInfectivityArray[1]}};
+            .infectivity = kInfectivityArray[0]}};
   EXPECT_CALL(*visit_broker, Send(Eq(expected_visits)));
   auto agent = SEIRAgent::Create(
       kUuid,
@@ -250,6 +259,10 @@ TEST(SEIRAgentTest, SetsInfectivityCorrectly) {
   std::vector<Visit> visits{Visit{.location_uuid = 0LL,
                                   .start_time = absl::FromUnixSeconds(43202LL),
                                   .end_time = absl::FromUnixSeconds(43203LL)}};
+  EXPECT_CALL(*transition_model, GetNextHealthTransition(_))
+      .WillOnce(
+          Return(HealthTransition{.time = absl::FromUnixSeconds(86400LL),
+                                  .health_state = HealthState::INFECTIOUS}));
   EXPECT_CALL(*visit_generator,
               GenerateVisits(timestep, Ref(*risk_score), NotNull()))
       .WillOnce(SetArgPointee<2>(visits));
@@ -258,23 +271,19 @@ TEST(SEIRAgentTest, SetsInfectivityCorrectly) {
             .agent_uuid = kUuid,
             .start_time = absl::FromUnixSeconds(43202LL),
             .end_time = absl::FromUnixSeconds(43203LL),
-            .health_state = HealthState::EXPOSED,
+            .health_state = HealthState::SYMPTOMATIC_MILD,
             .infectivity = kInfectivityArray[1]}};
   EXPECT_CALL(*visit_broker, Send(Eq(expected_visits)));
   auto agent = SEIRAgent::Create(
       kUuid,
       {.time = absl::FromUnixSeconds(-1LL),
-       .health_state = HealthState::SUSCEPTIBLE},
+       .health_state = HealthState::SYMPTOMATIC_MILD},
       &transmission_model, std::move(transition_model), *visit_generator,
       std::move(risk_score), VisitLocationDynamics());
   InfectionOutcome infection_outcome = {
       .agent_uuid = kUuid,
       .exposure = {},
       .exposure_type = InfectionOutcomeProto::CONTACT};
-  EXPECT_CALL(transmission_model, GetInfectionOutcome(_))
-      .Times(1)
-      .WillOnce(Return(HealthTransition{.time = absl::FromUnixSeconds(1LL),
-                                        .health_state = HealthState::EXPOSED}));
   agent->ProcessInfectionOutcomes(timestep, {infection_outcome});
   agent->ComputeVisits(timestep, visit_broker.get());
 }
@@ -313,13 +322,13 @@ TEST(SEIRAgentTest, RespectsTimestepBasedDwellTimeAndFiltersZeroIntervals) {
             .start_time = absl::FromUnixSeconds(0LL),
             .end_time = absl::FromUnixSeconds(86400LL - 1LL),
             .health_state = HealthState::EXPOSED,
-            .infectivity = kInfectivityArray[0]},
+            .infectivity = 0},
       Visit{.location_uuid = 0LL,
             .agent_uuid = kUuid,
             .start_time = absl::FromUnixSeconds(86400LL - 1LL),
             .end_time = absl::FromUnixSeconds(86400LL),
             .health_state = HealthState::INFECTIOUS,
-            .infectivity = kInfectivityArray[1]},
+            .infectivity = kInfectivityArray[0]},
   };
   EXPECT_CALL(*visit_broker, Send(Eq(expected_visits)));
   auto agent = SEIRAgent::Create(
