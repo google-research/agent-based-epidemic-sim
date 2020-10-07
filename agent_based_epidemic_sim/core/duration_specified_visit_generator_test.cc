@@ -17,6 +17,7 @@
 #include <initializer_list>
 
 #include "absl/time/time.h"
+#include "agent_based_epidemic_sim/core/event.h"
 #include "agent_based_epidemic_sim/core/integral_types.h"
 #include "agent_based_epidemic_sim/core/risk_score.h"
 #include "agent_based_epidemic_sim/core/visit.h"

@@ -183,6 +183,13 @@ class RiskLearningSimulation : public Simulation {
       };
     }
 
+    // Read in risk model config.
+    auto risk_score_model_or =
+        CreateLearningRiskScoreModel(config.risk_score_model());
+    if (!risk_score_model_or.ok()) return risk_score_model_or.status();
+
+    result->risk_score_model_ = risk_score_model_or.value();
+
     // Read in agents.
     std::vector<std::unique_ptr<Agent>> agents;
     for (const std::string& agent_file : config.agent_file()) {
@@ -201,7 +208,8 @@ class RiskLearningSimulation : public Simulation {
         // thread safe.  This is complicated by the fact that
         // absl::discrete_distribution::operator() is non-const.
         auto risk_score_or = CreateLearningRiskScore(
-            config.tracing_policy(), result->get_location_type_);
+            config.tracing_policy(), result->risk_score_model_,
+            result->get_location_type_);
         if (!risk_score_or.ok()) return risk_score_or.status();
         agents.push_back(SEIRAgent::CreateSusceptible(
             proto.uuid(), result->transmission_model_.get(),
@@ -269,6 +277,7 @@ class RiskLearningSimulation : public Simulation {
   const RiskLearningSimulationConfig config_;
   std::unique_ptr<MicroExposureGenerator> micro_generator_;
   std::unique_ptr<HazardTransmissionModel> transmission_model_;
+  LearningRiskScoreModel risk_score_model_;
   absl::flat_hash_map<int64, LocationReference::Type> location_types_;
   const LocationTypeFn get_location_type_;
   // location_types is filled during location loading in the constructor and is

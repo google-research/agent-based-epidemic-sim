@@ -40,10 +40,24 @@ constexpr std::array<HealthState::State, 4> kNotInfectedHealthStates = {
     HealthState::SUSCEPTIBLE, HealthState::REMOVED, HealthState::RECOVERED,
     HealthState::EXPOSED};
 
+constexpr std::array<HealthState::State, 6> kSymptomaticHealthStates = {
+    HealthState::SYMPTOMATIC_MILD,
+    HealthState::SYMPTOMATIC_SEVERE,
+    HealthState::SYMPTOMATIC_CRITICAL,
+    HealthState::INFECTIOUS,
+    HealthState::SYMPTOMATIC_HOSPITALIZED_RECOVERING,
+    HealthState::SYMPTOMATIC_HOSPITALIZED};
+
 inline bool IsInfectedState(const HealthState::State& subject_health_state) {
   return std::find(kNotInfectedHealthStates.begin(),
                    kNotInfectedHealthStates.end(),
                    subject_health_state) == kNotInfectedHealthStates.end();
+}
+
+inline bool IsSymptomaticState(const HealthState::State& subject_health_state) {
+  return std::find(kSymptomaticHealthStates.begin(),
+                   kSymptomaticHealthStates.end(),
+                   subject_health_state) != kSymptomaticHealthStates.end();
 }
 
 // An agent that implements a stochastic SEIR model.
@@ -152,6 +166,12 @@ class SEIRAgent : public Agent {
   absl::Duration DurationSinceFirstInfection(
       const absl::Time& current_time) const;
 
+  // TODO: move this into a time_util file. It is copied over in
+  // risk_learning/risk_score.
+  int ConvertDurationToDiscreteDays(const absl::Duration& duration) const {
+    return static_cast<int>(absl::ToDoubleHours(duration) / 24.0f + 0.5);
+  }
+
   const int64 uuid_;
   // The health state changes this agent has observed. Ordered in chronological
   // order. Note that the next pending state transition is stored in
@@ -160,6 +180,7 @@ class SEIRAgent : public Agent {
   std::vector<HealthTransition> health_transitions_;
   HealthTransition next_health_transition_;
   absl::optional<absl::Time> initial_infection_time_;
+  absl::optional<absl::Time> initial_symptom_onset_time_;
 
   ExposureStore exposures_;
 

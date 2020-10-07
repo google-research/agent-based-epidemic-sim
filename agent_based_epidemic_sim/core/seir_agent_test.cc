@@ -604,7 +604,8 @@ TEST(SEIRAgentTest, PositiveTest) {
   const std::vector<ContactReport> expected_contact_reports{
       {.from_agent_uuid = kUuid,
        .to_agent_uuid = 314LL,
-       .test_result = expected_result}};
+       .test_result = expected_result,
+       .initial_symptom_onset_time = absl::FromUnixSeconds(-1LL)}};
   EXPECT_CALL(*contact_report_broker, Send(Eq(expected_contact_reports)))
       .Times(1);
   const Timestep timestep(absl::UnixEpoch(), absl::Hours(24));
@@ -686,8 +687,7 @@ TEST(SEIRAgentTest, SendContactReports) {
                                .time = absl::InfinitePast(),
                                .health_state = HealthState::SUSCEPTIBLE}));
   HealthTransition initial_transition = {
-      .time = absl::FromUnixSeconds(-1LL),
-      .health_state = HealthState::INFECTIOUS};
+      .time = TimeFromDay(-1), .health_state = HealthState::INFECTIOUS};
   EXPECT_CALL(*risk_score, AddHealthStateTransistion(initial_transition));
 
   // First we receive two contacts on day 1 and a positive test result that
@@ -712,10 +712,12 @@ TEST(SEIRAgentTest, SendContactReports) {
     const std::vector<ContactReport> expected_contact_reports{
         {.from_agent_uuid = kUuid,
          .to_agent_uuid = 314LL,
-         .test_result = expected_test_result1},
+         .test_result = expected_test_result1,
+         .initial_symptom_onset_time = TimeFromDay(-1)},
         {.from_agent_uuid = kUuid,
          .to_agent_uuid = 272LL,
-         .test_result = expected_test_result1}};
+         .test_result = expected_test_result1,
+         .initial_symptom_onset_time = TimeFromDay(-1)}};
     EXPECT_CALL(
         *contact_report_broker,
         Send(testing::UnorderedElementsAreArray(expected_contact_reports)))
@@ -756,10 +758,12 @@ TEST(SEIRAgentTest, SendContactReports) {
     const std::vector<ContactReport> expected_contact_reports{
         {.from_agent_uuid = kUuid,
          .to_agent_uuid = 314LL,
-         .test_result = expected_test_result1},
+         .test_result = expected_test_result1,
+         .initial_symptom_onset_time = TimeFromDay(-1)},
         {.from_agent_uuid = kUuid,
          .to_agent_uuid = 999LL,
-         .test_result = expected_test_result1}};
+         .test_result = expected_test_result1,
+         .initial_symptom_onset_time = TimeFromDay(-1)}};
     EXPECT_CALL(
         *contact_report_broker,
         Send(testing::UnorderedElementsAreArray(expected_contact_reports)))
@@ -783,13 +787,16 @@ TEST(SEIRAgentTest, SendContactReports) {
     const std::vector<ContactReport> expected_contact_reports{
         {.from_agent_uuid = kUuid,
          .to_agent_uuid = 272LL,
-         .test_result = expected_test_result2},
+         .test_result = expected_test_result2,
+         .initial_symptom_onset_time = TimeFromDay(-1)},
         {.from_agent_uuid = kUuid,
          .to_agent_uuid = 314LL,
-         .test_result = expected_test_result2},
+         .test_result = expected_test_result2,
+         .initial_symptom_onset_time = TimeFromDay(-1)},
         {.from_agent_uuid = kUuid,
          .to_agent_uuid = 999LL,
-         .test_result = expected_test_result2}};
+         .test_result = expected_test_result2,
+         .initial_symptom_onset_time = TimeFromDay(-1)}};
     EXPECT_CALL(
         *contact_report_broker,
         Send(testing::UnorderedElementsAreArray(expected_contact_reports)))
@@ -813,10 +820,12 @@ TEST(SEIRAgentTest, SendContactReports) {
     const std::vector<ContactReport> expected_contact_reports{
         {.from_agent_uuid = kUuid,
          .to_agent_uuid = 314LL,
-         .test_result = expected_test_result3},
+         .test_result = expected_test_result3,
+         .initial_symptom_onset_time = TimeFromDay(-1)},
         {.from_agent_uuid = kUuid,
          .to_agent_uuid = 999LL,
-         .test_result = expected_test_result3}};
+         .test_result = expected_test_result3,
+         .initial_symptom_onset_time = TimeFromDay(-1)}};
     EXPECT_CALL(
         *contact_report_broker,
         Send(testing::UnorderedElementsAreArray(expected_contact_reports)))
@@ -842,6 +851,97 @@ TEST(SEIRAgentTest, SendContactReports) {
 
   agent->ProcessInfectionOutcomes(timestep5, outcomes5);
   agent->UpdateContactReports(timestep5, {}, contact_report_broker.get());
+}
+
+TEST(SEIRAgentTest, SendContactReportsBeforeAndAfterSymptoms) {
+  const int64 kUuid = 42LL;
+  auto transition_model = absl::make_unique<MockTransitionModel>();
+  EXPECT_CALL(*transition_model, GetNextHealthTransition(_))
+      .WillRepeatedly(
+          Return(HealthTransition{.time = absl::InfiniteFuture(),
+                                  .health_state = HealthState::RECOVERED}));
+  auto visit_generator = absl::make_unique<MockVisitGenerator>();
+  MockTransmissionModel transmission_model;
+
+  auto contact_report_broker = absl::make_unique<MockBroker<ContactReport>>();
+
+  auto risk_score = absl::make_unique<MockRiskScore>();
+  // That we add exposures to the risk score is tested elsewhere so we ignore it
+  // in this test.
+  EXPECT_CALL(*risk_score, AddExposures(_)).Times(testing::AnyNumber());
+  EXPECT_CALL(*risk_score, ContactRetentionDuration)
+      .WillRepeatedly(Return(absl::Hours(24 * 7)));
+  EXPECT_CALL(*risk_score, GetContactTracingPolicy(_))
+      .WillRepeatedly(
+          Return(RiskScore::ContactTracingPolicy{.send_report = true}));
+  EXPECT_CALL(*risk_score, AddHealthStateTransistion(HealthTransition{
+                               .time = absl::InfinitePast(),
+                               .health_state = HealthState::SUSCEPTIBLE}));
+
+  // Initial contacts, on day 0, with 314 before entering into a symptomatic
+  // state, on day 1.
+  Timestep timestep0(TimeFromDay(0), absl::Hours(24));
+  const TestResult expected_test_result0{
+      .time_requested = TimeFromDay(0),
+      .time_received = TimeFromDay(0),
+      .outcome = TestOutcome::NEGATIVE,
+  };
+  EXPECT_CALL(*risk_score, GetTestResult(timestep0))
+      .WillOnce(Return(expected_test_result0));
+  std::vector<Contact> contacts1{
+      {.other_uuid = 314LL,
+       .exposure = {.start_time = TimeFromDayAndHour(0, 1),
+                    .duration = absl::Hours(1LL)}}};
+  auto outcomes0 = OutcomesFromContacts(kUuid, contacts1);
+  {
+    const std::vector<ContactReport> expected_contact_reports{
+        {.from_agent_uuid = kUuid,
+         .to_agent_uuid = 314LL,
+         .test_result = expected_test_result0}};
+    EXPECT_CALL(
+        *contact_report_broker,
+        Send(testing::UnorderedElementsAreArray(expected_contact_reports)))
+        .Times(1);
+  }
+
+  // Agent transitions to a symptomatic state and tests positive on day 2
+  // after initial contact with 314 on day 0.
+  HealthTransition initial_transition = {
+      .time = TimeFromDay(2), .health_state = HealthState::SYMPTOMATIC_MILD};
+  EXPECT_CALL(*risk_score, AddHealthStateTransistion(initial_transition));
+
+  Timestep timestep2(TimeFromDay(2), absl::Hours(24));
+  const TestResult expected_test_result2{
+      .time_requested = TimeFromDay(2),
+      .time_received = TimeFromDay(2),
+      .outcome = TestOutcome::POSITIVE,
+  };
+  EXPECT_CALL(*risk_score, GetTestResult(timestep2))
+      .WillOnce(Return(expected_test_result2));
+  std::vector<Contact> contacts2{};
+  auto outcomes2 = OutcomesFromContacts(kUuid, contacts2);
+  {
+    const std::vector<ContactReport> expected_contact_reports{
+        {.from_agent_uuid = kUuid,
+         .to_agent_uuid = 314LL,
+         .test_result = expected_test_result2,
+         .initial_symptom_onset_time = TimeFromDay(2)}};
+    EXPECT_CALL(
+        *contact_report_broker,
+        Send(testing::UnorderedElementsAreArray(expected_contact_reports)))
+        .Times(1);
+  }
+
+  auto agent =
+      SEIRAgent::Create(kUuid, initial_transition, &transmission_model,
+                        std::move(transition_model), *visit_generator,
+                        std::move(risk_score), VisitLocationDynamics());
+
+  agent->ProcessInfectionOutcomes(timestep0, outcomes0);
+  agent->UpdateContactReports(timestep0, {}, contact_report_broker.get());
+
+  agent->ProcessInfectionOutcomes(timestep2, outcomes2);
+  agent->UpdateContactReports(timestep2, {}, contact_report_broker.get());
 }
 
 TEST(SEIRAgentTest, UpdateContactReportsRejectsWrongUuid) {

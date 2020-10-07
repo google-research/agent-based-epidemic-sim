@@ -36,20 +36,68 @@ message TracingPolicyProto {
   google.protobuf.Duration test_latency = 4;
 }
 
+message InfectiousnessLevel {
+  enum Level {
+    UNKNOWN = 0;
+    NONE = 1;
+    STANDARD = 2;
+    HIGH = 3;
+  }
+}
+
+// Each exposure has a series of one or more attenuation:duration pairs.
+// Each pair is discretized using the appropriate BLEBucket.threshold and the
+// corresponding weight is used by the model.
+message BLEBucket {
+  float threshold = 1;
+  float weight = 2;
+}
+
+// A min and max bound, mapping days since symptom onset to a particular
+// infectiousness level and model weight. Min and max bounds are required
+// because buckets can be nested in nature.
+message InfectiousnessBucket {
+  InfectiousnessLevel.Level level = 1;
+  float weight = 2;
+  int64 days_since_symptom_onset_min = 3;
+  int64 days_since_symptom_onset_max = 4;
+}
+
+// Weights used in the risk score model.
+message LearningRiskScoreModelProto {
+  // Overall scaling factor for hazard. This scales the product of duration and
+  // infection scores.
+  float overall_real = 1;
+
+  // Buckets representing threshold and corresponding weight of ble attenuation
+  // signals.
+  repeated BLEBucket ble_buckets = 2;
+
+  // Buckets representing days_since_symptom onset and a mapping to a
+  // corresponding infectiousness level and model weight.
+  repeated InfectiousnessBucket infectiousness_buckets = 3;
+
+  // The number of days of exosure history to use when determining whether to
+  // quarantine, test and other policy actions.
+  int64 exposure_notification_window_days = 4;
+}
+
 // Top level configuration for the risk learning simulation.
 message RiskLearningSimulationConfig {
   repeated string agent_file = 1;
   repeated string location_file = 2;
 
-  google.protobuf.Timestamp init_time = 20;
-  google.protobuf.Duration step_size = 21;
-  int32 steps = 22;
+  google.protobuf.Timestamp init_time = 3;
+  google.protobuf.Duration step_size = 4;
+  int32 steps = 5;
 
-  TracingPolicyProto tracing_policy = 100;
-  repeated PopulationProfile profiles = 101;
+  TracingPolicyProto tracing_policy = 6;
+  repeated PopulationProfile profiles = 7;
   // Changepoints are the time varying parameters used to set the infectivity
   // of work and random locations.
-  repeated float changepoints = 102;
+  repeated float changepoints = 8;
   // Number of infections that exist at the beginning of the simulation.
-  float n_seed_infections = 103;
+  float n_seed_infections = 9;
+
+  LearningRiskScoreModelProto risk_score_model = 10;
 }

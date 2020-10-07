@@ -61,6 +61,7 @@ message ContactReportProto {
   google.protobuf.Timestamp test_time_requested = 3;
   google.protobuf.Timestamp test_time_received = 4;
   TestOutcome.Outcome outcome = 7;
+  google.protobuf.Timestamp initial_symptom_onset_time = 8;
   reserved 5, 6;  // deprecated fields.
 }
 

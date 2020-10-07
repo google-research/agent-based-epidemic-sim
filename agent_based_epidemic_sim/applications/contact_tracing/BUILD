@@ -22,6 +22,7 @@ cc_library(
     hdrs = ["risk_score.h"],
     deps = [
         ":config_cc_proto",
+        "//agent_based_epidemic_sim/core:event",
         "//agent_based_epidemic_sim/core:integral_types",
         "//agent_based_epidemic_sim/core:location_type",
         "//agent_based_epidemic_sim/core:pandemic_cc_proto",

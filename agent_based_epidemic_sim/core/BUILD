@@ -210,6 +210,7 @@ cc_library(
         "//agent_based_epidemic_sim/util:ostream_overload",
         "@com_google_absl//absl/meta:type_traits",
         "@com_google_absl//absl/time",
+        "@com_google_absl//absl/types:optional",
         "@com_google_absl//absl/types:variant",
     ],
 )
@@ -794,6 +795,7 @@ cc_test(
     srcs = ["duration_specified_visit_generator_test.cc"],
     deps = [
         ":duration_specified_visit_generator",
+        ":event",
         ":integral_types",
         ":risk_score",
         ":visit",

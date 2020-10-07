@@ -20,6 +20,7 @@
 
 #include "absl/time/time.h"
 #include "agent_based_epidemic_sim/core/constants.h"
+#include "agent_based_epidemic_sim/core/event.h"
 #include "agent_based_epidemic_sim/core/visit.h"
 #include "agent_based_epidemic_sim/port/logging.h"
 
@@ -118,6 +119,10 @@ void SEIRAgent::MaybeUpdateHealthTransitions(const Timestep& timestep) {
         !initial_infection_time_.has_value()) {
       initial_infection_time_ = original_transition_time;
     }
+    if (IsSymptomaticState(next_health_transition_.health_state) &&
+        !initial_symptom_onset_time_.has_value()) {
+      initial_symptom_onset_time_ = original_transition_time;
+    }
     health_transitions_.push_back(next_health_transition_);
     risk_score_->AddHealthStateTransistion(next_health_transition_);
     next_health_transition_ =
@@ -192,14 +197,16 @@ void SEIRAgent::SendContactReports(const Timestep& timestep,
   }
 
   std::vector<ContactReport> contact_reports;
-  exposures_.PerAgent(contact_report_send_cutoff_,
-                      [this, &test_result, &contact_reports](const int64 uuid) {
-                        contact_reports.push_back({
-                            .from_agent_uuid = this->uuid(),
-                            .to_agent_uuid = uuid,
-                            .test_result = test_result,
-                        });
-                      });
+  exposures_.PerAgent(
+      contact_report_send_cutoff_,
+      [this, &test_result, &contact_reports](const int64 uuid) {
+        contact_reports.push_back({
+            .from_agent_uuid = this->uuid(),
+            .to_agent_uuid = uuid,
+            .test_result = test_result,
+            .initial_symptom_onset_time = initial_symptom_onset_time_,
+        });
+      });
   contact_report_send_cutoff_ = timestep.start_time();
   broker->Send(contact_reports);
 }
@@ -264,7 +271,7 @@ float SEIRAgent::CurrentInfectivity(const absl::Time& current_time) const {
   const absl::Duration duration_since_infection =
       DurationSinceFirstInfection(current_time);
   const int discrete_days_since_infection =
-      (int)std::round(absl::ToDoubleHours(duration_since_infection) / 24.0f);
+      ConvertDurationToDiscreteDays(duration_since_infection);
 
   if (discrete_days_since_infection > 14) return 0;
 

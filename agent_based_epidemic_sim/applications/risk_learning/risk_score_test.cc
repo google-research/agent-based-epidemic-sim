@@ -61,8 +61,11 @@ std::vector<float> FrequencyAdjustments(RiskScore& risk_score,
 class RiskScoreTest : public testing::Test {
  protected:
   std::unique_ptr<RiskScore> GetRiskScore() {
+    auto risk_score_model_or =
+        CreateLearningRiskScoreModel(GetLearningRiskScoreModelProto());
+    model_ = risk_score_model_or.value();
     auto risk_score_or = CreateLearningRiskScore(
-        GetTracingPolicyProto(), [](const int64 location_uuid) {
+        GetTracingPolicyProto(), model_, [](const int64 location_uuid) {
           return location_uuid == 0 ? LocationReference::BUSINESS
                                     : LocationReference::HOUSEHOLD;
         });
@@ -78,6 +81,35 @@ class RiskScoreTest : public testing::Test {
       test_latency { seconds: 86400 }
     )");
   }
+
+  LearningRiskScoreModelProto GetLearningRiskScoreModelProto() {
+    return ParseTextProtoOrDie<LearningRiskScoreModelProto>(R"(
+      overall_real: 0.5
+      ble_buckets: { weight: 0.1 }
+      ble_buckets: { weight: 0.2 threshold: 1 }
+      infectiousness_buckets: {
+        level: 3
+        weight: 0.3
+        days_since_symptom_onset_min: -1
+        days_since_symptom_onset_max: 1
+      }
+      infectiousness_buckets: {
+        level: 2
+        weight: 0.2
+        days_since_symptom_onset_min: -2
+        days_since_symptom_onset_max: 2
+      }
+      infectiousness_buckets: {
+        level: 1
+        weight: 0.1
+        days_since_symptom_onset_min: -999
+        days_since_symptom_onset_max: 999
+      }
+      exposure_notification_window_days: 14
+    )");
+  }
+
+  LearningRiskScoreModel model_;
 };
 
 OVERLOAD_VECTOR_OSTREAM_OPS

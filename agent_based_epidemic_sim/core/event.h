@@ -25,6 +25,7 @@
 
 #include "absl/meta/type_traits.h"
 #include "absl/time/time.h"
+#include "absl/types/optional.h"
 #include "absl/types/variant.h"
 #include "agent_based_epidemic_sim/core/constants.h"
 #include "agent_based_epidemic_sim/core/integral_types.h"
@@ -95,6 +96,11 @@ class ProximityTrace {
 
   friend bool operator==(const ProximityTrace& a, const ProximityTrace& b) {
     return a.values == b.values;
+  }
+
+  friend std::ostream& operator<<(std::ostream& strm,
+                                  const ProximityTrace& proximity_trace) {
+    return strm << proximity_trace.values;
   }
 };
 
@@ -283,10 +289,13 @@ struct ContactReport {
   int64 to_agent_uuid;
   TestResult test_result;
 
+  absl::optional<absl::Time> initial_symptom_onset_time;
+
   friend bool operator==(const ContactReport& a, const ContactReport& b) {
     return (a.from_agent_uuid == b.from_agent_uuid &&
             a.to_agent_uuid == b.to_agent_uuid &&
-            a.test_result == b.test_result);
+            a.test_result == b.test_result &&
+            a.initial_symptom_onset_time == b.initial_symptom_onset_time);
   }
 
   friend bool operator!=(const ContactReport& a, const ContactReport& b) {
@@ -295,9 +304,14 @@ struct ContactReport {
 
   friend std::ostream& operator<<(std::ostream& strm,
                                   const ContactReport& contact_report) {
-    return strm << "{" << contact_report.from_agent_uuid << ", "
-                << contact_report.to_agent_uuid << ", "
-                << contact_report.test_result << "}";
+    strm << "{" << contact_report.from_agent_uuid << ", "
+         << contact_report.to_agent_uuid << ", " << contact_report.test_result
+         << ", ";
+    if (!contact_report.initial_symptom_onset_time.has_value()) {
+      return strm << "?]";
+    }
+
+    return strm << contact_report.initial_symptom_onset_time.value() << "}";
   }
 };
 

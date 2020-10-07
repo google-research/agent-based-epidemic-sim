@@ -88,6 +88,7 @@ cc_library(
         "//agent_based_epidemic_sim/core:aggregated_transmission_model",
         "//agent_based_epidemic_sim/core:duration_specified_visit_generator",
         "//agent_based_epidemic_sim/core:enum_indexed_array",
+        "//agent_based_epidemic_sim/core:event",
         "//agent_based_epidemic_sim/core:integral_types",
         "//agent_based_epidemic_sim/core:location",
         "//agent_based_epidemic_sim/core:location_discrete_event_simulator",

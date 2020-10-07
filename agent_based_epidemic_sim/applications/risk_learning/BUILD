@@ -42,14 +42,19 @@ cc_library(
     hdrs = ["risk_score.h"],
     deps = [
         ":config_cc_proto",
+        "//agent_based_epidemic_sim/core:constants",
+        "//agent_based_epidemic_sim/core:event",
         "//agent_based_epidemic_sim/core:integral_types",
         "//agent_based_epidemic_sim/core:location_type",
         "//agent_based_epidemic_sim/core:pandemic_cc_proto",
         "//agent_based_epidemic_sim/core:risk_score",
         "//agent_based_epidemic_sim/port:time_proto_util",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
+        "@com_google_absl//absl/types:optional",
     ],
 )
 
