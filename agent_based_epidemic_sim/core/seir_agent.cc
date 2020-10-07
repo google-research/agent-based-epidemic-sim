@@ -168,9 +168,10 @@ void SEIRAgent::UpdateContactReports(
   DCHECK(matches_uuid_fn(contact_reports))
       << "Found incorrect ContactReport uuid.";
   for (const ContactReport& contact_report : contact_reports) {
-    auto contact = contact_set_.find(contact_report.from_agent_uuid);
-    if (contact == contact_set_.end()) continue;
-    risk_score_->AddExposureNotification((*contact)->exposure, contact_report);
+    exposures_.ProcessNotification(
+        contact_report, [this, &contact_report](const Exposure& exposure) {
+          risk_score_->AddExposureNotification(exposure, contact_report);
+        });
   }
   SendContactReports(timestep, broker);
 }
@@ -186,30 +187,20 @@ void SEIRAgent::SendContactReports(const Timestep& timestep,
 
   const TestResult test_result = risk_score_->GetTestResult(timestep);
   if (test_result != last_test_result_sent_) {
-    // We want to avoid re-sending ContactReports for contacts we've already
-    // sent a ContactReport for.  We keep track of
-    // last_contact_report_considered_ which tells us the last contact we sent
-    // last_test_result_sent_ for.  If we get a new test result, though, we
-    // need to send that even for contacts we sent the previous result for.
-    // For that reason we reset last_contact_report_consiered_ to an invalid
-    // value here so we send the new test result to all our contacts.
-    last_contact_report_considered_ = contacts_.end();
+    contact_report_send_cutoff_ = absl::InfinitePast();
     last_test_result_sent_ = test_result;
   }
 
   std::vector<ContactReport> contact_reports;
-  for (auto contact = contacts_.rbegin(); contact != contacts_.rend();
-       ++contact) {
-    if (last_contact_report_considered_ != contacts_.end() &&
-        last_contact_report_considered_ == std::prev(contact.base())) {
-      break;
-    }
-    contact_reports.push_back({.from_agent_uuid = uuid(),
-                               .to_agent_uuid = contact->other_uuid,
-                               .test_result = test_result});
-  }
-  last_contact_report_considered_ = std::prev(contacts_.end());
-
+  exposures_.PerAgent(contact_report_send_cutoff_,
+                      [this, &test_result, &contact_reports](const int64 uuid) {
+                        contact_reports.push_back({
+                            .from_agent_uuid = this->uuid(),
+                            .to_agent_uuid = uuid,
+                            .test_result = test_result,
+                        });
+                      });
+  contact_report_send_cutoff_ = timestep.start_time();
   broker->Send(contact_reports);
 }
 
@@ -239,29 +230,19 @@ void SEIRAgent::ProcessInfectionOutcomes(
       };
   DCHECK(matches_uuid_fn(infection_outcomes))
       << "Found incorrect InfectionOutcome uuid.";
+
+  const absl::Time earliest_retained_contact_time =
+      timestep.start_time() - risk_score_->ContactRetentionDuration();
+  exposures_.GarbageCollect(earliest_retained_contact_time);
+  exposures_.AddExposures(infection_outcomes);
+
   std::vector<const Exposure*> exposures;
   exposures.reserve(infection_outcomes.size());
   for (const InfectionOutcome& infection_outcome : infection_outcomes) {
-    // TODO: Record background exposures.
-    if (infection_outcome.exposure_type == InfectionOutcomeProto::CONTACT) {
-      const Contact contact{.other_uuid = infection_outcome.source_uuid,
-                            .exposure = infection_outcome.exposure};
-      const auto previous_contact =
-          contact_set_.find(infection_outcome.source_uuid);
-      if (previous_contact != contact_set_.end()) {
-        std::list<Contact>::iterator iter = *previous_contact;
-        if (iter == last_contact_report_considered_) {
-          last_contact_report_considered_ =
-              iter == contacts_.begin() ? contacts_.end() : std::prev(iter);
-        }
-        contact_set_.erase(previous_contact);
-        contacts_.erase(iter);
-      }
-      contact_set_.insert(contacts_.insert(contacts_.end(), contact));
-      exposures.push_back(&infection_outcome.exposure);
-    }
+    exposures.push_back(&infection_outcome.exposure);
   }
   risk_score_->AddExposures(exposures);
+
   if (next_health_transition_.health_state == HealthState::SUSCEPTIBLE &&
       !exposures.empty()) {
     const HealthTransition health_transition =
@@ -269,17 +250,6 @@ void SEIRAgent::ProcessInfectionOutcomes(
     if (health_transition.health_state == HealthState::EXPOSED) {
       next_health_transition_ = health_transition;
     }
-  }
-  const absl::Time earliest_retained_contact_time =
-      timestep.start_time() - risk_score_->ContactRetentionDuration();
-  while (
-      !contacts_.empty() &&
-      ContactFromBefore(*contacts_.begin(), earliest_retained_contact_time)) {
-    if (contacts_.begin() == last_contact_report_considered_) {
-      last_contact_report_considered_ = contacts_.end();
-    }
-    contact_set_.erase(contacts_.begin());
-    contacts_.erase(contacts_.begin());
   }
   MaybeUpdateHealthTransitions(timestep);
 }

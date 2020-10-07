@@ -823,28 +823,6 @@ TEST(SEIRAgentTest, SendContactReports) {
         .Times(1);
   }
 
-  // Currently the last_contact_considered_ is 999.  Here we test the special
-  // case that that entry is removed due to a new contact from the same agent.
-  // It still should be the case that we don't resend old contacts.
-  Timestep timestep6(TimeFromDay(9), absl::Hours(24));
-  EXPECT_CALL(*risk_score, GetTestResult(timestep6))
-      .WillOnce(Return(expected_test_result3));
-  std::vector<Contact> contacts6{
-      {.other_uuid = 999LL,
-       .exposure = {.start_time = TimeFromDayAndHour(8, 12),
-                    .duration = absl::Hours(1LL)}}};
-  auto outcomes6 = OutcomesFromContacts(kUuid, contacts6);
-  {
-    const std::vector<ContactReport> expected_contact_reports{
-        {.from_agent_uuid = kUuid,
-         .to_agent_uuid = 999LL,
-         .test_result = expected_test_result3}};
-    EXPECT_CALL(
-        *contact_report_broker,
-        Send(testing::UnorderedElementsAreArray(expected_contact_reports)))
-        .Times(1);
-  }
-
   auto agent =
       SEIRAgent::Create(kUuid, initial_transition, &transmission_model,
                         std::move(transition_model), *visit_generator,
@@ -864,9 +842,6 @@ TEST(SEIRAgentTest, SendContactReports) {
 
   agent->ProcessInfectionOutcomes(timestep5, outcomes5);
   agent->UpdateContactReports(timestep5, {}, contact_report_broker.get());
-
-  agent->ProcessInfectionOutcomes(timestep6, outcomes6);
-  agent->UpdateContactReports(timestep6, {}, contact_report_broker.get());
 }
 
 TEST(SEIRAgentTest, UpdateContactReportsRejectsWrongUuid) {

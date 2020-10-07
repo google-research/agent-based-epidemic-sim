@@ -25,6 +25,7 @@
 #include "agent_based_epidemic_sim/core/agent.h"
 #include "agent_based_epidemic_sim/core/broker.h"
 #include "agent_based_epidemic_sim/core/event.h"
+#include "agent_based_epidemic_sim/core/exposure_store.h"
 #include "agent_based_epidemic_sim/core/integral_types.h"
 #include "agent_based_epidemic_sim/core/pandemic.pb.h"
 #include "agent_based_epidemic_sim/core/risk_score.h"
@@ -116,7 +117,7 @@ class SEIRAgent : public Agent {
             std::unique_ptr<RiskScore> risk_score,
             VisitLocationDynamics visit_dynamics)
       : uuid_(uuid),
-        last_contact_report_considered_(contacts_.end()),
+        contact_report_send_cutoff_(absl::InfinitePast()),
         last_test_result_sent_({
             .time_requested = absl::InfiniteFuture(),
             .time_received = absl::InfiniteFuture(),
@@ -160,31 +161,7 @@ class SEIRAgent : public Agent {
   HealthTransition next_health_transition_;
   absl::optional<absl::Time> initial_infection_time_;
 
-  using ContactList = std::list<Contact>;
-  struct ContactHasher {
-    using is_transparent = void;
-    size_t operator()(ContactList::iterator contact) const {
-      return contact->other_uuid;
-    }
-    size_t operator()(int64 other_uuid) const { return other_uuid; }
-  };
-  struct ContactEq {
-    using is_transparent = void;
-    bool operator()(ContactList::iterator left,
-                    ContactList::iterator right) const {
-      return left->other_uuid == right->other_uuid;
-    }
-    bool operator()(int64 left, ContactList::iterator right) const {
-      return left == right->other_uuid;
-    }
-    bool operator()(ContactList::iterator left, int64 right) const {
-      return left->other_uuid == right;
-    }
-    bool operator()(int64 left, int64 right) const { return left == right; }
-  };
-  ContactList contacts_;
-  absl::flat_hash_set<ContactList::iterator, ContactHasher, ContactEq>
-      contact_set_;
+  ExposureStore exposures_;
 
   // This is the last contact that we sent last_test_result_sent_ to.
   // Before we send any test results, or if we remove all considered contacts
@@ -198,7 +175,7 @@ class SEIRAgent : public Agent {
   // one about to be deleted, since in this case subsequent contacts are
   // guaranteed not to be the last_contact_report_considered_ (or if there is
   // not previous contact, then again to the special value contacts_.end()).
-  ContactList::iterator last_contact_report_considered_;
+  absl::Time contact_report_send_cutoff_;
   TestResult last_test_result_sent_;
 
   // Unowned (shared between agents at risk for the given disease).

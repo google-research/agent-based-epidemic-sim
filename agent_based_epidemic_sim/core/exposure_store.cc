@@ -8,7 +8,8 @@ ExposureStore::ExposureStore() : buffer_(14) {}
 
 void ExposureStore::GarbageCollect(absl::Time before) {
   while (head_ != tail_ && buffer_[head_].exposure.start_time < before) {
-    const Record& record = buffer_[head_];
+    Record& record = buffer_[head_];
+    record.contact_report.reset();
     if (record.newer_id == 0) {  // This was the agents only record.
       agents_.erase(record.uuid);
     } else {
@@ -31,7 +32,7 @@ void ExposureStore::AddExposures(
     std::vector<Record> tmp(std::max(buffer_.size() * 2, desired + 1));
     size_t id = head_id_;
     for (int i = 0; i < current; ++i) {
-      tmp[i] = GetRecordById(id++);
+      tmp[i] = std::move(GetRecordById(id++));
     }
     std::swap(buffer_, tmp);
   }
