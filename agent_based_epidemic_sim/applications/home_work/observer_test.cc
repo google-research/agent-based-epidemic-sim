@@ -22,6 +22,7 @@
 #include "agent_based_epidemic_sim/core/location.h"
 #include "agent_based_epidemic_sim/core/pandemic.pb.h"
 #include "agent_based_epidemic_sim/port/status_matchers.h"
+#include "agent_based_epidemic_sim/util/test_util.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -52,41 +53,6 @@ const char* kExpectedHeaders =
     "home_2h,home_4h,home_8h,home_16h,work_0,work_1h,work_2h,work_4h,work_8h,"
     "work_16h,contact_1,contact_2,contact_4,contact_8,contact_16,"
     "contact_32,contact_64,contact_128,contact_256,contact_512\n";
-
-class MockAgent : public Agent {
- public:
-  MOCK_METHOD(int64, uuid, (), (const, override));
-  MOCK_METHOD(void, ComputeVisits,
-              (const Timestep& timestep, Broker<Visit>* visit_broker),
-              (const, override));
-  MOCK_METHOD(void, ProcessInfectionOutcomes,
-              (const Timestep& timestep,
-               absl::Span<const InfectionOutcome> infection_outcomes),
-              (override));
-  MOCK_METHOD(void, UpdateContactReports,
-              (const Timestep& timestep,
-               absl::Span<const ContactReport> symptom_reports,
-               Broker<ContactReport>* symptom_broker),
-              (override));
-  MOCK_METHOD(HealthState::State, CurrentHealthState, (), (const, override));
-  MOCK_METHOD(TestResult, CurrentTestResult, (const Timestep&),
-              (const, override));
-  MOCK_METHOD(absl::Span<const HealthTransition>, HealthTransitions, (),
-              (const, override));
-};
-
-class MockLocation : public Location {
- public:
-  MOCK_METHOD(int64, uuid, (), (const, override));
-
-  // Process a set of visits and write InfectionOutcomes to the given
-  // infection_broker.  If observer != nullptr, then observer should be called
-  // for each visit with a list of corresponding contacts.
-  MOCK_METHOD(void, ProcessVisits,
-              (absl::Span<const Visit> visits,
-               Broker<InfectionOutcome>* infection_broker),
-              (override));
-};
 
 std::unique_ptr<MockAgent> MakeAgent(int64 uuid, HealthState::State state) {
   auto agent = absl::make_unique<MockAgent>();

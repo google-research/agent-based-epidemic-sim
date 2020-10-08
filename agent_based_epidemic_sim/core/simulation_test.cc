@@ -14,6 +14,8 @@
 
 #include "agent_based_epidemic_sim/core/simulation.h"
 
+#include <memory>
+
 #include "absl/container/flat_hash_map.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/time/time.h"
@@ -23,6 +25,8 @@
 #include "agent_based_epidemic_sim/core/location.h"
 #include "agent_based_epidemic_sim/core/observer.h"
 #include "agent_based_epidemic_sim/core/timestep.h"
+#include "agent_based_epidemic_sim/util/test_util.h"
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 namespace abesim {
@@ -54,100 +58,84 @@ std::array<int, kReportsPerAgent> ReportRecipients(int64 agent_id) {
   return ret;
 }
 
-class FakeAgent : public Agent {
- public:
-  FakeAgent(int64 uuid, OutcomeMap* outcome_counts, ReportMap* report_counts)
-      : uuid_(uuid),
-        outcome_counts_(outcome_counts),
-        report_counts_(report_counts) {}
-  int64 uuid() const override { return uuid_; }
-  void ComputeVisits(const Timestep& timestep,
-                     Broker<Visit>* visit_broker) const override {
-    for (const int location_uuid : VisitLocations(uuid_)) {
-      visit_broker->Send(
-          {{.location_uuid = location_uuid, .agent_uuid = uuid_}});
-    }
-  }
-  void ProcessInfectionOutcomes(
-      const Timestep& timestep,
-      absl::Span<const InfectionOutcome> infection_outcomes) override {
-    for (const InfectionOutcome& outcome : infection_outcomes) {
-      ASSERT_EQ(outcome.agent_uuid, uuid_);
-    }
-    {
-      absl::MutexLock l(&map_mu);
-      (*outcome_counts_)[uuid_] += infection_outcomes.size();
-    }
-    if (last_timestep_ == nullptr) {
-      last_timestep_ = absl::make_unique<Timestep>(timestep);
-    } else {
-      ASSERT_EQ(timestep.start_time(), last_timestep_->end_time());
-      ASSERT_EQ(timestep.duration(), absl::Hours(24));
-      *last_timestep_ = timestep;
-    }
-  }
-  void UpdateContactReports(const Timestep& timestep,
-                            absl::Span<const ContactReport> symptom_reports,
-                            Broker<ContactReport>* symptom_broker) override {
-    {
-      absl::MutexLock l(&map_mu);
-      for (const auto& report : symptom_reports) {
-        ASSERT_EQ(report.to_agent_uuid, uuid_);
-        ASSERT_EQ(report.test_result.time_received,
-                  last_timestep_->start_time());
-        (*report_counts_)[{report.from_agent_uuid, report.to_agent_uuid}]++;
-      }
-    }
-    for (const int to_agent_uuid : ReportRecipients(uuid_)) {
-      symptom_broker->Send({{.from_agent_uuid = uuid_,
-                             .to_agent_uuid = to_agent_uuid,
-                             .test_result = {
-                                 .time_received = last_timestep_->end_time(),
-                             }}});
-    }
-  }
+std::unique_ptr<Agent> MakeAgent(int64 uuid, OutcomeMap* outcome_counts,
+                                 ReportMap* report_counts) {
+  auto agent = absl::make_unique<testing::NiceMock<MockAgent>>();
+  auto last_timestep = std::make_shared<absl::optional<Timestep>>();
+  ON_CALL(*agent, uuid()).WillByDefault(testing::Return(uuid));
+  ON_CALL(*agent, ComputeVisits(testing::_, testing::_))
+      .WillByDefault(
+          [uuid](const Timestep& timestep, Broker<Visit>* visit_broker) {
+            for (const int location_uuid : VisitLocations(uuid)) {
+              visit_broker->Send(
+                  {{.location_uuid = location_uuid, .agent_uuid = uuid}});
+            }
+          });
+  ON_CALL(*agent, ProcessInfectionOutcomes(testing::_, testing::_))
+      .WillByDefault(
+          [uuid, outcome_counts, last_timestep](
+              const Timestep& timestep,
+              absl::Span<const InfectionOutcome> infection_outcomes) {
+            for (const InfectionOutcome& outcome : infection_outcomes) {
+              ASSERT_EQ(outcome.agent_uuid, uuid);
+            }
+            {
+              absl::MutexLock l(&map_mu);
+              (*outcome_counts)[uuid] += infection_outcomes.size();
+            }
+            if (!last_timestep->has_value()) {
+              *last_timestep = timestep;
+            } else {
+              ASSERT_EQ(timestep.start_time(),
+                        last_timestep->value().end_time());
+              ASSERT_EQ(timestep.duration(), absl::Hours(24));
+              *last_timestep = timestep;
+            }
+          });
+  ON_CALL(*agent, UpdateContactReports(testing::_, testing::_, testing::_))
+      .WillByDefault([uuid, last_timestep, report_counts](
+                         const Timestep& timestep,
+                         absl::Span<const ContactReport> symptom_reports,
+                         Broker<ContactReport>* symptom_broker) {
+        {
+          absl::MutexLock l(&map_mu);
+          for (const auto& report : symptom_reports) {
+            ASSERT_EQ(report.to_agent_uuid, uuid);
+            ASSERT_EQ(report.test_result.time_received,
+                      last_timestep->value().start_time());
+            (*report_counts)[{report.from_agent_uuid, report.to_agent_uuid}]++;
+          }
+        }
+        for (const int to_agent_uuid : ReportRecipients(uuid)) {
+          symptom_broker->Send(
+              {{.from_agent_uuid = uuid,
+                .to_agent_uuid = to_agent_uuid,
+                .test_result = {
+                    .time_received = last_timestep->value().end_time(),
+                }}});
+        }
+      });
+  return agent;
+}
 
-  HealthState::State CurrentHealthState() const override {
-    return HealthState::SUSCEPTIBLE;
-  }
-
-  TestResult CurrentTestResult(const Timestep&) const override {
-    return TestResult{};
-  }
-
-  absl::Span<const HealthTransition> HealthTransitions() const override {
-    return {};
-  }
-
- private:
-  std::unique_ptr<Timestep> last_timestep_;
-  int64 uuid_;
-  OutcomeMap* outcome_counts_;
-  ReportMap* report_counts_;
-};
-
-class FakeLocation : public Location {
- public:
-  FakeLocation(int64 uuid, VisitMap* visit_counts)
-      : uuid_(uuid), visit_counts_(visit_counts) {}
-
-  int64 uuid() const override { return uuid_; }
-  void ProcessVisits(absl::Span<const Visit> visits,
-                     Broker<InfectionOutcome>* infection_broker) override {
-    for (const Visit& visit : visits) {
-      ASSERT_EQ(visit.location_uuid, uuid_);
-      {
-        absl::MutexLock l(&map_mu);
-        (*visit_counts_)[{uuid_, visit.agent_uuid}]++;
-      }
-      infection_broker->Send({{.agent_uuid = visit.agent_uuid}});
-    }
-  }
-
- private:
-  int64 uuid_;
-  VisitMap* visit_counts_;
-};
+std::unique_ptr<Location> MakeLocation(int64 uuid, VisitMap* visit_counts) {
+  auto location = absl::make_unique<testing::NiceMock<MockLocation>>();
+  ON_CALL(*location, uuid()).WillByDefault([uuid]() { return uuid; });
+  ON_CALL(*location, ProcessVisits(testing::_, testing::_))
+      .WillByDefault(
+          [uuid, visit_counts](absl::Span<const Visit> visits,
+                               Broker<InfectionOutcome>* infection_broker) {
+            for (const Visit& visit : visits) {
+              ASSERT_EQ(visit.location_uuid, uuid);
+              {
+                absl::MutexLock l(&map_mu);
+                (*visit_counts)[{uuid, visit.agent_uuid}]++;
+              }
+              infection_broker->Send({{.agent_uuid = visit.agent_uuid}});
+            }
+          });
+  return location;
+}
 
 struct PerAgent {
   int observations = 0;
@@ -227,11 +215,11 @@ std::unique_ptr<Simulation> BuildSimulator(SimBuilder builder,
                                            ReportMap* reports) {
   std::vector<std::unique_ptr<Agent>> agents;
   for (int i = 0; i < kNumAgents; ++i) {
-    agents.push_back(absl::make_unique<FakeAgent>(i, outcomes, reports));
+    agents.push_back(MakeAgent(i, outcomes, reports));
   }
   std::vector<std::unique_ptr<Location>> locations;
   for (int i = 0; i < kNumLocations; ++i) {
-    locations.push_back(absl::make_unique<FakeLocation>(i, visits));
+    locations.push_back(MakeLocation(i, visits));
   }
   auto sim =
       builder(absl::UnixEpoch(), std::move(agents), std::move(locations));

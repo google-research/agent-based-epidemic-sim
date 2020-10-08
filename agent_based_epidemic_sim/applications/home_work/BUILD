@@ -130,6 +130,7 @@ cc_test(
         "//agent_based_epidemic_sim/core:location",
         "//agent_based_epidemic_sim/core:pandemic_cc_proto",
         "//agent_based_epidemic_sim/port:status_matchers",
+        "//agent_based_epidemic_sim/util:test_util",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/time",
         "@com_google_googletest//:gtest_main",

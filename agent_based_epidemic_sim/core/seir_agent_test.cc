@@ -25,6 +25,7 @@
 #include "agent_based_epidemic_sim/core/transition_model.h"
 #include "agent_based_epidemic_sim/core/visit.h"
 #include "agent_based_epidemic_sim/core/visit_generator.h"
+#include "agent_based_epidemic_sim/util/test_util.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -42,55 +43,6 @@ absl::Time TimeFromDayAndHour(const int day, const int hour) {
   return absl::UnixEpoch() + absl::Hours(24 * day + hour);
 }
 absl::Time TimeFromDay(const int day) { return TimeFromDayAndHour(day, 0); }
-
-class MockTransitionModel : public TransitionModel {
- public:
-  explicit MockTransitionModel() = default;
-  MOCK_METHOD(HealthTransition, GetNextHealthTransition,
-              (const HealthTransition& latest_transition), (override));
-};
-
-class MockTransmissionModel : public TransmissionModel {
- public:
-  MockTransmissionModel() = default;
-  MOCK_METHOD(HealthTransition, GetInfectionOutcome,
-              (absl::Span<const Exposure* const> exposures), (override));
-};
-
-class MockVisitGenerator : public VisitGenerator {
- public:
-  explicit MockVisitGenerator() = default;
-  MOCK_METHOD(void, GenerateVisits,
-              (const Timestep& timestep, const RiskScore& policy,
-               std::vector<Visit>* visits),
-              (const, override));
-};
-
-template <typename T>
-class MockBroker : public Broker<T> {
- public:
-  explicit MockBroker() = default;
-  MOCK_METHOD(void, Send, (absl::Span<const T> visits), (override));
-};
-
-class MockRiskScore : public RiskScore {
- public:
-  MOCK_METHOD(void, AddHealthStateTransistion, (HealthTransition transition),
-              (override));
-  MOCK_METHOD(void, AddExposures, (absl::Span<const Exposure* const> exposures),
-              (override));
-  MOCK_METHOD(void, AddExposureNotification,
-              (const Exposure& contact, const ContactReport& notification),
-              (override));
-  MOCK_METHOD(VisitAdjustment, GetVisitAdjustment,
-              (const Timestep& timestep, int64 location_uuid),
-              (const, override));
-  MOCK_METHOD(TestResult, GetTestResult, (const Timestep& timestep),
-              (const, override));
-  MOCK_METHOD(ContactTracingPolicy, GetContactTracingPolicy,
-              (const Timestep& timestep), (const, override));
-  MOCK_METHOD(absl::Duration, ContactRetentionDuration, (), (const, override));
-};
 
 std::vector<InfectionOutcome> OutcomesFromContacts(
     const int64 agent_uuid, absl::Span<const Contact> contacts) {

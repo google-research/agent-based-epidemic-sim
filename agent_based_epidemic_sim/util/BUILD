@@ -23,3 +23,23 @@ cc_library(
         "@com_google_riegeli//riegeli/records:record_writer",
     ],
 )
+
+cc_library(
+    name = "test_util",
+    testonly = 1,
+    hdrs = ["test_util.h"],
+    deps = [
+        "//agent_based_epidemic_sim/core:agent",
+        "//agent_based_epidemic_sim/core:broker",
+        "//agent_based_epidemic_sim/core:event",
+        "//agent_based_epidemic_sim/core:integral_types",
+        "//agent_based_epidemic_sim/core:location",
+        "//agent_based_epidemic_sim/core:risk_score",
+        "//agent_based_epidemic_sim/core:timestep",
+        "//agent_based_epidemic_sim/core:transition_model",
+        "//agent_based_epidemic_sim/core:transmission_model",
+        "//agent_based_epidemic_sim/core:visit",
+        "//agent_based_epidemic_sim/core:visit_generator",
+        "@com_google_googletest//:gtest",
+    ],
+)

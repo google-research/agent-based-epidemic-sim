@@ -21,6 +21,7 @@
 #include "agent_based_epidemic_sim/core/integral_types.h"
 #include "agent_based_epidemic_sim/core/risk_score.h"
 #include "agent_based_epidemic_sim/core/visit.h"
+#include "agent_based_epidemic_sim/util/test_util.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -110,25 +111,6 @@ TEST(DurationSpecifiedVisitGeneratorTest, GeneratesVisitsWithNegativeSamples) {
   EXPECT_EQ(visits[0].start_time, timestep.start_time());
   EXPECT_EQ(visits[0].end_time, timestep.end_time());
 }
-
-class MockRiskScore : public RiskScore {
- public:
-  MOCK_METHOD(void, AddHealthStateTransistion, (HealthTransition transition),
-              (override));
-  MOCK_METHOD(void, AddExposures, (absl::Span<const Exposure* const> exposures),
-              (override));
-  MOCK_METHOD(void, AddExposureNotification,
-              (const Exposure& exposure, const ContactReport& notification),
-              (override));
-  MOCK_METHOD(VisitAdjustment, GetVisitAdjustment,
-              (const Timestep& timestep, int64 location_uuid),
-              (const, override));
-  MOCK_METHOD(TestResult, GetTestResult, (const Timestep& timestep),
-              (const override));
-  MOCK_METHOD(ContactTracingPolicy, GetContactTracingPolicy,
-              (const Timestep& timestep), (const, override));
-  MOCK_METHOD(absl::Duration, ContactRetentionDuration, (), (const, override));
-};
 
 MATCHER_P(TimeNear, a, "") {
   return arg >= a - absl::Seconds(1) && arg <= a + absl::Seconds(1);

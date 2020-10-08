@@ -24,6 +24,7 @@
 #include "agent_based_epidemic_sim/core/observer.h"
 #include "agent_based_epidemic_sim/core/pandemic.pb.h"
 #include "agent_based_epidemic_sim/core/visit.h"
+#include "agent_based_epidemic_sim/util/test_util.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -40,14 +41,6 @@ const std::vector<std::vector<float>> kFarProximityTraceDistribution = {
 const ProximityTrace kFarProximityTrace({kFarProximity});
 
 using testing::UnorderedElementsAreArray;
-
-class MockInfectionBroker : public Broker<InfectionOutcome> {
- public:
-  MockInfectionBroker() = default;
-  MOCK_METHOD(void, Send,
-              (absl::Span<const InfectionOutcome> infection_outcome),
-              (override));
-};
 
 std::vector<InfectionOutcome> InfectionOutcomesFromContacts(
     const absl::Span<const Contact> contacts, const int64 uuid) {
@@ -94,7 +87,7 @@ TEST(LocationDiscreteEventSimulatorTest, ContactTracing) {
                                   .symptom_factor = 0.0}};
 
   std::vector<Contact> contacts;
-  MockInfectionBroker infection_broker;
+  MockBroker<InfectionOutcome> infection_broker;
   {
     std::vector<Contact> expected_contacts = {
         {
@@ -181,7 +174,7 @@ TEST(LocationDiscreteEventSimulatorTest, ContactTracing) {
 }
 
 TEST(LocationDiscreteEventSimulatorTest, ProcessVisitsRejectsWrongUuid) {
-  auto infection_broker = absl::make_unique<MockInfectionBroker>();
+  auto infection_broker = absl::make_unique<MockBroker<InfectionOutcome>>();
   const int64 kUuid = 42LL;
   std::vector<Visit> visits{Visit{.location_uuid = 314LL,
                                   .agent_uuid = 0LL,
@@ -198,7 +191,7 @@ TEST(LocationDiscreteEventSimulatorTest, ProcessVisitsRejectsWrongUuid) {
 
 TEST(LocationDiscreteEventSimulatorTest,
      ProcessVisitsRejectsStartTimeNotBeforeEndTime) {
-  auto infection_broker = absl::make_unique<MockInfectionBroker>();
+  auto infection_broker = absl::make_unique<MockBroker<InfectionOutcome>>();
   const int64 kUuid = 42LL;
   std::vector<Visit> visits{Visit{.location_uuid = kUuid,
                                   .agent_uuid = 0LL,
