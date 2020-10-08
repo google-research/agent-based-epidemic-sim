@@ -23,6 +23,7 @@
 #include "agent_based_epidemic_sim/core/event.h"
 #include "agent_based_epidemic_sim/core/visit.h"
 #include "agent_based_epidemic_sim/port/logging.h"
+#include "agent_based_epidemic_sim/util/time_utils.h"
 
 namespace abesim {
 namespace {

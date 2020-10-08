@@ -43,3 +43,22 @@ cc_library(
         "@com_google_googletest//:gtest",
     ],
 )
+
+cc_library(
+    name = "time_utils",
+    srcs = ["time_utils.cc"],
+    hdrs = ["time_utils.h"],
+    deps = [
+        "@com_google_absl//absl/time",
+    ],
+)
+
+cc_test(
+    name = "time_utils_test",
+    srcs = ["time_utils_test.cc"],
+    deps = [
+        ":time_utils",
+        "@com_google_absl//absl/time",
+        "@com_google_googletest//:gtest_main",
+    ],
+)

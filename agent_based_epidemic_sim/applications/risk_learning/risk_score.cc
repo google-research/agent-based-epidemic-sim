@@ -33,6 +33,7 @@
 #include "agent_based_epidemic_sim/core/location_type.h"
 #include "agent_based_epidemic_sim/core/pandemic.pb.h"
 #include "agent_based_epidemic_sim/port/time_proto_util.h"
+#include "agent_based_epidemic_sim/util/time_utils.h"
 
 namespace abesim {
 

@@ -166,12 +166,6 @@ class SEIRAgent : public Agent {
   absl::Duration DurationSinceFirstInfection(
       const absl::Time& current_time) const;
 
-  // TODO: move this into a time_util file. It is copied over in
-  // risk_learning/risk_score.
-  int ConvertDurationToDiscreteDays(const absl::Duration& duration) const {
-    return static_cast<int>(absl::ToDoubleHours(duration) / 24.0f + 0.5);
-  }
-
   const int64 uuid_;
   // The health state changes this agent has observed. Ordered in chronological
   // order. Note that the next pending state transition is stored in

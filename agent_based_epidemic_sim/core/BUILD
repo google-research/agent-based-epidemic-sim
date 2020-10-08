@@ -527,6 +527,7 @@ cc_library(
         ":visit",
         ":visit_generator",
         "//agent_based_epidemic_sim/port:logging",
+        "//agent_based_epidemic_sim/util:time_utils",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/time",
         "@com_google_absl//absl/types:span",

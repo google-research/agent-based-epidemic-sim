@@ -55,12 +55,6 @@ class LearningRiskScoreModel {
     return pow(alpha / distance, 1 / gamma) - beta;
   }
 
-  // TODO: move this into a time_util file. It is copied over in
-  // core/seir_agent.
-  int ConvertDurationToDiscreteDays(const absl::Duration& duration) const {
-    return static_cast<int>(absl::ToDoubleHours(duration) / 24.0f + 0.5);
-  }
-
   absl::StatusOr<int> RSSIToBinIndex(const int rssi) const;
 
   float ComputeDurationScore(const Exposure& exposure) const;
