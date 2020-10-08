@@ -112,6 +112,17 @@ The computational model used by the simulator is inspired in part by the
 [EpiSimdemics simulator][1].  We also took a great deal of inspiration from the
 [OpenABM simulator][2].
 
+EpiSimdemics and its extensions were built by a team of researchers, the core
+team members are now at UVA, UMD, UIUC, and LLNL. All the members that
+contributed to EpiSimdemics and its extensions  include: Ashwin Aji,
+Christopher L. Barrett, Abhinav Bhatele, Keith R. Bisset, Ali Butt,
+Eric Bohm, Abhishek Gupta, Stephen G. Eubank, Xizhou Feng, Wu Feng,
+Nikhil Jain, Laxmikant V. Kale, Tariq Kamal,  Chris Kuhlman, Yarden Livnat,
+Madhav Marathe, Dimitrios S. Nikolopoulos, Martin Schulz, Lukasz Wesolowski,
+Jae-Seung Yeom. Madhav Marathe is the corresponding scientist for EpiSimdemics
+and can be reached at [marathe@virginia.edu][4].
+
 [1]: http://charm.cs.uiuc.edu/research/episim
 [2]: https://github.com/BDI-pathogens/OpenABM-Covid19
 [3]: https://github.com/GoogleCloudPlatform/covid-19-open-data
+[4]: mailto:marathe@virginia.edu
