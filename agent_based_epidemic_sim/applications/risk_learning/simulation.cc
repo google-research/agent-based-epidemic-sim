@@ -152,8 +152,12 @@ class RiskLearningSimulation : public Simulation {
             for (const GraphLocation::Edge& edge : proto.graph().edges()) {
               edges.push_back({edge.uuid_a(), edge.uuid_b()});
             }
+            float drop_prob =
+                proto.reference().type() == LocationReference::BUSINESS
+                    ? 1.0 - config.daily_fraction_work()
+                    : 0.0;
             locations.push_back(NewGraphLocation(
-                proto.reference().uuid(), transmissibility, 0.0,
+                proto.reference().uuid(), transmissibility, drop_prob,
                 std::move(edges), *result->micro_generator_));
             break;
           }

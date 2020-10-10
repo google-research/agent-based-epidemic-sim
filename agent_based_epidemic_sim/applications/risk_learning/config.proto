@@ -100,4 +100,8 @@ message RiskLearningSimulationConfig {
   float n_seed_infections = 9;
 
   LearningRiskScoreModelProto risk_score_model = 10;
+
+  // The fraction of edges from the workplace network that should be sampled
+  // every day.
+  float daily_fraction_work = 11;
 }
