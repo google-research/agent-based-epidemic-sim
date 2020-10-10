@@ -56,6 +56,7 @@ namespace {
 
 struct PopulationProfileData {
   const PopulationProfile* profile;
+  std::negative_binomial_distribution<int> random_edges_distribution;
 };
 
 int64 GetLocationUuidForTypeOrDie(const AgentProto& agent,
@@ -182,9 +183,14 @@ class RiskLearningSimulation : public Simulation {
     // Read in population profiles.
     absl::flat_hash_map<int, PopulationProfileData> profile_data;
     for (const PopulationProfile& profile : config.profiles()) {
+      float mean = profile.random_visit_params().mean();
+      float sd = profile.random_visit_params().stddev();
+      float p = mean / sd / sd;
+      int k = static_cast<int>((mean * mean / (sd * sd - mean)) + 0.5);
       profile_data[profile.id()] = {
           .profile = &profile,
-      };
+          .random_edges_distribution =
+              std::negative_binomial_distribution<int>(k, p)};
     }
 
     // Read in risk model config.
@@ -206,7 +212,7 @@ class RiskLearningSimulation : public Simulation {
               absl::StrCat("Invalid population profile id for agent: ",
                            proto.DebugString()));
         }
-        const PopulationProfileData& agent_profile = profile_iter->second;
+        PopulationProfileData& agent_profile = profile_iter->second;
         // TODO: It is wasteful that we are making a new transition model
         // for each agent.  To fix this we need to make GetNextHealthTransition
         // thread safe.  This is complicated by the fact that
@@ -268,13 +274,10 @@ class RiskLearningSimulation : public Simulation {
         }) {}
 
   static VisitLocationDynamics GenerateVisitDynamics(
-      const PopulationProfileData& profile) {
-    auto random_location_edges = std::negative_binomial_distribution<int>(
-        profile.profile->random_visit_params().r(),
-        profile.profile->random_visit_params().p());
+      PopulationProfileData& profile) {
     absl::BitGenRef gen = GetBitGen();
     return {
-        .random_location_edges = random_location_edges(gen),
+        .random_location_edges = profile.random_edges_distribution(gen),
     };
   }
 

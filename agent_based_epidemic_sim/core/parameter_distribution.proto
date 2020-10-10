@@ -61,8 +61,3 @@ message GroupedDiscreteDistribution {
   // The discrete distribution.
   DiscreteDistribution distribution = 2;
 }
-
-message NegativeBinomialDistribution {
-  float r = 1;
-  float p = 2;
-}

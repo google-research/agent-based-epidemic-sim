@@ -199,6 +199,10 @@ profiles {
       stddev: 1.0
     }
   }
+  random_visit_params {
+    mean: 2
+    stddev: 2
+  }
 }
 
 # Profile for ages 10-19.
@@ -344,6 +348,10 @@ profiles {
       mean: 16.0
       stddev: 1.0
     }
+  }
+  random_visit_params {
+    mean: 2
+    stddev: 2
   }
 }
 
@@ -491,6 +499,10 @@ profiles {
       stddev: 1.0
     }
   }
+  random_visit_params {
+    mean: 4
+    stddev: 4
+  }
 }
 
 # Profile for ages 30-39.
@@ -636,6 +648,10 @@ profiles {
       mean: 16.0
       stddev: 1.0
     }
+  }
+  random_visit_params {
+    mean: 4
+    stddev: 4
   }
 }
 
@@ -783,6 +799,10 @@ profiles {
       stddev: 1.0
     }
   }
+  random_visit_params {
+    mean: 4
+    stddev: 4
+  }
 }
 
 # Profile for ages 50-59.
@@ -928,6 +948,10 @@ profiles {
       mean: 16.0
       stddev: 1.0
     }
+  }
+  random_visit_params {
+    mean: 4
+    stddev: 4
   }
 }
 
@@ -1075,6 +1099,10 @@ profiles {
       stddev: 1.0
     }
   }
+  random_visit_params {
+    mean: 4
+    stddev: 4
+  }
 }
 
 # Profile for ages 70-79.
@@ -1221,9 +1249,13 @@ profiles {
       stddev: 1.0
     }
   }
+  random_visit_params {
+    mean: 3
+    stddev: 3
+  }
 }
 
-# Profile for ages 80-89.
+# Profile for ages 80+.
 profiles {
   id: 9
   transition_model {
@@ -1367,6 +1399,10 @@ profiles {
       mean: 16.0
       stddev: 1.0
     }
+  }
+  random_visit_params {
+    mean: 3
+    stddev: 3
   }
 }
 

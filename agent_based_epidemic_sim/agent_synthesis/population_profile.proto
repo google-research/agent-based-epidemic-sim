@@ -25,6 +25,11 @@ message VisitDuration {
   GaussianDistribution gaussian_distribution = 2;
 }
 
+message RandomGraphInteractions {
+  float mean = 1;
+  float stddev = 2;
+}
+
 // A message representing a given class of users. May be a function of
 // age or other comorbidities.
 message PopulationProfile {
@@ -40,7 +45,7 @@ message PopulationProfile {
   repeated VisitDuration visit_durations = 6;
   // Distribution that determines the number of edges assigned to each agent
   // with this profile when visiting a random location.
-  NegativeBinomialDistribution random_visit_params = 7;
+  RandomGraphInteractions random_visit_params = 7;
 }
 
 message PopulationProfiles {
