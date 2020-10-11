@@ -31,6 +31,7 @@
 #include "absl/strings/string_view.h"
 #include "agent_based_epidemic_sim/agent_synthesis/population_profile.pb.h"
 #include "agent_based_epidemic_sim/applications/risk_learning/config.pb.h"
+#include "agent_based_epidemic_sim/applications/risk_learning/observers.h"
 #include "agent_based_epidemic_sim/applications/risk_learning/risk_score.h"
 #include "agent_based_epidemic_sim/core/agent.h"
 #include "agent_based_epidemic_sim/core/duration_specified_visit_generator.h"
@@ -264,14 +265,18 @@ class RiskLearningSimulation : public Simulation {
                                             std::move(locations), num_workers)
                        : SerialSimulation(init_time, std::move(agents),
                                           std::move(locations));
+    result->sim_->AddObserverFactory(&result->summary_observer_);
+    result->sim_->AddObserverFactory(&result->learning_observer_);
     return std::move(result);
   }
 
  private:
   RiskLearningSimulation(const RiskLearningSimulationConfig& config)
-      : config_(config), get_location_type_([this](int64 uuid) {
-          return location_types_[uuid];
-        }) {}
+      : config_(config),
+        get_location_type_(
+            [this](int64 uuid) { return location_types_[uuid]; }),
+        summary_observer_(config.summary_filename()),
+        learning_observer_(config.learning_filename()) {}
 
   static VisitLocationDynamics GenerateVisitDynamics(
       PopulationProfileData& profile) {
@@ -293,6 +298,8 @@ class RiskLearningSimulation : public Simulation {
   // run of the simulation.
   absl::flat_hash_map<std::string, std::unique_ptr<VisitGenerator>>
       visit_gen_cache_;
+  SummaryObserverFactory summary_observer_;
+  LearningObserverFactory learning_observer_;
   std::unique_ptr<Simulation> sim_;
   int current_step_ = 0;
   float current_changepoint_ = 1.0;

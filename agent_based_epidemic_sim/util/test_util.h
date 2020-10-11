@@ -85,6 +85,10 @@ class MockAgent : public Agent {
               (const, override));
   MOCK_METHOD(absl::Span<const HealthTransition>, HealthTransitions, (),
               (const, override));
+  MOCK_METHOD(std::optional<absl::Time>, symptom_onset, (), (const, override));
+  MOCK_METHOD(std::optional<absl::Time>, infection_onset, (),
+              (const, override));
+  MOCK_METHOD(const ExposureStore*, exposure_store, (), (const, override));
 };
 
 class MockLocation : public Location {

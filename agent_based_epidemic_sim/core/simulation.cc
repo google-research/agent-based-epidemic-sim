@@ -121,11 +121,11 @@ class BaseSimulation : public Simulation {
               absl::Span<const ContactReport> agent_reports;
               std::tie(agent_reports, reports) =
                   SplitMessages(agent->uuid(), reports);
-              observer->Observe(*agent, agent_outcomes);
               agent->ProcessInfectionOutcomes(timestep, agent_outcomes);
               agent->UpdateContactReports(timestep, agent_reports,
                                           contact_report_broker);
               agent->ComputeVisits(timestep, visit_broker);
+              observer->Observe(*agent, agent_outcomes);
             }
             DCHECK(outcomes.empty()) << "Unprocessed InfectionOutcomes";
             DCHECK(reports.empty()) << "Unprocessed ContactReports";
@@ -142,8 +142,8 @@ class BaseSimulation : public Simulation {
               absl::Span<const Visit> location_visits;
               std::tie(location_visits, visits) =
                   SplitMessages(location->uuid(), visits);
-              observer->Observe(*location, location_visits);
               location->ProcessVisits(location_visits, broker);
+              observer->Observe(*location, location_visits);
             }
           });
       VLOG(1) << "Location phase took " << absl::Now() - location_start;

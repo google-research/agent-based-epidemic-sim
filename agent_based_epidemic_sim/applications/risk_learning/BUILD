@@ -60,11 +60,52 @@ cc_library(
 )
 
 cc_library(
+    name = "observers",
+    srcs = ["observers.cc"],
+    hdrs = ["observers.h"],
+    deps = [
+        ":exposures_per_test_result_cc_proto",
+        "//agent_based_epidemic_sim/core:agent",
+        "//agent_based_epidemic_sim/core:enum_indexed_array",
+        "//agent_based_epidemic_sim/core:observer",
+        "//agent_based_epidemic_sim/core:timestep",
+        "//agent_based_epidemic_sim/port:file_utils",
+        "//agent_based_epidemic_sim/port:time_proto_util",
+        "//agent_based_epidemic_sim/util:records",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/time",
+        "@com_google_absl//absl/types:span",
+    ],
+)
+
+cc_test(
+    name = "observers_test",
+    srcs = ["observers_test.cc"],
+    deps = [
+        ":exposures_per_test_result_cc_proto",
+        ":observers",
+        "//agent_based_epidemic_sim/core:exposure_store",
+        "//agent_based_epidemic_sim/core:pandemic_cc_proto",
+        "//agent_based_epidemic_sim/core:parse_text_proto",
+        "//agent_based_epidemic_sim/port:file_utils",
+        "//agent_based_epidemic_sim/port:status_matchers",
+        "//agent_based_epidemic_sim/port:time_proto_util",
+        "//agent_based_epidemic_sim/util:records",
+        "//agent_based_epidemic_sim/util:test_util",
+        "@com_google_absl//absl/time",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "simulation",
     srcs = ["simulation.cc"],
     hdrs = ["simulation.h"],
     deps = [
         ":config_cc_proto",
+        ":observers",
         ":risk_score",
         "//agent_based_epidemic_sim/agent_synthesis:population_profile_cc_proto",
         "//agent_based_epidemic_sim/core:agent",

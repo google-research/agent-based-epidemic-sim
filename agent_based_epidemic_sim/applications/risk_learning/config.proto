@@ -91,6 +91,9 @@ message RiskLearningSimulationConfig {
   google.protobuf.Duration step_size = 4;
   int32 steps = 5;
 
+  string summary_filename = 12;
+  string learning_filename = 13;
+
   TracingPolicyProto tracing_policy = 6;
   repeated PopulationProfile profiles = 7;
   // Changepoints are the time varying parameters used to set the infectivity

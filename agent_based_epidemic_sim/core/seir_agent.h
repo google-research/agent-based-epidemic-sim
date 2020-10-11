@@ -123,6 +123,15 @@ class SEIRAgent : public Agent {
     next_health_transition_ = transition;
   }
 
+  std::optional<absl::Time> symptom_onset() const override {
+    return initial_infection_time_;
+  }
+  std::optional<absl::Time> infection_onset() const override {
+    return initial_infection_time_;
+  }
+
+  const ExposureStore* exposure_store() const override { return &exposures_; }
+
  private:
   SEIRAgent(const int64 uuid, const HealthTransition& initial_health_transition,
             TransmissionModel* transmission_model,

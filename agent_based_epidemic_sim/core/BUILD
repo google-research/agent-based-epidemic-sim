@@ -67,6 +67,7 @@ cc_library(
     deps = [
         ":broker",
         ":event",
+        ":exposure_store",
         ":integral_types",
         ":pandemic_cc_proto",
         ":timestep",

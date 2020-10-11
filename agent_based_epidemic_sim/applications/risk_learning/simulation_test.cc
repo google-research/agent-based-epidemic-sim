@@ -102,6 +102,12 @@ TEST(SimulationTest, RunsSimulation) {
     writer.Close();
   }
 
+  // Add paths for output files.
+  config.set_summary_filename(
+      absl::StrCat(getenv("TEST_TMPDIR"), "/", "summary"));
+  config.set_learning_filename(
+      absl::StrCat(getenv("TEST_TMPDIR"), "/", "learning"));
+
   absl::Status status = RunSimulation(config, /*num_workers=*/1);
   PANDEMIC_ASSERT_OK(status);
 }

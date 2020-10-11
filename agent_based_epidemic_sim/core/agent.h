@@ -21,6 +21,7 @@
 #include "absl/types/span.h"
 #include "agent_based_epidemic_sim/core/broker.h"
 #include "agent_based_epidemic_sim/core/event.h"
+#include "agent_based_epidemic_sim/core/exposure_store.h"
 #include "agent_based_epidemic_sim/core/integral_types.h"
 #include "agent_based_epidemic_sim/core/pandemic.pb.h"
 #include "agent_based_epidemic_sim/core/timestep.h"
@@ -83,6 +84,13 @@ class Agent {
   virtual TestResult CurrentTestResult(const Timestep& timestep) const = 0;
 
   virtual absl::Span<const HealthTransition> HealthTransitions() const = 0;
+
+  virtual std::optional<absl::Time> symptom_onset() const = 0;
+  virtual std::optional<absl::Time> infection_onset() const = 0;
+
+  // Return a pointer to the agents stored exposures.  Note that the returned
+  // value may be nullptr if the agent doesn't support storing exposures.
+  virtual const ExposureStore* exposure_store() const = 0;
 
   virtual ~Agent() = default;
 };
