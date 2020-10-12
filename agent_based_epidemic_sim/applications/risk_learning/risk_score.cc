@@ -70,12 +70,12 @@ class LearningRiskScore : public RiskScore {
     // We don't take action on negative tests.
     if (notification.test_result.outcome != TestOutcome::POSITIVE) return;
 
-    float hazard = risk_score_model_.ComputeHazard(
+    float risk_score = risk_score_model_.ComputeRiskScore(
         exposure, notification.initial_symptom_onset_time);
-    VLOG(1) << "Hazard is " << hazard << " for exposure: " << exposure;
+    VLOG(1) << "Risk score is " << risk_score << " for exposure: " << exposure;
     // TODO: implement circular buffer maintaining a per day history of
-    // hazard sum.
-    current_hazard_sum_ += hazard;
+    // risk_score sum.
+    current_risk_score_sum_ += risk_score;
 
     absl::Time new_contact_time = exposure.start_time + exposure.duration;
     // If we already know about a contact that happened after this new
@@ -163,12 +163,12 @@ class LearningRiskScore : public RiskScore {
   HealthState::State latest_health_state_;
   std::vector<TestResult> test_results_;
   absl::Time latest_contact_time_;
-  float current_hazard_sum_;
+  float current_risk_score_sum_;
 };
 
 }  // namespace
 
-float LearningRiskScoreModel::ComputeHazard(
+float LearningRiskScoreModel::ComputeRiskScore(
     const Exposure& exposure,
     absl::optional<absl::Time> initial_symptom_onset_time) const {
   absl::optional<int64> days_since_symptom_onset;
@@ -177,15 +177,15 @@ float LearningRiskScoreModel::ComputeHazard(
         exposure.start_time - initial_symptom_onset_time.value());
   }
   VLOG(1) << "overall_real: " << overall_real_;
-  float hazard = overall_real_;
+  float risk_score = overall_real_;
 
-  hazard *= ComputeDurationScore(exposure);
-  hazard *= ComputeInfectionScore(days_since_symptom_onset);
+  risk_score *= ComputeDurationRiskScore(exposure);
+  risk_score *= ComputeInfectionRiskScore(days_since_symptom_onset);
 
-  return hazard;
+  return risk_score;
 }
 
-float LearningRiskScoreModel::ComputeDurationScore(
+float LearningRiskScoreModel::ComputeDurationRiskScore(
     const Exposure& exposure) const {
   std::vector<absl::Duration> ble_bucket_durations;
   ble_bucket_durations.resize(ble_buckets_.size(), absl::ZeroDuration());
@@ -210,7 +210,7 @@ float LearningRiskScoreModel::ComputeDurationScore(
   return duration_score;
 }
 
-float LearningRiskScoreModel::ComputeInfectionScore(
+float LearningRiskScoreModel::ComputeInfectionRiskScore(
     absl::optional<int64> days_since_symptom_onset) const {
   for (const InfectiousnessBucket& bucket : infectiousness_buckets_) {
     if (!days_since_symptom_onset.has_value()) {
@@ -256,7 +256,7 @@ absl::StatusOr<const LearningRiskScoreModel> CreateLearningRiskScoreModel(
   }
 
   // Note: Buckets must be sorted in asc order on threshold value. This is
-  // assumed downstream in ComputeInfectionScore.
+  // assumed downstream in ComputeDurationRiskScore.
   std::sort(ble_buckets.begin(), ble_buckets.end(),
             [](const BLEBucket& a, const BLEBucket& b) {
               return a.max_threshold() < b.max_threshold();
@@ -282,7 +282,7 @@ absl::StatusOr<const LearningRiskScoreModel> CreateLearningRiskScoreModel(
   }
 
   // Note: Buckets must be sorted in asc order using max threshold value. This
-  // is assumed downstream in ComputeInfectionScore.
+  // is assumed downstream in ComputeInfectionRiskScore.
   std::sort(infectiousness_buckets.begin(), infectiousness_buckets.end(),
             [](const InfectiousnessBucket& a, const InfectiousnessBucket& b) {
               return a.days_since_symptom_onset_max() <

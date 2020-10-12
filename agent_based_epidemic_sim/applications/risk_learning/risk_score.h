@@ -41,7 +41,7 @@ class LearningRiskScoreModel {
         infectiousness_buckets_(infectiousness_buckets),
         exposure_notification_window_days_(exposure_notification_window_days) {}
 
-  float ComputeHazard(
+  float ComputeRiskScore(
       const Exposure& exposure,
       absl::optional<absl::Time> initial_symptom_onset_time) const;
 
@@ -57,14 +57,14 @@ class LearningRiskScoreModel {
 
   absl::StatusOr<int> RSSIToBinIndex(const int rssi) const;
 
-  float ComputeDurationScore(const Exposure& exposure) const;
+  float ComputeDurationRiskScore(const Exposure& exposure) const;
   // Note: This method assumes infectiousness_buckets_ has a particular
   // ordering. Specifically the ordering is asc on days_since_symptom_onset_max.
-  float ComputeInfectionScore(
+  float ComputeInfectionRiskScore(
       absl::optional<int64> days_since_symptom_onset) const;
 
-  // Overall scaling factor for hazard. This scales the product of duration and
-  // infection scores.
+  // Overall scaling factor for risk score. This scales the product of duration
+  // and infection scores.
   float overall_real_;
   // Buckets representing threshold and corresponding weight of ble attenuation
   // signals.
