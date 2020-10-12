@@ -46,10 +46,10 @@ message InfectiousnessLevel {
 }
 
 // Each exposure has a series of one or more attenuation:duration pairs.
-// Each pair is discretized using the appropriate BLEBucket.threshold and the
-// corresponding weight is used by the model.
+// Each pair is discretized using the appropriate BLEBucket.max_threshold and
+// the corresponding weight is used by the model.
 message BLEBucket {
-  float threshold = 1;
+  float max_threshold = 1;
   float weight = 2;
 }
 

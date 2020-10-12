@@ -236,13 +236,13 @@ float LearningRiskScoreModel::ComputeInfectionScore(
 absl::StatusOr<int> LearningRiskScoreModel::RSSIToBinIndex(
     const int rssi) const {
   for (int i = 0; i < ble_buckets_.size(); ++i) {
-    if (rssi <= ble_buckets_[i].threshold()) {
+    if (rssi <= ble_buckets_[i].max_threshold()) {
       return i;
     }
   }
   return absl::InvalidArgumentError(absl::StrCat(
       "rssi value ", rssi, " larger than the largest ble threshold value: ",
-      ble_buckets_.back().threshold()));
+      ble_buckets_.back().max_threshold()));
 }
 
 absl::StatusOr<const LearningRiskScoreModel> CreateLearningRiskScoreModel(
@@ -259,7 +259,7 @@ absl::StatusOr<const LearningRiskScoreModel> CreateLearningRiskScoreModel(
   // assumed downstream in ComputeInfectionScore.
   std::sort(ble_buckets.begin(), ble_buckets.end(),
             [](const BLEBucket& a, const BLEBucket& b) {
-              return a.threshold() < b.threshold();
+              return a.max_threshold() < b.max_threshold();
             });
 
   std::vector<InfectiousnessBucket> infectiousness_buckets;
