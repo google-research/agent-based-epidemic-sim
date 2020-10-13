@@ -214,13 +214,13 @@ class ABSL_MUST_USE_RESULT StatusBuilder {
   // (cl/128258530).  This allows us to avoid a copy in the common case.
   // copybara:strip_end
   template <typename Adaptor>
-  auto With(Adaptor&& adaptor) & -> decltype(
-      std::forward<Adaptor>(adaptor)(*this)) {
+  auto With(
+      Adaptor&& adaptor) & -> decltype(std::forward<Adaptor>(adaptor)(*this)) {
     return std::forward<Adaptor>(adaptor)(*this);
   }
   template <typename Adaptor>
-  auto With(Adaptor&& adaptor) && -> decltype(
-      std::forward<Adaptor>(adaptor)(std::move(*this))) {
+  auto With(Adaptor&& adaptor) && -> decltype(std::forward<Adaptor>(adaptor)(
+      std::move(*this))) {
     return std::forward<Adaptor>(adaptor)(std::move(*this));
   }
 
