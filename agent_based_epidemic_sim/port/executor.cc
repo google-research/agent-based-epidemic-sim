@@ -15,6 +15,7 @@
 #include "agent_based_epidemic_sim/port/executor.h"
 
 #include <thread>  // NOLINT: Open source only.
+#include <vector>
 
 #include "absl/memory/memory.h"
 #include "absl/synchronization/mutex.h"
