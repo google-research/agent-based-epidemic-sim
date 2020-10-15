@@ -1,6 +1,6 @@
 absl-py
 jax
-jaxlib
+jaxlib==0.1
 numpy
 pandas
 scipy
