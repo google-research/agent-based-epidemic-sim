@@ -176,8 +176,7 @@ float LearningRiskScoreModel::ComputeRiskScore(
     days_since_symptom_onset = ConvertDurationToDiscreteDays(
         exposure.start_time - initial_symptom_onset_time.value());
   }
-  VLOG(1) << "overall_real: " << overall_real_;
-  float risk_score = overall_real_;
+  float risk_score = 1;
 
   risk_score *= ComputeDurationRiskScore(exposure);
   risk_score *= ComputeInfectionRiskScore(days_since_symptom_onset);
@@ -294,7 +293,7 @@ absl::StatusOr<const LearningRiskScoreModel> CreateLearningRiskScoreModel(
         "exposure_notification_window_days must be a positive integer.");
   }
   const LearningRiskScoreModel model = LearningRiskScoreModel(
-      proto.overall_real(), ble_buckets, infectiousness_buckets,
+      proto.risk_scale_factor(), ble_buckets, infectiousness_buckets,
       proto.exposure_notification_window_days());
   return model;
 }

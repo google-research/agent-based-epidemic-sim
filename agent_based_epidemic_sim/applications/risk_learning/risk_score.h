@@ -33,10 +33,10 @@ class LearningRiskScoreModel {
  public:
   LearningRiskScoreModel() {}
   LearningRiskScoreModel(
-      float overall_real, const std::vector<BLEBucket>& ble_buckets,
+      float risk_scale_factor, const std::vector<BLEBucket>& ble_buckets,
       const std::vector<InfectiousnessBucket>& infectiousness_buckets,
       const int exposure_notification_window_days)
-      : overall_real_(overall_real),
+      : risk_scale_factor_(risk_scale_factor),
         ble_buckets_(ble_buckets),
         infectiousness_buckets_(infectiousness_buckets),
         exposure_notification_window_days_(exposure_notification_window_days) {}
@@ -65,7 +65,12 @@ class LearningRiskScoreModel {
 
   // Overall scaling factor for risk score. This scales the product of duration
   // and infection scores.
-  float overall_real_;
+  // Default value from "Quantifying SARS-CoV-2-infection risk withing the
+  // Apple/Google exposure notification framework to inform quarantine
+  // recommendations, Amanda Wilson, Nathan Aviles, Paloma Beamer,
+  // Zsombor Szabo, Kacey Ernst, Joanna Masel. July 2020."
+  // https://www.medrxiv.org/content/10.1101/2020.07.17.20156539v2
+  float risk_scale_factor_ = 3.1 * 1e-4;
   // Buckets representing threshold and corresponding weight of ble attenuation
   // signals.
   std::vector<BLEBucket> ble_buckets_;

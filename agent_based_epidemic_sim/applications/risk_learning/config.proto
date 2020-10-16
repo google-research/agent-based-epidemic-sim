@@ -67,7 +67,7 @@ message InfectiousnessBucket {
 message LearningRiskScoreModelProto {
   // Overall scaling factor for risk score. This scales the product of duration
   // and infection scores.
-  float overall_real = 1;
+  float risk_scale_factor = 1;
 
   // Buckets representing threshold and corresponding weight of ble attenuation
   // signals.

@@ -1,3 +1,7 @@
+# proto-file: agent_based_epidemic_sim/applications/risk_learning/config.proto
+# proto-message: RiskLearningSimulationConfig
+
+
 # agent_file and location_file are set in simulation_test.cc.
 init_time {
   seconds: 0
@@ -25,7 +29,7 @@ tracing_policy {
 }
 
 risk_score_model {
-  overall_real: 0.5
+  risk_scale_factor: 0.5
   ble_buckets: { weight: 0.1 }
   ble_buckets: { weight: 0.2 max_threshold: 1 }
   infectiousness_buckets: {

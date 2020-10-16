@@ -84,7 +84,7 @@ class RiskScoreTest : public testing::Test {
 
   LearningRiskScoreModelProto GetLearningRiskScoreModelProto() {
     return ParseTextProtoOrDie<LearningRiskScoreModelProto>(R"(
-      overall_real: 0.5
+      risk_scale_factor: 0.5
       ble_buckets: { weight: 0.1 }
       ble_buckets: { weight: 0.2 max_threshold: 1 }
       infectiousness_buckets: {
