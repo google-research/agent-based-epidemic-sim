@@ -122,7 +122,9 @@ class SourceLocation {
 
   friend constexpr int UseUnused() {
     static_assert(SourceLocation(0, nullptr).unused_column_ == 0,
-                  "Use the otherwise-unused member.");
+                  "Use the otherwise unused member.");
+    static_assert(SourceLocation(0, nullptr).unused_function_name_ == nullptr,
+                  "Use the otherwise unused member.");
     return 0;
   }
 

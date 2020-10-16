@@ -160,7 +160,6 @@ class LearningRiskScore : public RiskScore {
   const LocationTypeFn location_type_;
   const LearningRiskScoreModel& risk_score_model_;
   absl::Time infection_onset_time_;
-  HealthState::State latest_health_state_;
   std::vector<TestResult> test_results_;
   absl::Time latest_contact_time_;
   float current_risk_score_sum_;

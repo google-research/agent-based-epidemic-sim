@@ -143,7 +143,7 @@ void HomeWorkSimulationObserverFactory::Aggregate(
   }
 
   LocationArray<Histogram<absl::Duration, kDurationBuckets>> location_histogram;
-  for (const auto iter : agent_location_type_durations_) {
+  for (const auto& iter : agent_location_type_durations_) {
     for (LocationReference::Type i :
          EnumerateEnumValues<LocationReference::Type>()) {
       if (iter.second[i] == absl::ZeroDuration()) continue;

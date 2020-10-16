@@ -70,11 +70,6 @@ void ConvertVisitsToEvents(
   }
 }
 
-absl::Duration Overlap(const Visit& a, const Visit& b) {
-  return std::min(a.end_time, b.end_time) -
-         std::max(a.start_time, b.start_time);
-}
-
 void RecordContact(VisitNode* a, VisitNode* b,
                    ExposureGenerator* exposure_generator) {
   // TODO: Incorporate a notion of guaranteed exposure duration

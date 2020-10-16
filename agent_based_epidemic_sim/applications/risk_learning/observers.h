@@ -59,7 +59,6 @@ class SummaryObserverFactory : public ObserverFactory<SummaryObserver> {
   };
 
  private:
-  bool wrote_header_ = false;
   std::unique_ptr<file::FileWriter> writer_;
 };
 

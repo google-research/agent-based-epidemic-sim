@@ -140,7 +140,6 @@ class TracingRiskScore : public RiskScore {
   const TracingRiskScoreConfig tracing_policy_;
   const LocationTypeFn location_type_;
   absl::Time infection_onset_time_;
-  HealthState::State latest_health_state_;
   std::vector<TestResult> test_results_;
   absl::Time latest_contact_time_;
 };

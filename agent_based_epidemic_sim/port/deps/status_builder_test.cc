@@ -128,7 +128,7 @@ TEST(StatusBuilderTest, ErrorCode) {
     const StatusBuilder builder(absl::OkStatus(), kLoc);
     EXPECT_TRUE(builder.ok());
     EXPECT_THAT(builder.code(), Eq(absl::StatusCode::kOk));
-    EXPECT_FALSE(builder.Is(kZomg));
+    EXPECT_FALSE(builder.code() == kZomg);
   }
 
   // Non-OK canonical code
@@ -136,7 +136,7 @@ TEST(StatusBuilderTest, ErrorCode) {
     const StatusBuilder builder(absl::StatusCode::kInvalidArgument, kLoc);
     EXPECT_FALSE(builder.ok());
     EXPECT_THAT(builder.code(), Eq(absl::StatusCode::kInvalidArgument));
-    EXPECT_FALSE(builder.Is(kZomg));
+    EXPECT_FALSE(builder.code() == kZomg);
   }
 }
 

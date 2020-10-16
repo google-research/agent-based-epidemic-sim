@@ -28,10 +28,6 @@
 namespace abesim {
 namespace {
 
-bool ContactFromBefore(const Contact& contact, const absl::Time time) {
-  return contact.exposure.start_time + contact.exposure.duration < time;
-}
-
 // TODO: Move to a more appropriate location when this gets more
 // sophisticated like taking into account covariates.
 float SymptomFactor(const HealthState::State health_state) {
