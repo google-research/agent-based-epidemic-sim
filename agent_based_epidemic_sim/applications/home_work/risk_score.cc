@@ -18,6 +18,7 @@
 
 #include "absl/memory/memory.h"
 #include "absl/random/distributions.h"
+#include "absl/status/statusor.h"
 #include "absl/time/time.h"
 #include "agent_based_epidemic_sim/applications/home_work/config.pb.h"
 #include "agent_based_epidemic_sim/applications/home_work/risk_score.h"

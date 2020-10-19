@@ -17,6 +17,7 @@
 #include <algorithm>
 
 #include "absl/memory/memory.h"
+#include "absl/status/statusor.h"
 #include "absl/time/time.h"
 #include "agent_based_epidemic_sim/applications/contact_tracing/config.pb.h"
 #include "agent_based_epidemic_sim/applications/contact_tracing/risk_score.h"
