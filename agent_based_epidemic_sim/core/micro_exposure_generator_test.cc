@@ -9,8 +9,8 @@
 namespace abesim {
 namespace {
 
-const HostData kInfectiousHost = {.infectivity = 1.0, .symptom_factor = 1.0};
-const HostData kSusceptibleHost = {.infectivity = 0.0, .symptom_factor = 0.0};
+const Visit kInfectiousVisit = {.infectivity = 1.0, .symptom_factor = 1.0};
+const Visit kSusceptibleVisit = {.infectivity = 0.0, .symptom_factor = 0.0};
 
 const std::vector<std::vector<float>> kDistribution = {{1.0f}};
 
@@ -20,7 +20,7 @@ TEST(MicroExposureGeneratorTest, CorrectlyDrawsFromDistribution) {
       meg_builder.Build(kDistribution);
 
   ExposurePair exposures =
-      generator->Generate(kInfectiousHost, kSusceptibleHost);
+      generator->Generate(1.0, kInfectiousVisit, kSusceptibleVisit);
 
   ProximityTrace proximity_trace = exposures.host_a.proximity_trace;
   EXPECT_EQ(proximity_trace.values[0], 1.0f);
@@ -35,7 +35,7 @@ TEST(MicroExposureGeneratorTest, ProximityTracesEqual) {
       meg_builder.Build(kDistribution);
 
   ExposurePair exposure_pair =
-      generator->Generate(kInfectiousHost, kSusceptibleHost);
+      generator->Generate(1.0, kInfectiousVisit, kSusceptibleVisit);
 
   EXPECT_EQ(exposure_pair.host_a.proximity_trace,
             exposure_pair.host_b.proximity_trace);
@@ -47,15 +47,15 @@ TEST(MicroExposureGeneratorTest, CorrectOrderingOfExposures) {
       meg_builder.Build(kDistribution);
 
   ExposurePair exposure_pair =
-      generator->Generate(kInfectiousHost, kSusceptibleHost);
+      generator->Generate(1.0, kInfectiousVisit, kSusceptibleVisit);
 
-  EXPECT_EQ(exposure_pair.host_a.infectivity, kSusceptibleHost.infectivity);
-  EXPECT_EQ(exposure_pair.host_b.infectivity, kInfectiousHost.infectivity);
+  EXPECT_EQ(exposure_pair.host_a.infectivity, kSusceptibleVisit.infectivity);
+  EXPECT_EQ(exposure_pair.host_b.infectivity, kInfectiousVisit.infectivity);
 
   EXPECT_EQ(exposure_pair.host_a.symptom_factor,
-            kSusceptibleHost.symptom_factor);
+            kSusceptibleVisit.symptom_factor);
   EXPECT_EQ(exposure_pair.host_b.symptom_factor,
-            kInfectiousHost.symptom_factor);
+            kInfectiousVisit.symptom_factor);
 }
 
 }  // namespace

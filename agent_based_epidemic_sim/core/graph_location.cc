@@ -49,12 +49,10 @@ class GraphLocation : public Location {
 
   void ProcessVisits(absl::Span<const Visit> visits,
                      Broker<InfectionOutcome>* infection_broker) override {
-    thread_local absl::flat_hash_map<int64, float> infectivity;
-    thread_local absl::flat_hash_map<int64, float> symptom_factor;
-    infectivity.clear();
+    thread_local absl::flat_hash_map<int64, Visit> visit_map;
+    visit_map.clear();
     for (const Visit& visit : visits) {
-      infectivity[visit.agent_uuid] = visit.infectivity;
-      symptom_factor[visit.agent_uuid] = visit.symptom_factor;
+      visit_map[visit.agent_uuid] = visit;
     }
 
     MaybeUpdateGraph(visits);
@@ -66,28 +64,13 @@ class GraphLocation : public Location {
       if (absl::Bernoulli(gen, drop_probability_)) continue;
 
       // If either of the participants are not present, no contact is generated.
-      auto infectivity_a = infectivity.find(edge.first);
-      if (infectivity_a == infectivity.end()) continue;
-      auto infectivity_b = infectivity.find(edge.second);
-      if (infectivity_b == infectivity.end()) continue;
-      auto symptom_factor_a = symptom_factor.find(edge.first);
-      if (symptom_factor_a == symptom_factor.end()) continue;
-      auto symptom_factor_b = symptom_factor.find(edge.second);
-      if (symptom_factor_b == symptom_factor.end()) continue;
+      auto visit_a = visit_map.find(edge.first);
+      if (visit_a == visit_map.end()) continue;
+      auto visit_b = visit_map.find(edge.second);
+      if (visit_b == visit_map.end()) continue;
 
-      HostData host_a = {.start_time = absl::UnixEpoch(),
-                         .infectivity = infectivity_a->second,
-                         .symptom_factor = symptom_factor_a->second};
-      HostData host_b = {.start_time = absl::UnixEpoch(),
-                         .infectivity = infectivity_b->second,
-                         .symptom_factor = symptom_factor_b->second};
-
-      ExposurePair host_exposures =
-          exposure_generator_.Generate(host_a, host_b);
-      host_exposures.host_a.location_transmissibility =
-          location_transmissibility_();
-      host_exposures.host_b.location_transmissibility =
-          location_transmissibility_();
+      ExposurePair host_exposures = exposure_generator_.Generate(
+          location_transmissibility_(), visit_a->second, visit_b->second);
       infection_broker->Send(
           {{
                .agent_uuid = edge.first,

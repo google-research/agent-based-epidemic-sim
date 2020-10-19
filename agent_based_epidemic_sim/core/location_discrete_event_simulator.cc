@@ -25,6 +25,10 @@
 namespace abesim {
 namespace {
 
+// TODO: Support location transmissibility more fully in this
+// implementation.
+static constexpr float kDefaultLocationTransmissibility = 1.0;
+
 // Corresponds to the record of a visiting agent in a location.
 struct VisitNode {
   const Visit* visit;
@@ -74,16 +78,11 @@ void RecordContact(VisitNode* a, VisitNode* b,
                    ExposureGenerator* exposure_generator) {
   // TODO: Incorporate a notion of guaranteed exposure duration
   // into this method.
-
-  HostData host_a = {.infectivity = a->visit->infectivity,
-                     .symptom_factor = a->visit->symptom_factor};
-  HostData host_b = {.infectivity = b->visit->infectivity,
-                     .symptom_factor = b->visit->symptom_factor};
-
   // TODO: Generate multiple ExposurePairs when overlap exceeds
   // current Exposure duration cap. There is currently a cap to the Exposure
   // duration because of the fixed size of ProximityTrace.
-  ExposurePair host_exposures = exposure_generator->Generate(host_a, host_b);
+  ExposurePair host_exposures = exposure_generator->Generate(
+      kDefaultLocationTransmissibility, *a->visit, *b->visit);
 
   a->contacts.push_back({.other_uuid = b->visit->agent_uuid,
                          .other_state = b->visit->health_state,

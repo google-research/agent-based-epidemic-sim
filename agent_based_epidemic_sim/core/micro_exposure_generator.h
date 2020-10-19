@@ -34,11 +34,9 @@ class MicroExposureGenerator : public ExposureGenerator {
 
   virtual ~MicroExposureGenerator() = default;
   // Generate a pair of Exposure objects representing a single contact between
-  // two hosts. The first and second values in the infectivity and
-  // symptom_factor pairs will correspond to the first and second Exposures
-  // returned, respectively.
-  ExposurePair Generate(const HostData& host_a,
-                        const HostData& host_b) const override;
+  // two hosts.
+  ExposurePair Generate(float location_transmissibility, const Visit& visit_a,
+                        const Visit& visit_b) const override;
 
  private:
   // Draws a proximity trace from an in-memory, non-parametric distribution.

@@ -93,7 +93,8 @@ TEST(LocationDiscreteEventSimulatorTest, ContactTracing) {
         {
             .other_uuid = 1,
             .other_state = HealthState::SUSCEPTIBLE,
-            .exposure = {.duration = kProximityTraceInterval,
+            .exposure = {.start_time = absl::FromUnixSeconds(100LL),
+                         .duration = kProximityTraceInterval,
                          .proximity_trace = kCloseProximityTrace,
                          .infectivity = 0.0f,
                          .symptom_factor = 0.0f},
@@ -101,7 +102,8 @@ TEST(LocationDiscreteEventSimulatorTest, ContactTracing) {
         {
             .other_uuid = 3,
             .other_state = HealthState::RECOVERED,
-            .exposure = {.duration = kProximityTraceInterval,
+            .exposure = {.start_time = absl::FromUnixSeconds(400LL),
+                         .duration = kProximityTraceInterval,
                          .proximity_trace = kCloseProximityTrace,
                          .infectivity = 0.0f,
                          .symptom_factor = 0.0f},
@@ -116,7 +118,8 @@ TEST(LocationDiscreteEventSimulatorTest, ContactTracing) {
         {
             .other_uuid = 0,
             .other_state = HealthState::INFECTIOUS,
-            .exposure = {.duration = kProximityTraceInterval,
+            .exposure = {.start_time = absl::FromUnixSeconds(100LL),
+                         .duration = kProximityTraceInterval,
                          .proximity_trace = kCloseProximityTrace,
                          .infectivity = 1.0f,
                          .symptom_factor = 1.0f},
@@ -124,7 +127,8 @@ TEST(LocationDiscreteEventSimulatorTest, ContactTracing) {
         {
             .other_uuid = 3,
             .other_state = HealthState::RECOVERED,
-            .exposure = {.duration = kProximityTraceInterval,
+            .exposure = {.start_time = absl::FromUnixSeconds(400LL),
+                         .duration = kProximityTraceInterval,
                          .proximity_trace = kCloseProximityTrace,
                          .infectivity = 0.0f,
                          .symptom_factor = 0.0f},
@@ -148,6 +152,7 @@ TEST(LocationDiscreteEventSimulatorTest, ContactTracing) {
             .other_state = HealthState::INFECTIOUS,
             .exposure =
                 {
+                    .start_time = absl::FromUnixSeconds(400LL),
                     .duration = kProximityTraceInterval,
                     .proximity_trace = kCloseProximityTrace,
                     .infectivity = 1.0f,
@@ -157,7 +162,8 @@ TEST(LocationDiscreteEventSimulatorTest, ContactTracing) {
         {
             .other_uuid = 1,
             .other_state = HealthState::SUSCEPTIBLE,
-            .exposure = {.duration = kProximityTraceInterval,
+            .exposure = {.start_time = absl::FromUnixSeconds(400LL),
+                         .duration = kProximityTraceInterval,
                          .proximity_trace = kCloseProximityTrace,
                          .infectivity = 0.0f,
                          .symptom_factor = 0.0f},
