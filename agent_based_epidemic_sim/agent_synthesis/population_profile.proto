@@ -62,7 +62,7 @@ message GraphLocation {
   repeated Edge edges = 1;
 }
 
-// GraphParamLocation is a location whose parameters define a Watts–Strogatz
+// GraphParamLocation is a location whose parameters define a Watts-Strogatz
 // small world graph whose edges represent possible interactions between agents.
 message GraphParamLocation {
   int64 nodes = 1;
@@ -110,4 +110,19 @@ message AgentProto {
   int64 population_profile_id = 2;
   HealthState.State initial_health_state = 3;
   repeated LocationReference locations = 4;
+}
+
+message NetworkProperties {
+  // Mean daily interactions at work (school, community center) for age groups:
+  //   - Children (0-19)
+  //   - Adult (20-69)
+  //   - Elderly (70+)
+  float mean_work_interactions_child = 1;
+  float mean_work_interactions_adult = 2;
+  float mean_work_interactions_elderly = 3;
+  // Rewire parameter on Watts-Strogatz workplace networks.
+  float work_network_rewire = 4;
+  // Fraction of an adult per child (elderly) in child (elderly) network.
+  float child_network_adults = 5;
+  float elderly_network_adults = 6;
 }
