@@ -125,4 +125,7 @@ message NetworkProperties {
   // Fraction of an adult per child (elderly) in child (elderly) network.
   float child_network_adults = 5;
   float elderly_network_adults = 6;
+  // Fraction of people in work network that an individual interacts with daily.
+  // NB: Duplicated in config for real time use.
+  float daily_fraction_work = 7;
 }
