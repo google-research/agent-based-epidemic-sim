@@ -173,9 +173,8 @@ TEST(LocationDiscreteEventSimulatorTest, ContactTracing) {
                     expected_contacts, visits[3].agent_uuid))))
         .Times(1);
   }
-  MicroExposureGeneratorBuilder meg_builder;
-  LocationDiscreteEventSimulator location(
-      kUuid, meg_builder.Build(kCloseProximityTraceDistribution));
+  MicroExposureGeneratorBuilder meg_builder(kCloseProximityTraceDistribution);
+  LocationDiscreteEventSimulator location(kUuid, meg_builder.Build());
   location.ProcessVisits(visits, &infection_broker);
 }
 
@@ -187,12 +186,10 @@ TEST(LocationDiscreteEventSimulatorTest, ProcessVisitsRejectsWrongUuid) {
                                   .start_time = absl::FromUnixSeconds(0LL),
                                   .end_time = absl::FromUnixSeconds(86400LL),
                                   .health_state = HealthState::INFECTIOUS}};
-  MicroExposureGeneratorBuilder meg_builder;
-  ASSERT_DEBUG_DEATH(
-      LocationDiscreteEventSimulator(
-          kUuid, meg_builder.Build(kCloseProximityTraceDistribution))
-          .ProcessVisits(visits, infection_broker.get()),
-      "");
+  MicroExposureGeneratorBuilder meg_builder(kCloseProximityTraceDistribution);
+  ASSERT_DEBUG_DEATH(LocationDiscreteEventSimulator(kUuid, meg_builder.Build())
+                         .ProcessVisits(visits, infection_broker.get()),
+                     "");
 }
 
 TEST(LocationDiscreteEventSimulatorTest,
@@ -204,12 +201,10 @@ TEST(LocationDiscreteEventSimulatorTest,
                                   .start_time = absl::FromUnixSeconds(0LL),
                                   .end_time = absl::FromUnixSeconds(0LL),
                                   .health_state = HealthState::INFECTIOUS}};
-  MicroExposureGeneratorBuilder meg_builder;
-  ASSERT_DEBUG_DEATH(
-      LocationDiscreteEventSimulator(
-          kUuid, meg_builder.Build(kCloseProximityTraceDistribution))
-          .ProcessVisits(visits, infection_broker.get()),
-      "");
+  MicroExposureGeneratorBuilder meg_builder(kCloseProximityTraceDistribution);
+  ASSERT_DEBUG_DEATH(LocationDiscreteEventSimulator(kUuid, meg_builder.Build())
+                         .ProcessVisits(visits, infection_broker.get()),
+                     "");
 }
 
 }  // namespace

@@ -28,9 +28,13 @@ namespace abesim {
 // Builds an exposure generator for the micro-exposure array scheme.
 class MicroExposureGeneratorBuilder : public ExposureGeneratorBuilder {
  public:
-  std::unique_ptr<ExposureGenerator> Build(
+  MicroExposureGeneratorBuilder(
       const std::vector<std::vector<float>>& proximity_trace_distribution)
-      const override;
+      : proximity_trace_distribution_(proximity_trace_distribution) {}
+  std::unique_ptr<ExposureGenerator> Build() const override;
+
+ private:
+  const std::vector<std::vector<float>>& proximity_trace_distribution_;
 };
 
 }  // namespace abesim

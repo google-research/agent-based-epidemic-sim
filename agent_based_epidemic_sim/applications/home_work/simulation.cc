@@ -275,14 +275,13 @@ void RunSimulation(
         *visit_generators.back(), policy_generator->NextRiskScore(),
         VisitLocationDynamics()));
   }
-  MicroExposureGeneratorBuilder meg_builder;
+  MicroExposureGeneratorBuilder meg_builder(kNonParametricTraceDistribution);
   std::vector<std::unique_ptr<Location>> location_des;
   location_des.reserve(context.locations.size());
   for (const auto& location : context.locations) {
     // TODO: Load a ProximityTrace Distribution from file.
     location_des.push_back(absl::make_unique<LocationDiscreteEventSimulator>(
-        location.reference().uuid(),
-        meg_builder.Build(kNonParametricTraceDistribution)));
+        location.reference().uuid(), meg_builder.Build()));
   }
   // Initializes Simulation.
   auto sim = num_workers > 1

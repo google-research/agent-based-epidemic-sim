@@ -19,6 +19,7 @@
 #include <memory>
 #include <random>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 #include "absl/container/fixed_array.h"
@@ -34,6 +35,8 @@
 #include "agent_based_epidemic_sim/applications/risk_learning/config.pb.h"
 #include "agent_based_epidemic_sim/applications/risk_learning/observers.h"
 #include "agent_based_epidemic_sim/applications/risk_learning/risk_score.h"
+#include "agent_based_epidemic_sim/applications/risk_learning/triple_exposure_generator.h"
+#include "agent_based_epidemic_sim/applications/risk_learning/triple_exposure_generator_builder.h"
 #include "agent_based_epidemic_sim/core/agent.h"
 #include "agent_based_epidemic_sim/core/duration_specified_visit_generator.h"
 #include "agent_based_epidemic_sim/core/event.h"
@@ -129,11 +132,8 @@ class RiskLearningSimulation : public Simulation {
     std::function<float()> work_random_transmissibility =
         [sim = result.get()]() -> float { return sim->current_changepoint_; };
 
-    // TODO: Load these values from config.
-    std::vector<ProximityTrace> proximity_traces = {
-        ProximityTrace({1.0f, 3.0f, 9.0f, 3.0f})};
-    result->micro_generator_ =
-        absl::make_unique<MicroExposureGenerator>(proximity_traces);
+    TripleExposureGeneratorBuilder seg_builder(config.proximity_config());
+    result->exposure_generator_ = seg_builder.Build();
 
     // Read in locations.
     std::vector<std::unique_ptr<Location>> locations;
@@ -161,13 +161,13 @@ class RiskLearningSimulation : public Simulation {
                     : 0.0;
             locations.push_back(NewGraphLocation(
                 proto.reference().uuid(), transmissibility, drop_prob,
-                std::move(edges), *result->micro_generator_));
+                std::move(edges), *result->exposure_generator_));
             break;
           }
           case LocationProto::kRandom:
             locations.push_back(NewRandomGraphLocation(
                 proto.reference().uuid(), transmissibility,
-                *result->micro_generator_));
+                *result->exposure_generator_));
             break;
           default:
             return absl::InvalidArgumentError(absl::StrCat(
@@ -288,7 +288,7 @@ class RiskLearningSimulation : public Simulation {
   }
 
   const RiskLearningSimulationConfig config_;
-  std::unique_ptr<MicroExposureGenerator> micro_generator_;
+  std::unique_ptr<ExposureGenerator> exposure_generator_;
   std::unique_ptr<HazardTransmissionModel> transmission_model_;
   LearningRiskScoreModel risk_score_model_;
   absl::flat_hash_map<int64, LocationReference::Type> location_types_;

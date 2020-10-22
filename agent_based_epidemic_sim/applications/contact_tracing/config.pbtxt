@@ -1,3 +1,7 @@
+# proto-file: agent_based_epidemic_sim/applications/contact_tracing/config.proto
+# proto-message: ContactTracingHomeWorkSimulationConfig
+
+
 home_work_config {
   init_time {
   }

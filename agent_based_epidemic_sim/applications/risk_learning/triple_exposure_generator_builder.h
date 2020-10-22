@@ -14,24 +14,30 @@
  * limitations under the License.
  */
 
-#ifndef AGENT_BASED_EPIDEMIC_SIM_CORE_EXPOSURE_GENERATOR_BUILDER_H_
-#define AGENT_BASED_EPIDEMIC_SIM_CORE_EXPOSURE_GENERATOR_BUILDER_H_
+#ifndef AGENT_BASED_EPIDEMIC_SIM_CORE_TRIPLE_EXPOSURE_GENERATOR_BUILDER_H_
+#define AGENT_BASED_EPIDEMIC_SIM_CORE_TRIPLE_EXPOSURE_GENERATOR_BUILDER_H_
 
 #include <memory>
 #include <vector>
 
+#include "agent_based_epidemic_sim/applications/risk_learning/config.pb.h"
 #include "agent_based_epidemic_sim/core/exposure_generator.h"
+#include "agent_based_epidemic_sim/core/exposure_generator_builder.h"
 
 namespace abesim {
 
-class ExposureGeneratorBuilder {
+// Builds an exposure generator for the
+// duration(min):attenuation(dB):distance(m) triple scheme.
+class TripleExposureGeneratorBuilder : public ExposureGeneratorBuilder {
  public:
-  ExposureGeneratorBuilder() = default;
-  virtual ~ExposureGeneratorBuilder() = default;
+  TripleExposureGeneratorBuilder(const ProximityConfigProto& proto)
+      : proto_(proto) {}
+  std::unique_ptr<ExposureGenerator> Build() const override;
 
-  virtual std::unique_ptr<ExposureGenerator> Build() const = 0;
+ private:
+  const ProximityConfigProto& proto_;
 };
 
 }  // namespace abesim
 
-#endif  // AGENT_BASED_EPIDEMIC_SIM_CORE_EXPOSURE_GENERATOR_BUILDER_H_
+#endif  // AGENT_BASED_EPIDEMIC_SIM_CORE_TRIPLE_EXPOSURE_GENERATOR_BUILDER_H_

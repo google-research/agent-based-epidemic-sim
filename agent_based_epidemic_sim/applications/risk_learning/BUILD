@@ -11,6 +11,7 @@ proto_library(
     srcs = ["config.proto"],
     deps = [
         "//agent_based_epidemic_sim/agent_synthesis:population_profile_proto",
+        "//agent_based_epidemic_sim/core:parameter_distribution_proto",
         "@com_google_protobuf//:duration_proto",
         "@com_google_protobuf//:timestamp_proto",
     ],
@@ -56,6 +57,42 @@ cc_library(
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
         "@com_google_absl//absl/types:optional",
+    ],
+)
+
+cc_library(
+    name = "triple_exposure_generator",
+    srcs = [
+        "triple_exposure_generator.cc",
+        "triple_exposure_generator_builder.cc",
+    ],
+    hdrs = [
+        "triple_exposure_generator.h",
+        "triple_exposure_generator_builder.h",
+    ],
+    deps = [
+        ":config_cc_proto",
+        "//agent_based_epidemic_sim/core:constants",
+        "//agent_based_epidemic_sim/core:exposure_generator",
+        "//agent_based_epidemic_sim/core:parameter_distribution_cc_proto",
+        "//agent_based_epidemic_sim/core:random",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/random",
+        "@com_google_absl//absl/random:distributions",
+        "@com_google_absl//absl/time",
+    ],
+)
+
+cc_test(
+    name = "triple_exposure_generator_test",
+    srcs = ["triple_exposure_generator_test.cc"],
+    deps = [
+        ":config_cc_proto",
+        ":triple_exposure_generator",
+        "//agent_based_epidemic_sim/core:exposure_generator",
+        "//agent_based_epidemic_sim/core:parse_text_proto",
+        "@com_google_absl//absl/time",
+        "@com_google_googletest//:gtest_main",
     ],
 )
 
@@ -107,6 +144,7 @@ cc_library(
         ":config_cc_proto",
         ":observers",
         ":risk_score",
+        ":triple_exposure_generator",
         "//agent_based_epidemic_sim/agent_synthesis:population_profile_cc_proto",
         "//agent_based_epidemic_sim/core:agent",
         "//agent_based_epidemic_sim/core:duration_specified_visit_generator",

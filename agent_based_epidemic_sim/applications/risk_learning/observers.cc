@@ -99,14 +99,8 @@ void LearningObserver::Observe(const Agent& agent,
                                  ? ExposuresPerTestResult::CONFIRMED
                                  : ExposuresPerTestResult::UNCONFIRMED);
         e->set_source_uuid(uuid);
-        // TODO: Update this when the proximity trace changes to a
-        // single value.
-        for (float value : exposure.proximity_trace.values) {
-          if (value == std::numeric_limits<float>::max()) break;
-          e->add_proximity_trace(value);
-        }
-        ToProto(absl::Minutes(5),
-                e->mutable_proximity_trace_temporal_resolution());
+        ToProto(exposure.duration, e->mutable_duration());
+        e->set_distance(exposure.distance);
 
         if (report != nullptr &&
             report->initial_symptom_onset_time.has_value()) {

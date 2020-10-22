@@ -43,6 +43,9 @@ ExposurePair MicroExposureGenerator::Generate(float location_transmissibility,
                     });
   const absl::Duration trace_duration = trace_length * kProximityTraceInterval;
   absl::Time start_time = std::max(visit_a.start_time, visit_b.start_time);
+
+  // TODO: Figure out how to remove proximity_trace from Exposure
+  // message while still threading it through here somehow.
   return {.host_a =
               {
                   .start_time = start_time,

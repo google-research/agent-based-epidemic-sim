@@ -151,7 +151,8 @@ TEST_F(LearningObserverTest, RecordsAllFields) {
               {
                   .start_time =
                       timestep_.start_time() - absl::Hours(24 * 2 + 8),
-                  .proximity_trace = {{1.0, 2.0, 4.0}},
+                  .duration = absl::Seconds(900),
+                  .distance = 2,
               },
           .source_uuid = 789,
       },
@@ -160,7 +161,8 @@ TEST_F(LearningObserverTest, RecordsAllFields) {
               {
                   .start_time =
                       timestep_.start_time() - absl::Hours(24 * 2 - 8),
-                  .proximity_trace = {{3.0, 6.0, 9.0}},
+                  .duration = absl::Seconds(900),
+                  .distance = 6,
               },
           .source_uuid = 654,
       },
@@ -187,19 +189,15 @@ TEST_F(LearningObserverTest, RecordsAllFields) {
         exposures {
           exposure_time { seconds: 115200 }
           duration_since_symptom_onset { seconds: -14400 }
-          proximity_trace_temporal_resolution { seconds: 300 }
-          proximity_trace: 3
-          proximity_trace: 6
-          proximity_trace: 9
+          duration { seconds: 900 }
+          distance: 6
           exposure_type: CONFIRMED
           source_uuid: 654
         }
         exposures {
           exposure_time { seconds: 57600 }
-          proximity_trace_temporal_resolution { seconds: 300 }
-          proximity_trace: 1
-          proximity_trace: 2
-          proximity_trace: 4
+          duration { seconds: 900 }
+          distance: 2
           exposure_type: UNCONFIRMED
           source_uuid: 789
         }

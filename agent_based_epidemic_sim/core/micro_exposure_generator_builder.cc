@@ -25,13 +25,13 @@
 
 namespace abesim {
 
-std::unique_ptr<ExposureGenerator> MicroExposureGeneratorBuilder::Build(
-    const std::vector<std::vector<float>>& proximity_trace_distribution) const {
-  CHECK(!proximity_trace_distribution.empty())
+std::unique_ptr<ExposureGenerator> MicroExposureGeneratorBuilder::Build()
+    const {
+  CHECK(!proximity_trace_distribution_.empty())
       << "proximity_trace_distribution_ cannot be empty!";
 
   std::vector<ProximityTrace> fixed_length_proximity_trace_distribution;
-  for (const auto& proximity_trace : proximity_trace_distribution) {
+  for (const auto& proximity_trace : proximity_trace_distribution_) {
     const ProximityTrace fixed_length_proximity_trace(proximity_trace);
     fixed_length_proximity_trace_distribution.push_back(
         fixed_length_proximity_trace);

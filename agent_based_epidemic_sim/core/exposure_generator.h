@@ -31,8 +31,6 @@ struct ExposurePair {
 class ExposureGenerator {
  public:
   virtual ~ExposureGenerator() = default;
-  // TODO: Incorporate a notion of gauranteed exposure duration
-  // into this method.
   // Returns a pair of Exposures mirroring a single exposure event between a
   // pair of hosts.
   virtual ExposurePair Generate(float location_transmissibility,

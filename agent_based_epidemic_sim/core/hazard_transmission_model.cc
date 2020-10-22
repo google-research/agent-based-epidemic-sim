@@ -46,8 +46,14 @@ HealthTransition HazardTransmissionModel::GetInfectionOutcome(
     }
     latest_exposure_time = std::max(latest_exposure_time,
                                     exposure->start_time + exposure->duration);
-    for (const float& proximity : exposure->proximity_trace.values) {
-      sum_dose += ComputeDose(proximity, kProximityTraceInterval, exposure);
+
+    // TODO: Remove proximity_trace.
+    if (exposure->distance >= 0) {
+      sum_dose += ComputeDose(exposure->distance, exposure->duration, exposure);
+    } else {
+      for (const float& proximity : exposure->proximity_trace.values) {
+        sum_dose += ComputeDose(proximity, kProximityTraceInterval, exposure);
+      }
     }
   }
 

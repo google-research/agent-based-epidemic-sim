@@ -86,7 +86,7 @@ class RiskScoreTest : public testing::Test {
     return ParseTextProtoOrDie<LearningRiskScoreModelProto>(R"(
       risk_scale_factor: 0.5
       ble_buckets: { weight: 0.1 }
-      ble_buckets: { weight: 0.2 max_threshold: 1 }
+      ble_buckets: { weight: 0.2 max_attenuation: 1 }
       infectiousness_buckets: {
         level: 3
         weight: 0.3

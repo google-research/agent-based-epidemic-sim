@@ -116,13 +116,13 @@ class ProximityTrace {
 // each time kProximityTraceInterval during the exposure.
 struct Exposure {
   absl::Time start_time;
-  // TODO: Assume every Exposure duration is fixed at
-  // (kMaxTraceLength * kProximityTraceInterval = 100min) to simplify things.
-  // This being possible because the proximity_trace is
-  // std::numeric_limits<float>::max() after the contact. At this distance there
-  // is 0% chance of infection. May make transmission_model much less efficient.
   absl::Duration duration;
+  // TODO: Remove proximity_trace.
   ProximityTrace proximity_trace;
+  // Distance is measured in meters and represents the distance between two
+  // entities. Default to -1 if not explicitly set.
+  float distance = -1;
+  float attenuation;
   float infectivity;
   float symptom_factor;
 
@@ -133,7 +133,7 @@ struct Exposure {
 
   friend bool operator==(const Exposure& a, const Exposure& b) {
     return (a.start_time == b.start_time && a.duration == b.duration &&
-            a.proximity_trace == b.proximity_trace &&
+            a.distance == b.distance && a.attenuation == b.attenuation &&
             a.infectivity == b.infectivity &&
             a.symptom_factor == b.symptom_factor);
   }
@@ -145,9 +145,9 @@ struct Exposure {
   friend std::ostream& operator<<(std::ostream& strm,
                                   const Exposure& exposure) {
     return strm << "{" << exposure.start_time << ", " << exposure.duration
-                << ", " << exposure.proximity_trace.values << ", "
-                << exposure.infectivity << ", " << exposure.symptom_factor
-                << "}";
+                << ", " << exposure.distance << ", " << exposure.attenuation
+                << ", " << exposure.infectivity << ", "
+                << exposure.symptom_factor << "}";
   }
 };
 

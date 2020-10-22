@@ -70,7 +70,7 @@ class LearningRiskScore : public RiskScore {
     // We don't take action on negative tests.
     if (notification.test_result.outcome != TestOutcome::POSITIVE) return;
 
-    float risk_score = risk_score_model_.ComputeRiskScore(
+    const float risk_score = risk_score_model_.ComputeRiskScore(
         exposure, notification.initial_symptom_onset_time);
     VLOG(1) << "Risk score is " << risk_score << " for exposure: " << exposure;
     // TODO: implement circular buffer maintaining a per day history of
@@ -187,23 +187,19 @@ float LearningRiskScoreModel::ComputeDurationRiskScore(
     const Exposure& exposure) const {
   std::vector<absl::Duration> ble_bucket_durations;
   ble_bucket_durations.resize(ble_buckets_.size(), absl::ZeroDuration());
-  float duration_score = 0;
 
-  for (int i = 0; i < exposure.proximity_trace.values.size(); ++i) {
-    const int rssi = DistanceToRSSI(exposure.proximity_trace.values[i]);
-    const absl::StatusOr<int> bin_index_or = RSSIToBinIndex(rssi);
-    if (!bin_index_or.ok()) {
-      LOG(WARNING) << "Unable to properly compute duration score: "
-                   << bin_index_or.status();
-      continue;
-    }
-    const int bin_index = bin_index_or.value();
-    duration_score += ble_buckets_[bin_index].weight() *
-                      absl::ToInt64Minutes(kProximityTraceInterval);
+  const absl::StatusOr<int> bin_index_or =
+      AttenuationToBinIndex(exposure.attenuation);
+  if (!bin_index_or.ok()) {
+    LOG(ERROR) << "Unable to properly compute duration score: "
+               << bin_index_or.status() << ". Falling back to 0.";
+    return 0;
   }
+  const int bin_index = bin_index_or.value();
+  const float duration_score = ble_buckets_[bin_index].weight() *
+                               absl::ToInt64Minutes(kProximityTraceInterval);
 
-  VLOG(1) << "duration_score: " << duration_score
-          << " for proximity_trace: " << exposure.proximity_trace;
+  VLOG(1) << "duration_score: " << duration_score << " exposure: " << exposure;
 
   return duration_score;
 }
@@ -231,16 +227,16 @@ float LearningRiskScoreModel::ComputeInfectionRiskScore(
   return 0;
 }
 
-absl::StatusOr<int> LearningRiskScoreModel::RSSIToBinIndex(
-    const int rssi) const {
+absl::StatusOr<int> LearningRiskScoreModel::AttenuationToBinIndex(
+    const int attenuation) const {
   for (int i = 0; i < ble_buckets_.size(); ++i) {
-    if (rssi <= ble_buckets_[i].max_threshold()) {
+    if (attenuation <= ble_buckets_[i].max_attenuation()) {
       return i;
     }
   }
-  return absl::InvalidArgumentError(absl::StrCat(
-      "rssi value ", rssi, " larger than the largest ble threshold value: ",
-      ble_buckets_.back().max_threshold()));
+  return absl::InvalidArgumentError(
+      absl::StrCat("Attenuation value ", attenuation,
+                   " larger than: ", ble_buckets_.back().max_attenuation()));
 }
 
 absl::StatusOr<const LearningRiskScoreModel> CreateLearningRiskScoreModel(
@@ -257,7 +253,7 @@ absl::StatusOr<const LearningRiskScoreModel> CreateLearningRiskScoreModel(
   // assumed downstream in ComputeDurationRiskScore.
   std::sort(ble_buckets.begin(), ble_buckets.end(),
             [](const BLEBucket& a, const BLEBucket& b) {
-              return a.max_threshold() < b.max_threshold();
+              return a.max_attenuation() < b.max_attenuation();
             });
 
   std::vector<InfectiousnessBucket> infectiousness_buckets;

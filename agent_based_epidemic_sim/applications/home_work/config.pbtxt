@@ -1,3 +1,7 @@
+# proto-file: agent_based_epidemic_sim/applications/home_work/config.proto
+# proto-message: HomeWorkSimulationConfig
+
+
 init_time {
 }
 

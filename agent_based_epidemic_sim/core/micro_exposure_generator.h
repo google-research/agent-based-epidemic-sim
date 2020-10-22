@@ -29,7 +29,7 @@ namespace abesim {
 class MicroExposureGenerator : public ExposureGenerator {
  public:
   explicit MicroExposureGenerator(
-      const std::vector<ProximityTrace>& proximity_trace_distribution)
+      const std::vector<ProximityTrace> proximity_trace_distribution)
       : proximity_trace_distribution_(proximity_trace_distribution) {}
 
   virtual ~MicroExposureGenerator() = default;
@@ -47,7 +47,7 @@ class MicroExposureGenerator : public ExposureGenerator {
   // Represents the distances between two hosts at fixed intervals.
   ProximityTrace GenerateProximityTrace() const;
 
-  std::vector<ProximityTrace> proximity_trace_distribution_;
+  const std::vector<ProximityTrace> proximity_trace_distribution_;
 };
 
 }  // namespace abesim

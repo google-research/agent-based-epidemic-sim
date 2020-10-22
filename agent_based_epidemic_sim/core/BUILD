@@ -271,6 +271,7 @@ cc_library(
     deps = [
         ":event",
         ":visit",
+        "@com_google_absl//absl/time",
     ],
 )
 

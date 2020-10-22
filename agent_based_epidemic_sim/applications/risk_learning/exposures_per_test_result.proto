@@ -50,6 +50,9 @@ message ExposuresPerTestResult {
     repeated float proximity_trace = 4;
     ExposureType exposure_type = 5;
     int64 source_uuid = 6;  // For debugging. Not used in learning.
+    google.protobuf.Duration duration = 7;
+    float distance = 8;
+    float attenuation = 9;
   }
   message ExposureResult {
     int64 agent_uuid = 1;

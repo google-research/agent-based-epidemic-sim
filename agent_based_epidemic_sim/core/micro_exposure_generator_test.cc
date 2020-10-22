@@ -15,9 +15,8 @@ const Visit kSusceptibleVisit = {.infectivity = 0.0, .symptom_factor = 0.0};
 const std::vector<std::vector<float>> kDistribution = {{1.0f}};
 
 TEST(MicroExposureGeneratorTest, CorrectlyDrawsFromDistribution) {
-  MicroExposureGeneratorBuilder meg_builder;
-  std::unique_ptr<ExposureGenerator> generator =
-      meg_builder.Build(kDistribution);
+  MicroExposureGeneratorBuilder meg_builder(kDistribution);
+  std::unique_ptr<ExposureGenerator> generator = meg_builder.Build();
 
   ExposurePair exposures =
       generator->Generate(1.0, kInfectiousVisit, kSusceptibleVisit);
@@ -30,9 +29,8 @@ TEST(MicroExposureGeneratorTest, CorrectlyDrawsFromDistribution) {
 }
 
 TEST(MicroExposureGeneratorTest, ProximityTracesEqual) {
-  MicroExposureGeneratorBuilder meg_builder;
-  std::unique_ptr<ExposureGenerator> generator =
-      meg_builder.Build(kDistribution);
+  MicroExposureGeneratorBuilder meg_builder(kDistribution);
+  std::unique_ptr<ExposureGenerator> generator = meg_builder.Build();
 
   ExposurePair exposure_pair =
       generator->Generate(1.0, kInfectiousVisit, kSusceptibleVisit);
@@ -42,9 +40,8 @@ TEST(MicroExposureGeneratorTest, ProximityTracesEqual) {
 }
 
 TEST(MicroExposureGeneratorTest, CorrectOrderingOfExposures) {
-  MicroExposureGeneratorBuilder meg_builder;
-  std::unique_ptr<ExposureGenerator> generator =
-      meg_builder.Build(kDistribution);
+  MicroExposureGeneratorBuilder meg_builder(kDistribution);
+  std::unique_ptr<ExposureGenerator> generator = meg_builder.Build();
 
   ExposurePair exposure_pair =
       generator->Generate(1.0, kInfectiousVisit, kSusceptibleVisit);

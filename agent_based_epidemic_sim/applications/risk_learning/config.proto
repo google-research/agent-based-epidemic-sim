@@ -17,6 +17,7 @@ syntax = "proto3";
 package abesim;
 
 import "agent_based_epidemic_sim/agent_synthesis/population_profile.proto";
+import "agent_based_epidemic_sim/core/parameter_distribution.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 
@@ -46,10 +47,10 @@ message InfectiousnessLevel {
 }
 
 // Each exposure has a series of one or more attenuation:duration pairs.
-// Each pair is discretized using the appropriate BLEBucket.max_threshold and
+// Each pair is discretized using the appropriate BLEBucket.max_attenuation and
 // the corresponding weight is used by the model.
 message BLEBucket {
-  float max_threshold = 1;
+  float max_attenuation = 1;
   float weight = 2;
 }
 
@@ -82,6 +83,32 @@ message LearningRiskScoreModelProto {
   int64 exposure_notification_window_days = 4;
 }
 
+// Coefficients used when converting from distance to attenutation value.
+message BleParamsProto {
+  float slope = 1;
+  float intercept = 2;
+  float tx = 3;
+  float correction = 4;
+}
+
+// Distribution to represent how we will generate durations in Exposure
+// generator.
+message DurationDistribution {
+  ParetoDistribution pareto_params = 1;
+  // Sometimes the pareto distribution is given to us with the implicit
+  // assumption that the output is a multiple of minute. This allows us to
+  // convert the draw from the pareto distribution to actual minutes.
+  float output_multiplier_minutes = 2;
+}
+
+// Coefficients used when generating distance:attenuation:duration triples for a
+// given exposure.
+message ProximityConfigProto {
+  GammaDistribution distance_distribution = 1;
+  DurationDistribution duration_distribution = 2;
+  BleParamsProto ble_params = 3;
+}
+
 // Top level configuration for the risk learning simulation.
 message RiskLearningSimulationConfig {
   repeated string agent_file = 1;
@@ -90,9 +117,6 @@ message RiskLearningSimulationConfig {
   google.protobuf.Timestamp init_time = 3;
   google.protobuf.Duration step_size = 4;
   int32 steps = 5;
-
-  string summary_filename = 12;
-  string learning_filename = 13;
 
   TracingPolicyProto tracing_policy = 6;
   repeated PopulationProfile profiles = 7;
@@ -107,4 +131,11 @@ message RiskLearningSimulationConfig {
   // The fraction of edges from the workplace network that should be sampled
   // every day.
   float daily_fraction_work = 11;
+
+  string summary_filename = 12;
+  string learning_filename = 13;
+
+  ProximityConfigProto proximity_config = 14;
+
+  // Next id: 15
 }

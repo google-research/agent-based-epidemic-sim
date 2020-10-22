@@ -33,6 +33,12 @@ message GammaDistribution {
   float beta = 2;
 }
 
+message ParetoDistribution {
+  float shape = 1;
+  float scale = 2;
+  float loc = 3;
+}
+
 // A discrete distribution of values.
 message DiscreteDistribution {
   message Bucket {

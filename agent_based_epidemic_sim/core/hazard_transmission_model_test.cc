@@ -24,12 +24,11 @@ namespace abesim {
 namespace {
 
 using testing::Eq;
-const ProximityTrace kCloseShortProximityTrace({1});
+const absl::Duration kLongDuration = absl::Minutes(100);
+const absl::Duration kShortDuration = absl::Minutes(1);
 
-const ProximityTrace kCloseLongProximityTrace({1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                                               1, 1, 1, 1, 1, 1, 1, 1, 1, 1});
-
-const ProximityTrace kFarShortProximityTrace({10});
+const float kCloseDistance = 1;
+const float kFarDistance = 10;
 
 std::vector<const Exposure*> MakePointers(const std::vector<Exposure>& v) {
   std::vector<const Exposure*> result;
@@ -42,49 +41,45 @@ std::vector<const Exposure*> MakePointers(const std::vector<Exposure>& v) {
 
 TEST(HazardTransmissionModelTest, GetsInfectionOutcomes) {
   HazardTransmissionModel transmission_model(
-      {.risk_at_distance_function = [](float proximity) {
-        return (proximity <= 1) ? 10 : 0;
+      {.risk_at_distance_function = [](float distance) {
+        return (distance <= 1) ? 10 : 0;
       }});
 
-  std::vector<Exposure> exposures{{.duration = absl::Minutes(5),
-                                   .proximity_trace = kFarShortProximityTrace,
+  std::vector<Exposure> exposures{{.duration = kShortDuration,
+                                   .distance = kFarDistance,
                                    .infectivity = 1,
                                    .symptom_factor = 1},
-                                  {.duration = absl::Minutes(5),
-                                   .proximity_trace = kCloseShortProximityTrace,
+                                  {.duration = kShortDuration,
+                                   .distance = kCloseDistance,
                                    .infectivity = 1,
                                    .symptom_factor = 1},
-                                  {.duration = absl::Minutes(100),
-                                   .proximity_trace = kCloseLongProximityTrace,
+                                  {.duration = kLongDuration,
+                                   .distance = kCloseDistance,
                                    .infectivity = 1,
                                    .symptom_factor = 1}};
 
-  EXPECT_THAT(
-      transmission_model.GetInfectionOutcome(MakePointers(exposures)),
-      Eq(HealthTransition{.time = absl::FromUnixSeconds(
-                              absl::ToDoubleSeconds(absl::Minutes(100))),
-                          .health_state = HealthState::EXPOSED}));
-
-  exposures = {{.duration = absl::Minutes(5),
-                .proximity_trace = kFarShortProximityTrace,
-                .infectivity = 1,
-                .symptom_factor = 1},
-               {.duration = absl::Minutes(5),
-                .proximity_trace = kCloseShortProximityTrace,
-                .infectivity = 1,
-                .symptom_factor = 1}};
   EXPECT_THAT(transmission_model.GetInfectionOutcome(MakePointers(exposures)),
-              Eq(HealthTransition{.time = absl::FromUnixSeconds(
-                                      absl::ToDoubleSeconds(absl::Minutes(5))),
+              Eq(HealthTransition{.time = absl::UnixEpoch() + kLongDuration,
                                   .health_state = HealthState::EXPOSED}));
 
-  exposures = {{.duration = absl::Minutes(5),
-                .proximity_trace = kFarShortProximityTrace,
+  exposures = {{.duration = kShortDuration,
+                .distance = kFarDistance,
+                .infectivity = 1,
+                .symptom_factor = 1},
+               {.duration = kShortDuration,
+                .distance = kCloseDistance,
                 .infectivity = 1,
                 .symptom_factor = 1}};
   EXPECT_THAT(transmission_model.GetInfectionOutcome(MakePointers(exposures)),
-              Eq(HealthTransition{.time = absl::FromUnixSeconds(
-                                      absl::ToDoubleSeconds(absl::Minutes(5))),
+              Eq(HealthTransition{.time = absl::UnixEpoch() + kShortDuration,
+                                  .health_state = HealthState::EXPOSED}));
+
+  exposures = {{.duration = kShortDuration,
+                .distance = kFarDistance,
+                .infectivity = 1,
+                .symptom_factor = 1}};
+  EXPECT_THAT(transmission_model.GetInfectionOutcome(MakePointers(exposures)),
+              Eq(HealthTransition{.time = absl::UnixEpoch() + kShortDuration,
                                   .health_state = HealthState::SUSCEPTIBLE}));
 }
 
@@ -92,26 +87,22 @@ TEST(HazardTransmissionModelTest,
      GetsInfectionOutcomesWithDefaultRiskDistance) {
   HazardTransmissionModel transmission_model;
 
-  std::vector<Exposure> exposures{{.duration = absl::Minutes(100),
-                                   .proximity_trace = kCloseLongProximityTrace,
+  std::vector<Exposure> exposures{{.duration = kLongDuration,
+                                   .distance = kCloseDistance,
                                    .infectivity = 1,
                                    .symptom_factor = 1}};
 
-  EXPECT_THAT(
-      transmission_model.GetInfectionOutcome(MakePointers(exposures)),
-      Eq(HealthTransition{.time = absl::FromUnixSeconds(
-                              absl::ToDoubleSeconds(absl::Minutes(100))),
-                          .health_state = HealthState::EXPOSED}));
+  EXPECT_THAT(transmission_model.GetInfectionOutcome(MakePointers(exposures)),
+              Eq(HealthTransition{.time = absl::UnixEpoch() + kLongDuration,
+                                  .health_state = HealthState::EXPOSED}));
 
-  exposures = {{.duration = absl::Minutes(100),
-                .proximity_trace = kFarShortProximityTrace,
+  exposures = {{.duration = kLongDuration,
+                .distance = kFarDistance,
                 .infectivity = 1,
                 .symptom_factor = 1}};
-  EXPECT_THAT(
-      transmission_model.GetInfectionOutcome(MakePointers(exposures)),
-      Eq(HealthTransition{.time = absl::FromUnixSeconds(
-                              absl::ToDoubleSeconds(absl::Minutes(100))),
-                          .health_state = HealthState::SUSCEPTIBLE}));
+  EXPECT_THAT(transmission_model.GetInfectionOutcome(MakePointers(exposures)),
+              Eq(HealthTransition{.time = absl::UnixEpoch() + kLongDuration,
+                                  .health_state = HealthState::SUSCEPTIBLE}));
 }
 
 }  // namespace

@@ -46,16 +46,7 @@ class LearningRiskScoreModel {
       absl::optional<absl::Time> initial_symptom_onset_time) const;
 
  private:
-  // Inverse form of the RSSI to distance function found in the Cencetti paper:
-  // https://www.medrxiv.org/content/10.1101/2020.05.29.20115915v2.
-  int DistanceToRSSI(const float distance) const {
-    const float alpha = 8.851;
-    const float beta = 113.4;
-    const float gamma = 3.715;
-    return pow(alpha / distance, 1 / gamma) - beta;
-  }
-
-  absl::StatusOr<int> RSSIToBinIndex(const int rssi) const;
+  absl::StatusOr<int> AttenuationToBinIndex(const int attenuation) const;
 
   float ComputeDurationRiskScore(const Exposure& exposure) const;
   // Note: This method assumes infectiousness_buckets_ has a particular
