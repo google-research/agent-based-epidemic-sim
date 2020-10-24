@@ -46,6 +46,8 @@ struct BleParams {
   float correction = 2.398;
 };
 
+// Generates an Exposure triple. This class is thread-safe. It may be created
+// once and shared among dependent objects.
 class TripleExposureGenerator : public ExposureGenerator {
  public:
   explicit TripleExposureGenerator(
@@ -78,9 +80,9 @@ class TripleExposureGenerator : public ExposureGenerator {
   // James Lomax, Chris Holmes, July 2020. https://arxiv.org/abs/2007.05057
   float DistanceToAttenuation(float distance) const;
 
-  const DistanceGammaDistributionParams& distance_params_;
-  const DurationParetoDistributionParams& duration_params_;
-  const BleParams& ble_params_;
+  const DistanceGammaDistributionParams distance_params_;
+  const DurationParetoDistributionParams duration_params_;
+  const BleParams ble_params_;
 };
 
 }  // namespace abesim
