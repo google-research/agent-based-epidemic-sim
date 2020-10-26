@@ -109,29 +109,41 @@ void SEIRAgent::SplitAndAssignHealthStates(std::vector<Visit>* visits) const {
   }
 }
 
+void SEIRAgent::SeedInfection(const absl::Time time) {
+  SetNextHealthTransition({
+      .time = time,
+      .health_state = HealthState::EXPOSED,
+  });
+  UpdateHealthTransition(Timestep(time, absl::Seconds(1LL)));
+}
+
+void SEIRAgent::UpdateHealthTransition(const Timestep& timestep) {
+  const absl::Time original_transition_time = next_health_transition_.time;
+  if (IsInfectedState(next_health_transition_.health_state) &&
+      !initial_infection_time_.has_value()) {
+    initial_infection_time_ = original_transition_time;
+  }
+  if (IsSymptomaticState(next_health_transition_.health_state) &&
+      !initial_symptom_onset_time_.has_value()) {
+    initial_symptom_onset_time_ = original_transition_time;
+  }
+  health_transitions_.push_back(next_health_transition_);
+  risk_score_->AddHealthStateTransistion(next_health_transition_);
+  next_health_transition_ =
+      transition_model_->GetNextHealthTransition(next_health_transition_);
+  absl::Duration health_state_duration =
+      next_health_transition_.time - original_transition_time;
+  if (health_state_duration < timestep.duration()) {
+    // TODO: Clean up enforcement of minimums/maximums on dwell times,
+    // particularly for long-running (recurrent) states like SUSCEPTIBLE.
+    next_health_transition_.time =
+        original_transition_time + timestep.duration();
+  }
+}
+
 void SEIRAgent::MaybeUpdateHealthTransitions(const Timestep& timestep) {
   while (next_health_transition_.time < timestep.end_time()) {
-    const absl::Time original_transition_time = next_health_transition_.time;
-    if (IsInfectedState(next_health_transition_.health_state) &&
-        !initial_infection_time_.has_value()) {
-      initial_infection_time_ = original_transition_time;
-    }
-    if (IsSymptomaticState(next_health_transition_.health_state) &&
-        !initial_symptom_onset_time_.has_value()) {
-      initial_symptom_onset_time_ = original_transition_time;
-    }
-    health_transitions_.push_back(next_health_transition_);
-    risk_score_->AddHealthStateTransistion(next_health_transition_);
-    next_health_transition_ =
-        transition_model_->GetNextHealthTransition(next_health_transition_);
-    absl::Duration health_state_duration =
-        next_health_transition_.time - original_transition_time;
-    if (health_state_duration < timestep.duration()) {
-      // TODO: Clean up enforcement of minimums/maximums on dwell times,
-      // particularly for long-running (recurrent) states like SUSCEPTIBLE.
-      next_health_transition_.time =
-          original_transition_time + timestep.duration();
-    }
+    UpdateHealthTransition(timestep);
   }
 }
 

@@ -255,10 +255,7 @@ class RiskLearningSimulation : public Simulation {
         continue;
       }
       infected++;
-      agent->SetNextHealthTransition({
-          .time = init_time,
-          .health_state = HealthState::EXPOSED,
-      });
+      agent->SeedInfection(init_time);
     }
 
     result->sim_ = num_workers > 1

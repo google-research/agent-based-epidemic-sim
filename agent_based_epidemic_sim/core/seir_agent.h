@@ -123,6 +123,9 @@ class SEIRAgent : public Agent {
     next_health_transition_ = transition;
   }
 
+  // Seeds an infection starting at the specified time.
+  void SeedInfection(absl::Time time);
+
   std::optional<absl::Time> symptom_onset() const override {
     return initial_infection_time_;
   }
@@ -160,8 +163,12 @@ class SEIRAgent : public Agent {
   // Computes infectivity of agent at a given time.
   float CurrentInfectivity(const absl::Time& current_time) const;
 
-  // Advances the health state transitions.
+  // Samples a new HealthTransition and advances the health state.
+  void UpdateHealthTransition(const Timestep& timestep);
+
+  // Conditionally advances the health state transitions.
   void MaybeUpdateHealthTransitions(const Timestep& timestep);
+
   // Splits visits on HealthTransition boundaries so that a unique HealthState
   // can be assigned to each visit.
   void SplitAndAssignHealthStates(std::vector<Visit>* visits) const;

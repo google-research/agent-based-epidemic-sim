@@ -913,5 +913,32 @@ TEST(SEIRAgentTest, UpdateContactReportsRejectsWrongUuid) {
       agent->UpdateContactReports(timestep, contact_reports, broker.get()), "");
 }
 
+TEST(SEIRAgentTest, SeedsInfection) {
+  auto transition_model = absl::make_unique<MockTransitionModel>();
+  EXPECT_CALL(*transition_model, GetNextHealthTransition(_))
+      .WillOnce(Return(
+          HealthTransition{.time = absl::FromUnixMillis(1LL),
+                           .health_state = HealthState::PRE_SYMPTOMATIC_MILD}));
+  auto visit_generator = absl::make_unique<MockVisitGenerator>();
+  MockTransmissionModel transmission_model;
+  auto risk_score = NewNullRiskScore();
+  const int64 kUuid = 42LL;
+  auto agent = SEIRAgent::CreateSusceptible(
+      kUuid, &transmission_model, std::move(transition_model), *visit_generator,
+      std::move(risk_score), VisitLocationDynamics());
+  auto broker = absl::make_unique<MockBroker<ContactReport>>();
+  agent->SeedInfection(absl::UnixEpoch());
+  EXPECT_THAT(
+      agent->NextHealthTransition(),
+      Eq(HealthTransition{.time = absl::FromUnixSeconds(1LL),
+                          .health_state = HealthState::PRE_SYMPTOMATIC_MILD}));
+  const std::vector<HealthTransition> expected_health_transitions{
+      {.time = absl::InfinitePast(), .health_state = HealthState::SUSCEPTIBLE},
+      {.time = absl::UnixEpoch(), .health_state = HealthState::EXPOSED},
+  };
+  EXPECT_THAT(agent->HealthTransitions(),
+              testing::ElementsAreArray(expected_health_transitions));
+}
+
 }  // namespace
 }  // namespace abesim
