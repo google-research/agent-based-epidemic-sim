@@ -81,6 +81,11 @@ absl::StatusOr<std::unique_ptr<RiskScore>> CreateLearningRiskScore(
     const LearningRiskScoreModel& risk_score_model,
     LocationTypeFn location_type);
 
+// Returns a risk score that toggles contact tracing behavior on the basis of
+// whether it is enabled.
+std::unique_ptr<RiskScore> CreateAppEnabledRiskScore(
+    bool is_app_enabled, std::unique_ptr<RiskScore> risk_score);
+
 }  // namespace abesim
 
 #endif  // AGENT_BASED_EPIDEMIC_SIM_APPLICATIONS_RISK_LEARNING_RISK_SCORE_H_

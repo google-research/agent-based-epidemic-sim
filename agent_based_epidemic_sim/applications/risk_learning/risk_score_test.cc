@@ -24,6 +24,7 @@
 #include "agent_based_epidemic_sim/core/timestep.h"
 #include "agent_based_epidemic_sim/port/status_matchers.h"
 #include "agent_based_epidemic_sim/util/ostream_overload.h"
+#include "agent_based_epidemic_sim/util/test_util.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -292,7 +293,7 @@ TEST_F(RiskScoreTest, GetsContactTracingPolicy) {
                   Timestep(TimeFromDay(7), absl::Hours(24))),
               Eq(RiskScore::ContactTracingPolicy{.report_recursively = false,
                                                  .send_report = true}));
-  // Don't send old tests that were requested 2 weeks ago+;
+  // Don't send old tests that were requested 2 weeks ago+.
   EXPECT_THAT(risk_score->GetContactTracingPolicy(
                   Timestep(TimeFromDay(21), absl::Hours(24))),
               Eq(RiskScore::ContactTracingPolicy{.report_recursively = false,
@@ -302,6 +303,38 @@ TEST_F(RiskScoreTest, GetsContactTracingPolicy) {
 TEST_F(RiskScoreTest, GetsContactRetentionDuration) {
   auto risk_score = GetRiskScore();
   EXPECT_EQ(risk_score->ContactRetentionDuration(), absl::Hours(24 * 14));
+}
+
+TEST_F(RiskScoreTest, AppEnabledRiskScoreTogglesBehaviorOn) {
+  auto risk_score = absl::make_unique<MockRiskScore>();
+  EXPECT_CALL(*risk_score, AddExposures).Times(1);
+  EXPECT_CALL(*risk_score, AddExposureNotification).Times(1);
+  EXPECT_CALL(*risk_score, GetContactTracingPolicy)
+      .WillOnce(testing::Return(RiskScore::ContactTracingPolicy{
+          .report_recursively = false, .send_report = true}));
+  auto app_enabled_risk_score = CreateAppEnabledRiskScore(
+      /*is_app_enabled=*/true, std::move(risk_score));
+  app_enabled_risk_score->AddExposures({});
+  app_enabled_risk_score->AddExposureNotification({}, {});
+  EXPECT_THAT(app_enabled_risk_score->GetContactTracingPolicy(
+                  Timestep(TimeFromDay(21), absl::Hours(24))),
+              Eq(RiskScore::ContactTracingPolicy{.report_recursively = false,
+                                                 .send_report = true}));
+}
+
+TEST_F(RiskScoreTest, AppEnabledRiskScoreTogglesBehaviorOff) {
+  auto risk_score = absl::make_unique<MockRiskScore>();
+  EXPECT_CALL(*risk_score, AddExposures).Times(0);
+  EXPECT_CALL(*risk_score, AddExposureNotification).Times(0);
+  EXPECT_CALL(*risk_score, GetContactTracingPolicy).Times(0);
+  auto app_enabled_risk_score = CreateAppEnabledRiskScore(
+      /*is_app_enabled=*/false, std::move(risk_score));
+  app_enabled_risk_score->AddExposures({});
+  app_enabled_risk_score->AddExposureNotification({}, {});
+  EXPECT_THAT(app_enabled_risk_score->GetContactTracingPolicy(
+                  Timestep(TimeFromDay(21), absl::Hours(24))),
+              Eq(RiskScore::ContactTracingPolicy{.report_recursively = false,
+                                                 .send_report = false}));
 }
 
 }  // namespace

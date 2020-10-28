@@ -67,6 +67,7 @@ class LearningRiskScore : public RiskScore {
   void AddExposures(absl::Span<const Exposure* const> exposures) override {}
   void AddExposureNotification(const Exposure& exposure,
                                const ContactReport& notification) override {
+    // Actuate based on app user flag.
     // We don't take action on negative tests.
     if (notification.test_result.outcome != TestOutcome::POSITIVE) return;
 
@@ -123,6 +124,7 @@ class LearningRiskScore : public RiskScore {
 
   ContactTracingPolicy GetContactTracingPolicy(
       const Timestep& timestep) const override {
+    // Actuate based on app user flag.
     TestResult result = GetTestResult(timestep);
     bool should_report =
         result.outcome == TestOutcome::POSITIVE &&
@@ -163,6 +165,49 @@ class LearningRiskScore : public RiskScore {
   std::vector<TestResult> test_results_;
   absl::Time latest_contact_time_;
   float current_risk_score_sum_;
+};
+
+class AppEnabledRiskScore : public RiskScore {
+ public:
+  explicit AppEnabledRiskScore(const bool is_app_enabled,
+                               std::unique_ptr<RiskScore> risk_score)
+      : is_app_enabled_(is_app_enabled), risk_score_(std::move(risk_score)) {}
+
+  void AddHealthStateTransistion(HealthTransition transition) override {
+    risk_score_->AddHealthStateTransistion(transition);
+  }
+  void AddExposures(absl::Span<const Exposure* const> exposures) override {
+    if (is_app_enabled_) {
+      risk_score_->AddExposures(exposures);
+    }
+  }
+  void AddExposureNotification(const Exposure& exposure,
+                               const ContactReport& notification) override {
+    if (is_app_enabled_) {
+      risk_score_->AddExposureNotification(exposure, notification);
+    }
+  }
+  VisitAdjustment GetVisitAdjustment(const Timestep& timestep,
+                                     const int64 location_uuid) const override {
+    return risk_score_->GetVisitAdjustment(timestep, location_uuid);
+  }
+  TestResult GetTestResult(const Timestep& timestep) const override {
+    return risk_score_->GetTestResult(timestep);
+  }
+  ContactTracingPolicy GetContactTracingPolicy(
+      const Timestep& timestep) const override {
+    if (is_app_enabled_) {
+      return risk_score_->GetContactTracingPolicy(timestep);
+    }
+    return {.report_recursively = false, .send_report = false};
+  }
+  absl::Duration ContactRetentionDuration() const override {
+    return risk_score_->ContactRetentionDuration();
+  }
+
+ private:
+  const bool is_app_enabled_;
+  std::unique_ptr<RiskScore> risk_score_;
 };
 
 }  // namespace
@@ -326,6 +371,12 @@ absl::StatusOr<std::unique_ptr<RiskScore>> CreateLearningRiskScore(
 
   return absl::make_unique<LearningRiskScore>(location_type, config,
                                               risk_score_model);
+}
+
+std::unique_ptr<RiskScore> CreateAppEnabledRiskScore(
+    const bool is_app_enabled, std::unique_ptr<RiskScore> risk_score) {
+  return absl::make_unique<AppEnabledRiskScore>(is_app_enabled,
+                                                std::move(risk_score));
 }
 
 }  // namespace abesim

@@ -199,7 +199,6 @@ class RiskLearningSimulation : public Simulation {
     auto risk_score_model_or =
         CreateLearningRiskScoreModel(config.risk_score_model());
     if (!risk_score_model_or.ok()) return risk_score_model_or.status();
-
     result->risk_score_model_ = risk_score_model_or.value();
 
     // Read in agents.
@@ -223,13 +222,17 @@ class RiskLearningSimulation : public Simulation {
             config.tracing_policy(), result->risk_score_model_,
             result->get_location_type_);
         if (!risk_score_or.ok()) return risk_score_or.status();
+        auto risk_score = CreateAppEnabledRiskScore(
+            absl::Bernoulli(GetBitGen(),
+                            agent_profile.profile->app_users_fraction()),
+            std::move(*risk_score_or));
         agents.push_back(SEIRAgent::CreateSusceptible(
             proto.uuid(), result->transmission_model_.get(),
             PTTSTransitionModel::CreateFromProto(
                 agent_profile.profile->transition_model()),
             GetVisitGenerator(proto, *agent_profile.profile,
                               result->visit_gen_cache_),
-            std::move(*risk_score_or), GenerateVisitDynamics(agent_profile)));
+            std::move(risk_score), GenerateVisitDynamics(agent_profile)));
       }
       absl::Status status = reader.status();
       if (!status.ok()) return status;

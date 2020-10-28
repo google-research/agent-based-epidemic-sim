@@ -187,6 +187,7 @@ cc_test(
         "//agent_based_epidemic_sim/core:timestep",
         "//agent_based_epidemic_sim/port:status_matchers",
         "//agent_based_epidemic_sim/util:ostream_overload",
+        "//agent_based_epidemic_sim/util:test_util",
         "@com_google_absl//absl/time",
         "@com_google_googletest//:gtest_main",
     ],

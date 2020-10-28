@@ -46,6 +46,8 @@ message PopulationProfile {
   // Distribution that determines the number of edges assigned to each agent
   // with this profile when visiting a random location.
   RandomGraphInteractions random_visit_params = 7;
+  // The fraction of the cohort that use the app.
+  float app_users_fraction = 8;
 }
 
 message PopulationProfiles {
