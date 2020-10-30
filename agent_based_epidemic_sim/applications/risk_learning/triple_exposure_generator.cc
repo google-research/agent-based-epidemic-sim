@@ -64,7 +64,7 @@ ExposurePair TripleExposureGenerator::Generate(float location_transmissibility,
                   .distance = distance,
                   .attenuation = attenuation,
                   .infectivity = visit_b.infectivity,
-                  .symptom_factor = visit_b.infectivity,
+                  .symptom_factor = visit_b.symptom_factor,
               },
           .host_b = {
               .start_time = start_time,

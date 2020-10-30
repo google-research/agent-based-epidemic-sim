@@ -9,7 +9,8 @@
 namespace abesim {
 namespace {
 
-const Visit kInfectiousVisit = {.infectivity = 1.0, .symptom_factor = 1.0};
+const Visit kInfectiousSymptomaticVisit = {.infectivity = 1.0,
+                                           .symptom_factor = 0.7};
 const Visit kSusceptibleVisit = {.infectivity = 0.0, .symptom_factor = 0.0};
 
 const std::vector<std::vector<float>> kDistribution = {{1.0f}};
@@ -19,7 +20,7 @@ TEST(MicroExposureGeneratorTest, CorrectlyDrawsFromDistribution) {
   std::unique_ptr<ExposureGenerator> generator = meg_builder.Build();
 
   ExposurePair exposures =
-      generator->Generate(1.0, kInfectiousVisit, kSusceptibleVisit);
+      generator->Generate(1.0, kInfectiousSymptomaticVisit, kSusceptibleVisit);
 
   ProximityTrace proximity_trace = exposures.host_a.proximity_trace;
   EXPECT_EQ(proximity_trace.values[0], 1.0f);
@@ -33,7 +34,7 @@ TEST(MicroExposureGeneratorTest, ProximityTracesEqual) {
   std::unique_ptr<ExposureGenerator> generator = meg_builder.Build();
 
   ExposurePair exposure_pair =
-      generator->Generate(1.0, kInfectiousVisit, kSusceptibleVisit);
+      generator->Generate(1.0, kInfectiousSymptomaticVisit, kSusceptibleVisit);
 
   EXPECT_EQ(exposure_pair.host_a.proximity_trace,
             exposure_pair.host_b.proximity_trace);
@@ -44,15 +45,28 @@ TEST(MicroExposureGeneratorTest, CorrectOrderingOfExposures) {
   std::unique_ptr<ExposureGenerator> generator = meg_builder.Build();
 
   ExposurePair exposure_pair =
-      generator->Generate(1.0, kInfectiousVisit, kSusceptibleVisit);
+      generator->Generate(1.0, kInfectiousSymptomaticVisit, kSusceptibleVisit);
 
   EXPECT_EQ(exposure_pair.host_a.infectivity, kSusceptibleVisit.infectivity);
-  EXPECT_EQ(exposure_pair.host_b.infectivity, kInfectiousVisit.infectivity);
+  EXPECT_EQ(exposure_pair.host_b.infectivity,
+            kInfectiousSymptomaticVisit.infectivity);
 
   EXPECT_EQ(exposure_pair.host_a.symptom_factor,
             kSusceptibleVisit.symptom_factor);
   EXPECT_EQ(exposure_pair.host_b.symptom_factor,
-            kInfectiousVisit.symptom_factor);
+            kInfectiousSymptomaticVisit.symptom_factor);
+
+  // Ensure the exposure pair is filled correctly in reverse order.
+  exposure_pair =
+      generator->Generate(1.0, kSusceptibleVisit, kInfectiousSymptomaticVisit);
+  EXPECT_EQ(exposure_pair.host_a.infectivity,
+            kInfectiousSymptomaticVisit.infectivity);
+  EXPECT_EQ(exposure_pair.host_b.infectivity, kSusceptibleVisit.infectivity);
+
+  EXPECT_EQ(exposure_pair.host_a.symptom_factor,
+            kInfectiousSymptomaticVisit.symptom_factor);
+  EXPECT_EQ(exposure_pair.host_b.symptom_factor,
+            kSusceptibleVisit.symptom_factor);
 }
 
 }  // namespace

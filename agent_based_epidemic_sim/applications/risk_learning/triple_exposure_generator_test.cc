@@ -13,28 +13,44 @@
 namespace abesim {
 namespace {
 
-const Visit kInfectiousVisit = {.infectivity = 1.0, .symptom_factor = 1.0};
+const Visit kInfectiousSymptomaticVisit = {.infectivity = 1.0,
+                                           .symptom_factor = 0.7};
 const Visit kSusceptibleVisit = {.infectivity = 0.0, .symptom_factor = 0.0};
 
 TEST(TripleExposureGeneratorTest, CorrectOrderingOfExposures) {
   TripleExposureGenerator generator;
-  ExposurePair exposures =
-      generator.Generate(1.0, kInfectiousVisit, kSusceptibleVisit);
-  EXPECT_EQ(exposures.host_a.infectivity, kSusceptibleVisit.infectivity);
-  EXPECT_EQ(exposures.host_b.infectivity, kInfectiousVisit.infectivity);
+  ExposurePair exposure_pair =
+      generator.Generate(1.0, kInfectiousSymptomaticVisit, kSusceptibleVisit);
+  EXPECT_EQ(exposure_pair.host_a.infectivity, kSusceptibleVisit.infectivity);
+  EXPECT_EQ(exposure_pair.host_b.infectivity,
+            kInfectiousSymptomaticVisit.infectivity);
 
-  EXPECT_EQ(exposures.host_a.symptom_factor, kSusceptibleVisit.symptom_factor);
-  EXPECT_EQ(exposures.host_b.symptom_factor, kInfectiousVisit.symptom_factor);
+  EXPECT_EQ(exposure_pair.host_a.symptom_factor,
+            kSusceptibleVisit.symptom_factor);
+  EXPECT_EQ(exposure_pair.host_b.symptom_factor,
+            kInfectiousSymptomaticVisit.symptom_factor);
+
+  // Ensure the exposure pair is filled correctly in reverse order.
+  exposure_pair =
+      generator.Generate(1.0, kSusceptibleVisit, kInfectiousSymptomaticVisit);
+  EXPECT_EQ(exposure_pair.host_a.infectivity,
+            kInfectiousSymptomaticVisit.infectivity);
+  EXPECT_EQ(exposure_pair.host_b.infectivity, kSusceptibleVisit.infectivity);
+
+  EXPECT_EQ(exposure_pair.host_a.symptom_factor,
+            kInfectiousSymptomaticVisit.symptom_factor);
+  EXPECT_EQ(exposure_pair.host_b.symptom_factor,
+            kSusceptibleVisit.symptom_factor);
 }
 
 TEST(TripleExposureGeneratorTest, CorrectDataIsMirrored) {
   TripleExposureGenerator generator;
-  ExposurePair exposures =
-      generator.Generate(1.0, kInfectiousVisit, kSusceptibleVisit);
-  EXPECT_EQ(exposures.host_a.start_time, exposures.host_b.start_time);
-  EXPECT_EQ(exposures.host_a.duration, exposures.host_b.duration);
-  EXPECT_EQ(exposures.host_a.distance, exposures.host_b.distance);
-  EXPECT_EQ(exposures.host_a.attenuation, exposures.host_b.attenuation);
+  ExposurePair exposure_pair =
+      generator.Generate(1.0, kInfectiousSymptomaticVisit, kSusceptibleVisit);
+  EXPECT_EQ(exposure_pair.host_a.start_time, exposure_pair.host_b.start_time);
+  EXPECT_EQ(exposure_pair.host_a.duration, exposure_pair.host_b.duration);
+  EXPECT_EQ(exposure_pair.host_a.distance, exposure_pair.host_b.distance);
+  EXPECT_EQ(exposure_pair.host_a.attenuation, exposure_pair.host_b.attenuation);
 }
 
 }  // namespace

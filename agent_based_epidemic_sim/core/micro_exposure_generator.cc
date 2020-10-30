@@ -51,10 +51,8 @@ ExposurePair MicroExposureGenerator::Generate(float location_transmissibility,
                   .start_time = start_time,
                   .duration = trace_duration,
                   .proximity_trace = proximity_trace,
-                  // TODO: Is it right that infectivity and
-                  // symptom_factor are set to the same value?
                   .infectivity = visit_b.infectivity,
-                  .symptom_factor = visit_b.infectivity,
+                  .symptom_factor = visit_b.symptom_factor,
                   .location_transmissibility = location_transmissibility,
               },
           .host_b = {
