@@ -479,11 +479,6 @@ TEST(SEIRAgentTest,
   EXPECT_CALL(*risk_score, GetContactTracingPolicy(_))
       .WillOnce(Return(RiskScore::ContactTracingPolicy{}));
 
-  // This is a key assertion that we pass on exposures from
-  // ProcessInfectionOutcomes to the risk score.
-  EXPECT_CALL(*risk_score, AddExposures(testing::ElementsAre(
-                               &outcomes[0].exposure, &outcomes[1].exposure)));
-
   // This is a key assertion that we do pass on contact reports to the
   // risk score.
   // Only the contact_report form agents 12 and 15 are reported because the
@@ -528,8 +523,6 @@ TEST(SEIRAgentTest, PositiveTest) {
   }};
   std::vector<InfectionOutcome> outcomes =
       OutcomesFromContacts(kUuid, contacts);
-  EXPECT_CALL(*risk_score,
-              AddExposures(testing::ElementsAre(&outcomes[0].exposure)));
 
   EXPECT_CALL(*transition_model, GetNextHealthTransition(transition))
       .WillOnce(
@@ -590,8 +583,6 @@ TEST(SEIRAgentTest, NegativeTestResult) {
                                .health_state = HealthState::SUSCEPTIBLE}));
   std::vector<InfectionOutcome> outcomes =
       OutcomesFromContacts(kUuid, contacts);
-  EXPECT_CALL(*risk_score,
-              AddExposures(testing::ElementsAre(&outcomes[0].exposure)));
   EXPECT_CALL(*risk_score, AddExposureNotification(contacts[0].exposure,
                                                    contact_reports[0]));
 
@@ -627,9 +618,6 @@ TEST(SEIRAgentTest, SendContactReports) {
   auto contact_report_broker = absl::make_unique<MockBroker<ContactReport>>();
 
   auto risk_score = absl::make_unique<MockRiskScore>();
-  // That we add exposures to the risk score is tested elsewhere so we ignore it
-  // in this test.
-  EXPECT_CALL(*risk_score, AddExposures(_)).Times(testing::AnyNumber());
   EXPECT_CALL(*risk_score, ContactRetentionDuration)
       .WillRepeatedly(Return(absl::Hours(24 * 7)));
   EXPECT_CALL(*risk_score, GetContactTracingPolicy(_))
@@ -818,9 +806,6 @@ TEST(SEIRAgentTest, SendContactReportsBeforeAndAfterSymptoms) {
   auto contact_report_broker = absl::make_unique<MockBroker<ContactReport>>();
 
   auto risk_score = absl::make_unique<MockRiskScore>();
-  // That we add exposures to the risk score is tested elsewhere so we ignore it
-  // in this test.
-  EXPECT_CALL(*risk_score, AddExposures(_)).Times(testing::AnyNumber());
   EXPECT_CALL(*risk_score, ContactRetentionDuration)
       .WillRepeatedly(Return(absl::Hours(24 * 7)));
   EXPECT_CALL(*risk_score, GetContactTracingPolicy(_))

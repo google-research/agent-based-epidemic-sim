@@ -64,7 +64,6 @@ class LearningRiskScore : public RiskScore {
       infection_onset_time_ = std::min(infection_onset_time_, transition.time);
     }
   }
-  void AddExposures(absl::Span<const Exposure* const> exposures) override {}
   void AddExposureNotification(const Exposure& exposure,
                                const ContactReport& notification) override {
     // Actuate based on app user flag.
@@ -175,11 +174,6 @@ class AppEnabledRiskScore : public RiskScore {
 
   void AddHealthStateTransistion(HealthTransition transition) override {
     risk_score_->AddHealthStateTransistion(transition);
-  }
-  void AddExposures(absl::Span<const Exposure* const> exposures) override {
-    if (is_app_enabled_) {
-      risk_score_->AddExposures(exposures);
-    }
   }
   void AddExposureNotification(const Exposure& exposure,
                                const ContactReport& notification) override {
