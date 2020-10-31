@@ -50,8 +50,6 @@ class MockRiskScore : public RiskScore {
  public:
   MOCK_METHOD(void, AddHealthStateTransistion, (HealthTransition transition),
               (override));
-  MOCK_METHOD(void, AddExposures, (absl::Span<const Exposure* const> exposures),
-              (override));
   MOCK_METHOD(void, AddExposureNotification,
               (const Exposure& contact, const ContactReport& notification),
               (override));

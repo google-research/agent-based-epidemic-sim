@@ -257,7 +257,6 @@ void SEIRAgent::ProcessInfectionOutcomes(
   for (const InfectionOutcome& infection_outcome : infection_outcomes) {
     exposures.push_back(&infection_outcome.exposure);
   }
-  risk_score_->AddExposures(exposures);
 
   if (next_health_transition_.health_state == HealthState::SUSCEPTIBLE &&
       !exposures.empty()) {
