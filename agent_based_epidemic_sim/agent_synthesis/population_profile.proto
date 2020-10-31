@@ -57,11 +57,22 @@ message PopulationProfiles {
 // GraphLocation is a location whose edges represent possible interactions
 // between agents.
 message GraphLocation {
+  enum Type {
+    UNKNOWN = 0;
+    OCCUPATION_PRIMARY = 1;
+    OCCUPATION_SECONDARY = 2;
+    OCCUPATION_WORK = 3;
+    OCCUPATION_RETIRED = 4;
+    OCCUPATION_ELDERLY = 5;
+    HOUSEHOLD = 6;
+    RANDOM = 7;
+  }
   message Edge {
     int64 uuid_a = 1;
     int64 uuid_b = 2;
   }
   repeated Edge edges = 1;
+  Type type = 2;
 }
 
 // GraphParamLocation is a location whose parameters define a Watts-Strogatz
