@@ -36,7 +36,7 @@ namespace {
 class GraphLocation : public Location {
  public:
   GraphLocation(int64 uuid, std::function<float()> location_transmissibility,
-                float drop_probability,
+                std::function<float()> drop_probability,
                 std::vector<std::pair<int64, int64>> graph,
                 const ExposureGenerator& exposure_generator)
       : graph_(std::move(graph)),
@@ -61,7 +61,9 @@ class GraphLocation : public Location {
 
     for (const std::pair<int64, int64>& edge : graph_) {
       // Randomly drop some potential contacts.
-      if (absl::Bernoulli(gen, drop_probability_)) continue;
+      if (absl::Bernoulli(gen, drop_probability_())) {
+        continue;
+      }
 
       // If either of the participants are not present, no contact is generated.
       auto visit_a = visit_map.find(edge.first);
@@ -95,7 +97,7 @@ class GraphLocation : public Location {
 
   const int64 uuid_;
   const std::function<float()> location_transmissibility_;
-  const float drop_probability_;
+  const std::function<float()> drop_probability_;
   const ExposureGenerator& exposure_generator_;
 };
 
@@ -103,21 +105,29 @@ class RandomGraphLocation : public GraphLocation {
  public:
   RandomGraphLocation(int64 uuid,
                       std::function<float()> location_transmissibility,
+                      std::function<float()> lockdown_multiplier,
                       const ExposureGenerator& exposure_generator)
-      : GraphLocation(uuid, std::move(location_transmissibility),
-                      /* drop_probability = */ 0.0, /* graph = */ {},
-                      exposure_generator) {}
+      : GraphLocation(
+            uuid, std::move(location_transmissibility),
+            /* drop_probability = */ []() -> float { return 0.0; },
+            /* graph = */ {}, exposure_generator),
+        lockdown_multiplier_(lockdown_multiplier) {}
 
  private:
   void MaybeUpdateGraph(absl::Span<const Visit> visits) override {
     // Construct list of agent UUIDs as potential endpoints for edges. An agent
     // is repeated once for each edge needed by it.
     thread_local std::vector<int64> agent_uuids;
-    internal::AgentUuidsFromRandomLocationVisits(visits, agent_uuids);
+    internal::AgentUuidsFromRandomLocationVisits(visits, lockdown_multiplier_(),
+                                                 agent_uuids);
     // Connect random pairs till none remain.
     std::shuffle(agent_uuids.begin(), agent_uuids.end(), GetBitGen());
     internal::ConnectAdjacentNodes(agent_uuids, graph_);
   }
+
+  // A callback that gets the current interaction modification for contacts due
+  // to lockdown state.
+  std::function<float()> lockdown_multiplier_;
 };
 
 }  // namespace
@@ -125,11 +135,13 @@ class RandomGraphLocation : public GraphLocation {
 namespace internal {
 
 void AgentUuidsFromRandomLocationVisits(absl::Span<const Visit> visits,
+                                        const float lockdown_multiplier,
                                         std::vector<int64>& agent_uuids) {
   agent_uuids.clear();
   for (const Visit& visit : visits) {
     agent_uuids.resize(
-        agent_uuids.size() + visit.location_dynamics.random_location_edges,
+        agent_uuids.size() +
+            visit.location_dynamics.random_location_edges * lockdown_multiplier,
         visit.agent_uuid);
   }
 }
@@ -159,18 +171,21 @@ void ConnectAdjacentNodes(absl::Span<const int64> agent_uuids,
 
 std::unique_ptr<Location> NewGraphLocation(
     int64 uuid, std::function<float()> location_transmissibility,
-    float drop_probability, std::vector<std::pair<int64, int64>> graph,
+    std::function<float()> drop_probability,
+    std::vector<std::pair<int64, int64>> graph,
     const ExposureGenerator& exposure_generator) {
   return absl::make_unique<GraphLocation>(
-      uuid, std::move(location_transmissibility), drop_probability,
+      uuid, std::move(location_transmissibility), std::move(drop_probability),
       std::move(graph), exposure_generator);
 }
 
 std::unique_ptr<Location> NewRandomGraphLocation(
     int64 uuid, std::function<float()> location_transmissibility,
+    std::function<float()> lockdown_multiplier,
     const ExposureGenerator& exposure_generator) {
   return absl::make_unique<RandomGraphLocation>(
-      uuid, std::move(location_transmissibility), exposure_generator);
+      uuid, std::move(location_transmissibility),
+      std::move(lockdown_multiplier), exposure_generator);
 }
 
 }  // namespace abesim

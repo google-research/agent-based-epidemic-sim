@@ -109,6 +109,40 @@ message ProximityConfigProto {
   BleParamsProto ble_params = 3;
 }
 
+// Defines the current lockdown state.
+message LockdownStateProto {
+  enum Status {
+    UNKNOWN = 0;
+    OFF = 1;
+    ON = 2;
+  }
+  Status lockdown_status = 1;
+  Status lockdown_elderly_status = 2;
+}
+
+// Defines the factor with which to scale interactions during lockdown for the
+// given network type.
+message LockdownMultiplier {
+  GraphLocation.Type type = 1;
+  float multiplier = 2;
+}
+
+// Paramters that are defined on a per-step basis.
+message StepwiseParams {
+  // Changepoints are the time varying parameters used to set the infectivity
+  // of work and random locations.
+  float changepoint = 1;
+  // Note that this list always implicitly starts with a stage:
+  // stages {
+  //   lockdown_on: false
+  //   lockdown_elderly_on: false
+  // }
+  // so an empty value here means no distancing.
+  LockdownStateProto lockdown_state = 2;
+  // Mobility GLM scale factor.
+  float mobility_glm_scale_factor = 3;
+}
+
 // Top level configuration for the risk learning simulation.
 message RiskLearningSimulationConfig {
   repeated string agent_file = 1;
@@ -137,5 +171,10 @@ message RiskLearningSimulationConfig {
 
   ProximityConfigProto proximity_config = 14;
 
-  // Next id: 15
+  // Parameters defined per step (see num_steps above).
+  repeated StepwiseParams stepwise_params = 15;
+
+  // The interaction scale factors that apply during lockdown.
+  repeated LockdownMultiplier lockdown_multipliers = 16;
+  // Next id: 17
 }

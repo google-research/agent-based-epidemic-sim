@@ -167,6 +167,7 @@ cc_library(
         "//agent_based_epidemic_sim/util:records",
         "@com_google_absl//absl/container:fixed_array",
         "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/functional:bind_front",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/random:bit_gen_ref",
         "@com_google_absl//absl/status",

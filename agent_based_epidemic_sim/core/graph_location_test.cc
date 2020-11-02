@@ -79,7 +79,7 @@ InfectionOutcome ExpectedOutcome(int64 agent, int64 source, float infectivity,
 TEST(GraphLocationTest, CompleteSampleGenerated) {
   FakeExposureGenerator generator;
   auto location = NewGraphLocation(
-      kLocationUUID, []() { return 0.75; }, 0.0,
+      kLocationUUID, []() { return 0.75; }, []() { return 0.0; },
       {{0, 2}, {0, 4}, {1, 3}, {1, 5}, {2, 4}, {3, 5}}, generator);
   FakeBroker broker;
   location->ProcessVisits(
@@ -107,7 +107,7 @@ TEST(GraphLocationTest, CompleteSampleGenerated) {
 TEST(GraphLocationTest, AllSamplesDropped) {
   FakeExposureGenerator generator;
   auto location = NewGraphLocation(
-      kLocationUUID, []() { return 0.75; }, 1.0,
+      kLocationUUID, []() { return 0.75; }, []() { return 1.0; },
       {{0, 2}, {0, 4}, {1, 3}, {1, 5}, {2, 4}, {3, 5}}, generator);
   FakeBroker broker;
   location->ProcessVisits(
@@ -134,9 +134,10 @@ TEST(AgentUuidsFromRandomLocationVisits, Basic) {
           GenerateVisit(4, HealthState::SUSCEPTIBLE, 4),
           GenerateVisit(5, HealthState::INFECTIOUS, 2),
       },
-      agent_uuids);
+      2.0f, agent_uuids);
   EXPECT_THAT(agent_uuids, testing::UnorderedElementsAreArray(
-                               {0, 0, 1, 1, 1, 2, 4, 4, 4, 4, 5, 5}));
+                               {0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2,
+                                4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5}));
 }
 
 TEST(AgentUuidsFromRandomLocationVisits, ClearsOutputArg) {
@@ -151,7 +152,7 @@ TEST(AgentUuidsFromRandomLocationVisits, ClearsOutputArg) {
           GenerateVisit(4, HealthState::SUSCEPTIBLE, 4),
           GenerateVisit(5, HealthState::INFECTIOUS, 2),
       },
-      agent_uuids);
+      1.0f, agent_uuids);
   EXPECT_THAT(agent_uuids, testing::UnorderedElementsAreArray(
                                {0, 0, 1, 1, 1, 2, 4, 4, 4, 4, 5, 5}));
 }

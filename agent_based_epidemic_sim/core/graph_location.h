@@ -35,7 +35,8 @@ namespace abesim {
 // timestep to another.
 std::unique_ptr<Location> NewGraphLocation(
     int64 uuid, std::function<float()> location_transmissibility,
-    float drop_probability, std::vector<std::pair<int64, int64>> graph,
+    std::function<float()> drop_probability,
+    std::vector<std::pair<int64, int64>> graph,
     const ExposureGenerator& exposure_generator);
 
 // Creates a new location that dynamically connects visiting agents. On each
@@ -44,6 +45,7 @@ std::unique_ptr<Location> NewGraphLocation(
 // VisitLocationDynamics of each agents visit message.
 std::unique_ptr<Location> NewRandomGraphLocation(
     int64 uuid, std::function<float()> location_transmissibility,
+    std::function<float()> lockdown_multiplier,
     const ExposureGenerator& exposure_generator);
 
 // Internal namespace exposed for testing.
@@ -53,6 +55,7 @@ namespace internal {
 // Extracts a list of agent UUIDs from visits. An agent is repeated once for
 // each edge needed by it.
 void AgentUuidsFromRandomLocationVisits(absl::Span<const Visit> visits,
+                                        float lockdown_multiplier,
                                         std::vector<int64>& agent_uuids);
 
 // Constructs a graph by adding edges between adjacent elements of agent_uuids,

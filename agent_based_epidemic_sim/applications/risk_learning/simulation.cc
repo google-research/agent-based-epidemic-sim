@@ -24,6 +24,7 @@
 
 #include "absl/container/fixed_array.h"
 #include "absl/container/flat_hash_map.h"
+#include "absl/functional/bind_front.h"
 #include "absl/memory/memory.h"
 #include "absl/random/bit_gen_ref.h"
 #include "absl/status/status.h"
@@ -109,9 +110,15 @@ const VisitGenerator& GetVisitGenerator(
 class RiskLearningSimulation : public Simulation {
  public:
   void Step(int steps, absl::Duration step_duration) override {
-    current_changepoint_ = (config_.changepoints_size() > current_step_)
-                               ? config_.changepoints(current_step_)
-                               : 1.0f;
+    current_changepoint_ =
+        (config_.stepwise_params_size() > current_step_)
+            ? config_.stepwise_params(current_step_).changepoint()
+            : 1.0f;
+    current_mobility_glm_scale_factor_ =
+        (config_.stepwise_params_size() > current_step_)
+            ? config_.stepwise_params(current_step_).mobility_glm_scale_factor()
+            : 1.0f;
+    UpdateCurrentLockdownMultipliers();
     sim_->Step(steps, step_duration);
     current_step_++;
   }
@@ -121,16 +128,28 @@ class RiskLearningSimulation : public Simulation {
   void RemoveObserverFactory(ObserverFactoryBase* factory) override {
     sim_->RemoveObserverFactory(factory);
   }
-
   static absl::StatusOr<std::unique_ptr<Simulation>> Build(
       const RiskLearningSimulationConfig& config, int num_workers) {
     auto result = absl::WrapUnique(new RiskLearningSimulation(config));
 
-    std::function<float()> home_transmissibility = []() -> float {
-      return 1.0;
+    std::function<float()> home_transmissibility =
+        [sim = result.get()]() -> float {
+      return 1.0f *
+             sim->current_lockdown_multipliers_[GraphLocation::HOUSEHOLD];
     };
     std::function<float()> work_random_transmissibility =
         [sim = result.get()]() -> float { return sim->current_changepoint_; };
+    std::function<float(const GraphLocation::Type)> work_interaction_drop_prob =
+        [sim = result.get(), &config](const GraphLocation::Type type) -> float {
+      return 1.0 - config.daily_fraction_work() *
+                       sim->current_lockdown_multipliers_[type] *
+                       sim->current_mobility_glm_scale_factor_;
+    };
+    std::function<float()> random_interaction_multiplier =
+        [sim = result.get()]() -> float {
+      return sim->current_lockdown_multipliers_[GraphLocation::RANDOM];
+    };
+    std::function<float()> non_work_drop_prob = []() -> float { return 0.0f; };
 
     TripleExposureGeneratorBuilder seg_builder(config.proximity_config());
     result->exposure_generator_ = seg_builder.Build();
@@ -155,10 +174,11 @@ class RiskLearningSimulation : public Simulation {
             for (const GraphLocation::Edge& edge : proto.graph().edges()) {
               edges.push_back({edge.uuid_a(), edge.uuid_b()});
             }
-            float drop_prob =
+            std::function<float()> drop_prob =
                 proto.reference().type() == LocationReference::BUSINESS
-                    ? 1.0 - config.daily_fraction_work()
-                    : 0.0;
+                    ? absl::bind_front(work_interaction_drop_prob,
+                                       proto.graph().type())
+                    : non_work_drop_prob;
             locations.push_back(NewGraphLocation(
                 proto.reference().uuid(), transmissibility, drop_prob,
                 std::move(edges), *result->exposure_generator_));
@@ -167,7 +187,7 @@ class RiskLearningSimulation : public Simulation {
           case LocationProto::kRandom:
             locations.push_back(NewRandomGraphLocation(
                 proto.reference().uuid(), transmissibility,
-                *result->exposure_generator_));
+                random_interaction_multiplier, *result->exposure_generator_));
             break;
           default:
             return absl::InvalidArgumentError(absl::StrCat(
@@ -277,7 +297,9 @@ class RiskLearningSimulation : public Simulation {
         get_location_type_(
             [this](int64 uuid) { return location_types_[uuid]; }),
         summary_observer_(config.summary_filename()),
-        learning_observer_(config.learning_filename()) {}
+        learning_observer_(config.learning_filename()) {
+    current_lockdown_multipliers_.fill(1.0f);
+  }
 
   static VisitLocationDynamics GenerateVisitDynamics(
       PopulationProfileData& profile) {
@@ -285,6 +307,27 @@ class RiskLearningSimulation : public Simulation {
     return {
         .random_location_edges = profile.random_edges_distribution(gen),
     };
+  }
+  void UpdateCurrentLockdownMultipliers() {
+    const LockdownStateProto& lockdown_state =
+        (config_.stepwise_params_size() > current_step_)
+            ? config_.stepwise_params(current_step_).lockdown_state()
+            : LockdownStateProto();
+
+    for (const auto& lockdown_multiplier : config_.lockdown_multipliers()) {
+      if (lockdown_multiplier.type() == GraphLocation::OCCUPATION_RETIRED ||
+          lockdown_multiplier.type() == GraphLocation::OCCUPATION_ELDERLY) {
+        current_lockdown_multipliers_[lockdown_multiplier.type()] =
+            lockdown_state.lockdown_elderly_status() == LockdownStateProto::ON
+                ? lockdown_multiplier.multiplier()
+                : 1.0f;
+      } else {
+        current_lockdown_multipliers_[lockdown_multiplier.type()] =
+            lockdown_state.lockdown_status() == LockdownStateProto::ON
+                ? lockdown_multiplier.multiplier()
+                : 1.0f;
+      }
+    }
   }
 
   const RiskLearningSimulationConfig config_;
@@ -303,7 +346,10 @@ class RiskLearningSimulation : public Simulation {
   LearningObserverFactory learning_observer_;
   std::unique_ptr<Simulation> sim_;
   int current_step_ = 0;
-  float current_changepoint_ = 1.0;
+  float current_changepoint_ = 1.0f;
+  float current_mobility_glm_scale_factor_ = 1.0f;
+  EnumIndexedArray<float, GraphLocation::Type, GraphLocation::Type_ARRAYSIZE>
+      current_lockdown_multipliers_;
 };
 
 absl::StatusOr<std::unique_ptr<Simulation>> BuildSimulation(
