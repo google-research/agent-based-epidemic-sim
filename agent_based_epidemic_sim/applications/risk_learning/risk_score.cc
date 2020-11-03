@@ -39,7 +39,7 @@ namespace abesim {
 
 namespace {
 
-struct LearningRiskScoreConfig {
+struct TracingPolicy {
   absl::Duration test_validity_duration;
   absl::Duration contact_retention_duration;
   absl::Duration quarantine_duration;
@@ -50,11 +50,13 @@ struct LearningRiskScoreConfig {
 class LearningRiskScore : public RiskScore {
  public:
   LearningRiskScore(LocationTypeFn location_type,
-                    const LearningRiskScoreConfig& tracing_policy,
-                    const LearningRiskScoreModel& risk_score_model)
+                    const TracingPolicy& tracing_policy,
+                    const LearningRiskScoreModel& risk_score_model,
+                    const LearningRiskScorePolicy& risk_score_policy)
       : tracing_policy_(tracing_policy),
         location_type_(std::move(location_type)),
         risk_score_model_(risk_score_model),
+        risk_score_policy_(risk_score_policy),
         infection_onset_time_(absl::InfiniteFuture()),
         latest_contact_time_(absl::InfinitePast()) {}
 
@@ -64,19 +66,19 @@ class LearningRiskScore : public RiskScore {
       infection_onset_time_ = std::min(infection_onset_time_, transition.time);
     }
   }
-  void AddExposures(absl::Span<const Exposure* const> exposures) override {}
+  void AddExposures(const Timestep& timestep,
+                    absl::Span<const Exposure* const> exposures) override {
+    // Assume this is called each timestep for each agent.
+    latest_timestep_ = timestep;
+    risk_score_per_timestep_.push_back(0);
+  }
   void AddExposureNotification(const Exposure& exposure,
                                const ContactReport& notification) override {
     // Actuate based on app user flag.
     // We don't take action on negative tests.
     if (notification.test_result.outcome != TestOutcome::POSITIVE) return;
-
-    const float risk_score = risk_score_model_.ComputeRiskScore(
-        exposure, notification.initial_symptom_onset_time);
-    VLOG(1) << "Risk score is " << risk_score << " for exposure: " << exposure;
-    // TODO: implement circular buffer maintaining a per day history of
-    // risk_score sum.
-    current_risk_score_sum_ += risk_score;
+    ComputeAndAddExposureRiskScore(exposure,
+                                   notification.initial_symptom_onset_time);
 
     absl::Time new_contact_time = exposure.start_time + exposure.duration;
     // If we already know about a contact that happened after this new
@@ -158,13 +160,67 @@ class LearningRiskScore : public RiskScore {
             timestep.end_time() > earliest_quarantine_time);
   }
 
-  const LearningRiskScoreConfig tracing_policy_;
+  // Gets the current risk score of the associated agent.
+  float GetCurrentRiskScore() const {
+    float total_risk = 0;
+    int counter = 0;
+    for (auto result = risk_score_per_timestep_.rbegin();
+         result != risk_score_per_timestep_.rend() &&
+         counter < risk_score_policy_.exposure_notification_window_days_;
+         ++result, ++counter) {
+      total_risk += *result;
+    }
+    return total_risk;
+  }
+
+  // Gets the probability of infection for the associated agent.
+  float GetCurrentProbabilisticRiskScore() const {
+    return 1 -
+           exp(-risk_score_policy_.risk_scale_factor_ * GetCurrentRiskScore());
+  }
+
+  // Computes the risk score for a given exposure.
+  void ComputeAndAddExposureRiskScore(
+      const Exposure& exposure,
+      const absl::optional<absl::Time> initial_symptom_onset_time) {
+    const float risk_score = risk_score_model_.ComputeRiskScore(
+        exposure, initial_symptom_onset_time);
+    VLOG(1) << "Risk score is (" << risk_score
+            << ") for exposure: " << exposure;
+
+    if (latest_timestep_.has_value()) {
+      if (exposure.start_time >= latest_timestep_.value().end_time() ||
+          exposure.start_time < latest_timestep_.value().start_time()) {
+        LOG(ERROR) << "Failed to compute risk score. Exposure processed out of "
+                      "order. Should be within timestep: "
+                   << latest_timestep_.value() << ". Received: " << exposure;
+        return;
+      }
+    } else {
+      LOG(WARNING) << "latest_timestep_ is not filled. "
+                      "risk_score->AddExposures should be called each timestep "
+                      "before risk_score->AddExposureNotification.";
+    }
+
+    if (risk_score_per_timestep_.empty()) {
+      LOG(ERROR)
+          << "Failed to compute risk score: risk_score_per_timestep_ is "
+             "empty. Ensure risk_score->AddExposures is called each "
+             "timestep before the first risk_score->AddExposureNotification.";
+      return;
+    }
+    risk_score_per_timestep_.back() += risk_score;
+  }
+
+  const TracingPolicy tracing_policy_;
   const LocationTypeFn location_type_;
   const LearningRiskScoreModel& risk_score_model_;
+  const LearningRiskScorePolicy& risk_score_policy_;
   absl::Time infection_onset_time_;
   std::vector<TestResult> test_results_;
   absl::Time latest_contact_time_;
-  float current_risk_score_sum_;
+  std::vector<float> risk_score_per_timestep_;
+  absl::optional<Timestep> latest_timestep_;
 };
 
 class AppEnabledRiskScore : public RiskScore {
@@ -176,9 +232,10 @@ class AppEnabledRiskScore : public RiskScore {
   void AddHealthStateTransistion(HealthTransition transition) override {
     risk_score_->AddHealthStateTransistion(transition);
   }
-  void AddExposures(absl::Span<const Exposure* const> exposures) override {
+  void AddExposures(const Timestep& timestep,
+                    absl::Span<const Exposure* const> exposures) override {
     if (is_app_enabled_) {
-      risk_score_->AddExposures(exposures);
+      risk_score_->AddExposures(timestep, exposures);
     }
   }
   void AddExposureNotification(const Exposure& exposure,
@@ -284,6 +341,27 @@ absl::StatusOr<int> LearningRiskScoreModel::AttenuationToBinIndex(
                    " larger than: ", ble_buckets_.back().max_attenuation()));
 }
 
+absl::StatusOr<const LearningRiskScorePolicy> CreateLearningRiskScorePolicy(
+    const LearningRiskScorePolicyProto& proto) {
+  LearningRiskScorePolicy policy;
+  if (proto.risk_scale_factor() <= 0) {
+    return absl::InvalidArgumentError(absl::StrCat(
+        "Invalid value found for risk_scale_factor:", proto.risk_scale_factor(),
+        ". Must be a positive, non-zero value."));
+  }
+  policy.risk_scale_factor_ = proto.risk_scale_factor();
+
+  if (proto.exposure_notification_window_days() <= 0) {
+    return absl::InvalidArgumentError(absl::StrCat(
+        "Invalid value found for exposure_notification_window_days: ",
+        proto.exposure_notification_window_days(),
+        ". Must be a positive, non-zero value."));
+  }
+  policy.exposure_notification_window_days_ =
+      proto.exposure_notification_window_days();
+  return policy;
+}
+
 absl::StatusOr<const LearningRiskScoreModel> CreateLearningRiskScoreModel(
     const LearningRiskScoreModelProto& proto) {
   std::vector<BLEBucket> ble_buckets;
@@ -328,49 +406,44 @@ absl::StatusOr<const LearningRiskScoreModel> CreateLearningRiskScoreModel(
                      b.days_since_symptom_onset_max();
             });
 
-  if (proto.exposure_notification_window_days() <= 0) {
-    return absl::InvalidArgumentError(
-        "exposure_notification_window_days must be a positive integer.");
-  }
-  const LearningRiskScoreModel model = LearningRiskScoreModel(
-      proto.risk_scale_factor(), ble_buckets, infectiousness_buckets,
-      proto.exposure_notification_window_days());
+  const LearningRiskScoreModel model =
+      LearningRiskScoreModel(ble_buckets, infectiousness_buckets);
   return model;
 }
 
 absl::StatusOr<std::unique_ptr<RiskScore>> CreateLearningRiskScore(
     const TracingPolicyProto& tracing_policy_proto,
     const LearningRiskScoreModel& risk_score_model,
+    const LearningRiskScorePolicy& risk_score_policy,
     LocationTypeFn location_type) {
-  LearningRiskScoreConfig config;
+  TracingPolicy tracing_policy;
   auto test_validity_duration_or =
       DecodeGoogleApiProto(tracing_policy_proto.test_validity_duration());
   if (!test_validity_duration_or.ok()) {
     return test_validity_duration_or.status();
   }
-  config.test_validity_duration = *test_validity_duration_or;
+  tracing_policy.test_validity_duration = *test_validity_duration_or;
   auto contact_retention_duration_or =
       DecodeGoogleApiProto(tracing_policy_proto.contact_retention_duration());
   if (!contact_retention_duration_or.ok()) {
     return contact_retention_duration_or.status();
   }
-  config.contact_retention_duration = *contact_retention_duration_or;
+  tracing_policy.contact_retention_duration = *contact_retention_duration_or;
   auto quarantine_duration_or =
       DecodeGoogleApiProto(tracing_policy_proto.quarantine_duration());
   if (!quarantine_duration_or.ok()) {
     return quarantine_duration_or.status();
   }
-  config.quarantine_duration = *quarantine_duration_or;
+  tracing_policy.quarantine_duration = *quarantine_duration_or;
   auto test_latency_or =
       DecodeGoogleApiProto(tracing_policy_proto.test_latency());
   if (!test_latency_or.ok()) {
     return test_latency_or.status();
   }
-  config.test_latency = *test_latency_or;
-  LearningRiskScore risk_score(location_type, config, risk_score_model);
+  tracing_policy.test_latency = *test_latency_or;
 
-  return absl::make_unique<LearningRiskScore>(location_type, config,
-                                              risk_score_model);
+  return absl::make_unique<LearningRiskScore>(
+      location_type, tracing_policy, risk_score_model, risk_score_policy);
 }
 
 std::unique_ptr<RiskScore> CreateAppEnabledRiskScore(

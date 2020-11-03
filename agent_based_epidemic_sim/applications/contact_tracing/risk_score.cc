@@ -54,7 +54,8 @@ class TracingRiskScore : public RiskScore {
       infection_onset_time_ = std::min(infection_onset_time_, transition.time);
     }
   }
-  void AddExposures(absl::Span<const Exposure* const> exposures) override {}
+  void AddExposures(const Timestep& timestep,
+                    absl::Span<const Exposure* const> exposures) override {}
   void AddExposureNotification(const Exposure& exposure,
                                const ContactReport& notification) override {
     // We don't take action on negative tests.

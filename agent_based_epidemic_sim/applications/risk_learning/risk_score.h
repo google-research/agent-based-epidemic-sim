@@ -26,20 +26,33 @@
 
 namespace abesim {
 
-// A static representation of the risk score model loaded it at simulation
-// start. All usages of this class should be const& to prevent us creating a new
-// copy for each agent.
+struct LearningRiskScorePolicy {
+  // The number of days of exposure history to use when determining whether to
+  // take policy actions e.g. quarantine, test.
+  // Defaults to 14 days as this is standard in the literature.
+  int exposure_notification_window_days_ = 14;
+
+  // Overall scaling factor for risk score. This scales the product of duration
+  // and infection scores.
+  // Default value from "Quantifying SARS-CoV-2-infection risk withing the
+  // Apple/Google exposure notification framework to inform quarantine
+  // recommendations, Amanda Wilson, Nathan Aviles, Paloma Beamer,
+  // Zsombor Szabo, Kacey Ernst, Joanna Masel. July 2020."
+  // https://www.medrxiv.org/content/10.1101/2020.07.17.20156539v2
+  float risk_scale_factor_ = 3.1 * 1e-4;
+};
+
+// A static representation of the risk score model loaded at simulation start.
+// All usages of this class should be const& to prevent us creating a new copy
+// for each agent.
 class LearningRiskScoreModel {
  public:
   LearningRiskScoreModel() {}
   LearningRiskScoreModel(
-      float risk_scale_factor, const std::vector<BLEBucket>& ble_buckets,
-      const std::vector<InfectiousnessBucket>& infectiousness_buckets,
-      const int exposure_notification_window_days)
-      : risk_scale_factor_(risk_scale_factor),
-        ble_buckets_(ble_buckets),
-        infectiousness_buckets_(infectiousness_buckets),
-        exposure_notification_window_days_(exposure_notification_window_days) {}
+      const std::vector<BLEBucket>& ble_buckets,
+      const std::vector<InfectiousnessBucket>& infectiousness_buckets)
+      : ble_buckets_(ble_buckets),
+        infectiousness_buckets_(infectiousness_buckets) {}
 
   float ComputeRiskScore(
       const Exposure& exposure,
@@ -54,31 +67,24 @@ class LearningRiskScoreModel {
   float ComputeInfectionRiskScore(
       absl::optional<int64> days_since_symptom_onset) const;
 
-  // Overall scaling factor for risk score. This scales the product of duration
-  // and infection scores.
-  // Default value from "Quantifying SARS-CoV-2-infection risk withing the
-  // Apple/Google exposure notification framework to inform quarantine
-  // recommendations, Amanda Wilson, Nathan Aviles, Paloma Beamer,
-  // Zsombor Szabo, Kacey Ernst, Joanna Masel. July 2020."
-  // https://www.medrxiv.org/content/10.1101/2020.07.17.20156539v2
-  float risk_scale_factor_ = 3.1 * 1e-4;
   // Buckets representing threshold and corresponding weight of ble attenuation
   // signals.
   std::vector<BLEBucket> ble_buckets_;
   // Buckets representing days_since_symptom onset and a mapping to a
   // corresponding infectiousness level and model weight.
   std::vector<InfectiousnessBucket> infectiousness_buckets_;
-  // The number of days of exosure history to use when determining whether to
-  // quarantine, test and other policy actions.
-  int exposure_notification_window_days_;
 };
 
 absl::StatusOr<const LearningRiskScoreModel> CreateLearningRiskScoreModel(
     const LearningRiskScoreModelProto& proto);
 
+absl::StatusOr<const LearningRiskScorePolicy> CreateLearningRiskScorePolicy(
+    const LearningRiskScorePolicyProto& proto);
+
 absl::StatusOr<std::unique_ptr<RiskScore>> CreateLearningRiskScore(
     const TracingPolicyProto& proto,
     const LearningRiskScoreModel& risk_score_model,
+    const LearningRiskScorePolicy& risk_score_policy,
     LocationTypeFn location_type);
 
 // Returns a risk score that toggles contact tracing behavior on the basis of

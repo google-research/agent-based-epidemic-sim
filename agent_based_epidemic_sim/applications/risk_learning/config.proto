@@ -66,21 +66,32 @@ message InfectiousnessBucket {
 
 // Weights used in the risk score model.
 message LearningRiskScoreModelProto {
-  // Overall scaling factor for risk score. This scales the product of duration
-  // and infection scores.
-  float risk_scale_factor = 1;
-
   // Buckets representing threshold and corresponding weight of ble attenuation
   // signals.
-  repeated BLEBucket ble_buckets = 2;
+  repeated BLEBucket ble_buckets = 1;
 
   // Buckets representing days_since_symptom onset and a mapping to a
   // corresponding infectiousness level and model weight.
-  repeated InfectiousnessBucket infectiousness_buckets = 3;
+  repeated InfectiousnessBucket infectiousness_buckets = 2;
+}
 
+message LearningRiskScorePolicyProto {
   // The number of days of exosure history to use when determining whether to
   // quarantine, test and other policy actions.
-  int64 exposure_notification_window_days = 4;
+  int64 exposure_notification_window_days = 1;
+
+  // Overall scaling factor for risk score. This scales the product of duration
+  // and infection scores.
+  float risk_scale_factor = 2;
+}
+
+message LearningRiskScoreConfig {
+  // Model parameters fed to Abesim via learning.
+  LearningRiskScoreModelProto model_proto = 1;
+
+  // Policy factors effecting the decision to take action on risk score e.g.
+  // quarantine and test.
+  LearningRiskScorePolicyProto policy_proto = 2;
 }
 
 // Coefficients used when converting from distance to attenutation value.
@@ -160,7 +171,7 @@ message RiskLearningSimulationConfig {
   // Number of infections that exist at the beginning of the simulation.
   float n_seed_infections = 9;
 
-  LearningRiskScoreModelProto risk_score_model = 10;
+  LearningRiskScoreConfig risk_score_config = 10;
 
   // The fraction of edges from the workplace network that should be sampled
   // every day.

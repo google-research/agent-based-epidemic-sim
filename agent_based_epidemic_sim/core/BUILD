@@ -51,6 +51,12 @@ cc_library(
 )
 
 cc_library(
+    name = "risk_score_model",
+    srcs = ["risk_score_model.cc"],
+    hdrs = ["risk_score_model.h"],
+)
+
+cc_library(
     name = "location_type",
     hdrs = ["location_type.h"],
     deps = [
