@@ -609,6 +609,7 @@ cc_library(
         "visit.h",
     ],
     deps = [
+        ":constants",
         ":integral_types",
         ":pandemic_cc_proto",
         "@com_google_absl//absl/meta:type_traits",
@@ -622,7 +623,6 @@ cc_library(
         "visit_generator.h",
     ],
     deps = [
-        ":event",
         ":risk_score",
         ":timestep",
         ":visit",

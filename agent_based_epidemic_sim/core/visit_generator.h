@@ -17,7 +17,8 @@
 #ifndef AGENT_BASED_EPIDEMIC_SIM_CORE_VISIT_GENERATOR_H_
 #define AGENT_BASED_EPIDEMIC_SIM_CORE_VISIT_GENERATOR_H_
 
-#include "agent_based_epidemic_sim/core/event.h"
+#include <vector>
+
 #include "agent_based_epidemic_sim/core/risk_score.h"
 #include "agent_based_epidemic_sim/core/timestep.h"
 #include "agent_based_epidemic_sim/core/visit.h"

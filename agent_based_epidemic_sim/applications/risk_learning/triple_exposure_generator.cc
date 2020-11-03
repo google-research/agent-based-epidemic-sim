@@ -57,23 +57,20 @@ ExposurePair TripleExposureGenerator::Generate(float location_transmissibility,
   const float distance = DrawDistance();
   const float attenuation = DistanceToAttenuation(distance);
   absl::Time start_time = std::max(visit_a.start_time, visit_b.start_time);
-  return {.host_a =
-              {
-                  .start_time = start_time,
-                  .duration = duration,
-                  .distance = distance,
-                  .attenuation = attenuation,
-                  .infectivity = visit_b.infectivity,
-                  .symptom_factor = visit_b.symptom_factor,
-              },
-          .host_b = {
-              .start_time = start_time,
-              .duration = duration,
-              .distance = distance,
-              .attenuation = attenuation,
-              .infectivity = visit_a.infectivity,
-              .symptom_factor = visit_a.symptom_factor,
-          }};
+  return {.host_a = {.start_time = start_time,
+                     .duration = duration,
+                     .distance = distance,
+                     .attenuation = attenuation,
+                     .infectivity = visit_b.infectivity,
+                     .symptom_factor = visit_b.symptom_factor,
+                     .susceptibility = visit_a.susceptibility},
+          .host_b = {.start_time = start_time,
+                     .duration = duration,
+                     .distance = distance,
+                     .attenuation = attenuation,
+                     .infectivity = visit_a.infectivity,
+                     .symptom_factor = visit_a.symptom_factor,
+                     .susceptibility = visit_b.susceptibility}};
 }
 
 }  // namespace abesim

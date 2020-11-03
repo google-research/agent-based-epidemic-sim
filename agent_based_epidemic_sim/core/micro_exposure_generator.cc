@@ -46,23 +46,20 @@ ExposurePair MicroExposureGenerator::Generate(float location_transmissibility,
 
   // TODO: Figure out how to remove proximity_trace from Exposure
   // message while still threading it through here somehow.
-  return {.host_a =
-              {
-                  .start_time = start_time,
-                  .duration = trace_duration,
-                  .proximity_trace = proximity_trace,
-                  .infectivity = visit_b.infectivity,
-                  .symptom_factor = visit_b.symptom_factor,
-                  .location_transmissibility = location_transmissibility,
-              },
-          .host_b = {
-              .start_time = start_time,
-              .duration = trace_duration,
-              .proximity_trace = proximity_trace,
-              .infectivity = visit_a.infectivity,
-              .symptom_factor = visit_a.symptom_factor,
-              .location_transmissibility = location_transmissibility,
-          }};
+  return {.host_a = {.start_time = start_time,
+                     .duration = trace_duration,
+                     .proximity_trace = proximity_trace,
+                     .infectivity = visit_b.infectivity,
+                     .symptom_factor = visit_b.symptom_factor,
+                     .susceptibility = visit_a.susceptibility,
+                     .location_transmissibility = location_transmissibility},
+          .host_b = {.start_time = start_time,
+                     .duration = trace_duration,
+                     .proximity_trace = proximity_trace,
+                     .infectivity = visit_a.infectivity,
+                     .symptom_factor = visit_a.symptom_factor,
+                     .susceptibility = visit_b.susceptibility,
+                     .location_transmissibility = location_transmissibility}};
 }
 
 ProximityTrace MicroExposureGenerator::GenerateProximityTrace() const {

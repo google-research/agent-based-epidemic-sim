@@ -19,6 +19,7 @@
 
 #include "absl/meta/type_traits.h"
 #include "absl/time/time.h"
+#include "agent_based_epidemic_sim/core/constants.h"
 #include "agent_based_epidemic_sim/core/integral_types.h"
 #include "agent_based_epidemic_sim/core/pandemic.pb.h"
 
@@ -63,6 +64,7 @@ struct Visit {
   absl::Time start_time;
   absl::Time end_time;
   HealthState::State health_state;
+  float susceptibility = kSusceptibility;
   float infectivity;
   float symptom_factor;
   VisitLocationDynamics location_dynamics;

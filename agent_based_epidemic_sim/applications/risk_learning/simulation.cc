@@ -65,27 +65,29 @@ struct PopulationProfileData {
   std::negative_binomial_distribution<int> random_edges_distribution;
 };
 
-int64 GetLocationUuidForTypeOrDie(const AgentProto& agent,
-                                  const LocationReference::Type type) {
-  for (const auto& location : agent.locations()) {
-    if (location.type() == type) {
-      return location.uuid();
+// Generates visits to an agent's configured locations lasting a
+// profile-dependent duration, and having a profile-dependent susceptibility.
+// TODO: Also add random location params here.
+class RiskLearningVisitGenerator : public VisitGenerator {
+ public:
+  RiskLearningVisitGenerator(const AgentProto& agent,
+                             const PopulationProfile& profile)
+      : generator_(absl::make_unique<DurationSpecifiedVisitGenerator>(
+            GetLocationDurations(agent, profile))),
+        susceptibility_(profile.susceptibility()) {}
+
+  void GenerateVisits(const Timestep& timestep, const RiskScore& risk_score,
+                      std::vector<Visit>* visits) const final {
+    int i = visits->size();  // Index of first element added below.
+    generator_->GenerateVisits(timestep, risk_score, visits);
+    for (; i < visits->size(); ++i) {
+      (*visits)[i].susceptibility = susceptibility_;
     }
   }
-  LOG(FATAL) << "Location not found for type: " << type;
-}
 
-const VisitGenerator& GetVisitGenerator(
-    const AgentProto& agent, const PopulationProfile& profile,
-    absl::flat_hash_map<std::string, std::unique_ptr<VisitGenerator>>& cache) {
-  // Agents with the same set of locations and the same profile can share
-  // a visit generator.
-  std::string key = absl::StrCat(agent.population_profile_id());
-  for (const LocationReference& ref : agent.locations()) {
-    absl::StrAppend(&key, ",", ref.uuid());
-  }
-  std::unique_ptr<VisitGenerator>& value = cache[key];
-  if (value == nullptr) {
+ private:
+  static std::vector<LocationDuration> GetLocationDurations(
+      const AgentProto& agent, const PopulationProfile& profile) {
     std::vector<LocationDuration> durations;
     durations.reserve(profile.visit_durations_size());
     for (const VisitDuration& visit_duration : profile.visit_durations()) {
@@ -100,7 +102,35 @@ const VisitGenerator& GetVisitGenerator(
                                               stddev);
                }});
     }
-    value = absl::make_unique<DurationSpecifiedVisitGenerator>(durations);
+    return durations;
+  }
+
+  static int64 GetLocationUuidForTypeOrDie(const AgentProto& agent,
+                                           const LocationReference::Type type) {
+    for (const auto& location : agent.locations()) {
+      if (location.type() == type) {
+        return location.uuid();
+      }
+    }
+    LOG(FATAL) << "Location not found for type: " << type;
+  }
+
+  std::unique_ptr<DurationSpecifiedVisitGenerator> generator_;
+  float susceptibility_;
+};
+
+const VisitGenerator& GetVisitGenerator(
+    const AgentProto& agent, const PopulationProfile& profile,
+    absl::flat_hash_map<std::string, std::unique_ptr<VisitGenerator>>& cache) {
+  // Agents with the same set of locations and the same profile can share
+  // a visit generator.
+  std::string key = absl::StrCat(agent.population_profile_id());
+  for (const LocationReference& ref : agent.locations()) {
+    absl::StrAppend(&key, ",", ref.uuid());
+  }
+  std::unique_ptr<VisitGenerator>& value = cache[key];
+  if (value == nullptr) {
+    value = absl::make_unique<RiskLearningVisitGenerator>(agent, profile);
   }
   return *value;
 }
