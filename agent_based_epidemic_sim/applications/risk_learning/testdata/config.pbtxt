@@ -1,7 +1,6 @@
 # proto-file: agent_based_epidemic_sim/applications/risk_learning/config.proto
 # proto-message: RiskLearningSimulationConfig
 
-
 # agent_file and location_file are set in simulation_test.cc.
 init_time {
   seconds: 0
@@ -1410,137 +1409,401 @@ profiles {
   }
 }
 
-changepoints: 1.
-changepoints: 1.
-changepoints: 1.
-changepoints: 1.
-changepoints: 1.
-changepoints: 1.
-changepoints: 1.
-changepoints: 1.
-changepoints: 1.
-changepoints: 1.
-changepoints: 1.
-changepoints: 1.
-changepoints: 1.
-changepoints: 1.
-changepoints: 1.
-changepoints: 1.
-changepoints: 1.
-changepoints: 1.
-changepoints: 1.
-changepoints: 1.
-changepoints: 1.
-changepoints: 1.
-changepoints: 1.
-changepoints: 1.
-changepoints: 1.
-changepoints: 1.
-changepoints: 1.
-changepoints: 1.
-changepoints: 1.
-changepoints: 1.
-changepoints: 1.
-changepoints: 1.
-changepoints: 1.
-changepoints: 1.
-changepoints: 1.
-changepoints: 1.
-changepoints: 1.
-changepoints: 1.
-changepoints: 1.
-changepoints: 0.99999994
-changepoints: 0.99999976
-changepoints: 0.9999981
-changepoints: 0.99998915
-changepoints: 0.99989426
-changepoints: 0.9993038
-changepoints: 0.9968595
-changepoints: 0.9869055
-changepoints: 0.9583875
-changepoints: 0.92156726
-changepoints: 0.8832767
-changepoints: 0.8543031
-changepoints: 0.8308939
-changepoints: 0.81462353
-changepoints: 0.7999654
-changepoints: 0.7872288
-changepoints: 0.7766864
-changepoints: 0.76803565
-changepoints: 0.76088834
-changepoints: 0.75616527
-changepoints: 0.75068736
-changepoints: 0.74641025
-changepoints: 0.74349767
-changepoints: 0.740088
-changepoints: 0.7383175
-changepoints: 0.7367529
-changepoints: 0.7356839
-changepoints: 0.7350616
-changepoints: 0.73431563
-changepoints: 0.7335588
-changepoints: 0.73329717
-changepoints: 0.7330837
-changepoints: 0.7330729
-changepoints: 0.7328347
-changepoints: 0.73260194
-changepoints: 0.732494
-changepoints: 0.7324209
-changepoints: 0.7323586
-changepoints: 0.73230326
-changepoints: 0.73216546
-changepoints: 0.73211575
-changepoints: 0.7319937
-changepoints: 0.7319734
-changepoints: 0.73181605
-changepoints: 0.7317901
-changepoints: 0.7317885
-changepoints: 0.7317885
-changepoints: 0.7317885
-changepoints: 0.7317885
-changepoints: 0.7317885
-changepoints: 0.7317885
-changepoints: 0.7317885
-changepoints: 0.7317885
-changepoints: 0.7317885
-changepoints: 0.7317885
-changepoints: 0.7317885
-changepoints: 0.7317054
-changepoints: 0.7317054
-changepoints: 0.7317054
-changepoints: 0.7317054
-changepoints: 0.7316194
-changepoints: 0.7316194
-changepoints: 0.7316036
-changepoints: 0.731565
-changepoints: 0.73153794
-changepoints: 0.73153794
-changepoints: 0.73153794
-changepoints: 0.73153794
-changepoints: 0.73153794
-changepoints: 0.73153794
-changepoints: 0.73153794
-changepoints: 0.73153794
-changepoints: 0.73153794
-changepoints: 0.7315259
-changepoints: 0.7313702
-changepoints: 0.7313702
-changepoints: 0.73118675
-changepoints: 0.73109984
-changepoints: 0.73109984
-changepoints: 0.73109984
-changepoints: 0.7310293
-changepoints: 0.73098
-changepoints: 0.7308445
-changepoints: 0.7306876
-changepoints: 0.73050874
-changepoints: 0.7304316
-changepoints: 0.7303984
-changepoints: 0.7302203
-changepoints: 0.73017645
-changepoints: 0.73017645
-changepoints: 0.7301605
-changepoints: 0.7300091
-changepoints: 0.7300091
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 1.
+}
+stepwise_params {
+  changepoint: 0.99999994
+}
+stepwise_params {
+  changepoint: 0.99999976
+}
+stepwise_params {
+  changepoint: 0.9999981
+}
+stepwise_params {
+  changepoint: 0.99998915
+}
+stepwise_params {
+  changepoint: 0.99989426
+}
+stepwise_params {
+  changepoint: 0.9993038
+}
+stepwise_params {
+  changepoint: 0.9968595
+}
+stepwise_params {
+  changepoint: 0.9869055
+}
+stepwise_params {
+  changepoint: 0.9583875
+}
+stepwise_params {
+  changepoint: 0.92156726
+}
+stepwise_params {
+  changepoint: 0.8832767
+}
+stepwise_params {
+  changepoint: 0.8543031
+}
+stepwise_params {
+  changepoint: 0.8308939
+}
+stepwise_params {
+  changepoint: 0.81462353
+}
+stepwise_params {
+  changepoint: 0.7999654
+}
+stepwise_params {
+  changepoint: 0.7872288
+}
+stepwise_params {
+  changepoint: 0.7766864
+}
+stepwise_params {
+  changepoint: 0.76803565
+}
+stepwise_params {
+  changepoint: 0.76088834
+}
+stepwise_params {
+  changepoint: 0.75616527
+}
+stepwise_params {
+  changepoint: 0.75068736
+}
+stepwise_params {
+  changepoint: 0.74641025
+}
+stepwise_params {
+  changepoint: 0.74349767
+}
+stepwise_params {
+  changepoint: 0.740088
+}
+stepwise_params {
+  changepoint: 0.7383175
+}
+stepwise_params {
+  changepoint: 0.7367529
+}
+stepwise_params {
+  changepoint: 0.7356839
+}
+stepwise_params {
+  changepoint: 0.7350616
+}
+stepwise_params {
+  changepoint: 0.73431563
+}
+stepwise_params {
+  changepoint: 0.7335588
+}
+stepwise_params {
+  changepoint: 0.73329717
+}
+stepwise_params {
+  changepoint: 0.7330837
+}
+stepwise_params {
+  changepoint: 0.7330729
+}
+stepwise_params {
+  changepoint: 0.7328347
+}
+stepwise_params {
+  changepoint: 0.73260194
+}
+stepwise_params {
+  changepoint: 0.732494
+}
+stepwise_params {
+  changepoint: 0.7324209
+}
+stepwise_params {
+  changepoint: 0.7323586
+}
+stepwise_params {
+  changepoint: 0.73230326
+}
+stepwise_params {
+  changepoint: 0.73216546
+}
+stepwise_params {
+  changepoint: 0.73211575
+}
+stepwise_params {
+  changepoint: 0.7319937
+}
+stepwise_params {
+  changepoint: 0.7319734
+}
+stepwise_params {
+  changepoint: 0.73181605
+}
+stepwise_params {
+  changepoint: 0.7317901
+}
+stepwise_params {
+  changepoint: 0.7317885
+}
+stepwise_params {
+  changepoint: 0.7317885
+}
+stepwise_params {
+  changepoint: 0.7317885
+}
+stepwise_params {
+  changepoint: 0.7317885
+}
+stepwise_params {
+  changepoint: 0.7317885
+}
+stepwise_params {
+  changepoint: 0.7317885
+}
+stepwise_params {
+  changepoint: 0.7317885
+}
+stepwise_params {
+  changepoint: 0.7317885
+}
+stepwise_params {
+  changepoint: 0.7317885
+}
+stepwise_params {
+  changepoint: 0.7317885
+}
+stepwise_params {
+  changepoint: 0.7317885
+}
+stepwise_params {
+  changepoint: 0.7317054
+}
+stepwise_params {
+  changepoint: 0.7317054
+}
+stepwise_params {
+  changepoint: 0.7317054
+}
+stepwise_params {
+  changepoint: 0.7317054
+}
+stepwise_params {
+  changepoint: 0.7316194
+}
+stepwise_params {
+  changepoint: 0.7316194
+}
+stepwise_params {
+  changepoint: 0.7316036
+}
+stepwise_params {
+  changepoint: 0.731565
+}
+stepwise_params {
+  changepoint: 0.73153794
+}
+stepwise_params {
+  changepoint: 0.73153794
+}
+stepwise_params {
+  changepoint: 0.73153794
+}
+stepwise_params {
+  changepoint: 0.73153794
+}
+stepwise_params {
+  changepoint: 0.73153794
+}
+stepwise_params {
+  changepoint: 0.73153794
+}
+stepwise_params {
+  changepoint: 0.73153794
+}
+stepwise_params {
+  changepoint: 0.73153794
+}
+stepwise_params {
+  changepoint: 0.73153794
+}
+stepwise_params {
+  changepoint: 0.7315259
+}
+stepwise_params {
+  changepoint: 0.7313702
+}
+stepwise_params {
+  changepoint: 0.7313702
+}
+stepwise_params {
+  changepoint: 0.73118675
+}
+stepwise_params {
+  changepoint: 0.73109984
+}
+stepwise_params {
+  changepoint: 0.73109984
+}
+stepwise_params {
+  changepoint: 0.73109984
+}
+stepwise_params {
+  changepoint: 0.7310293
+}
+stepwise_params {
+  changepoint: 0.73098
+}
+stepwise_params {
+  changepoint: 0.7308445
+}
+stepwise_params {
+  changepoint: 0.7306876
+}
+stepwise_params {
+  changepoint: 0.73050874
+}
+stepwise_params {
+  changepoint: 0.7304316
+}
+stepwise_params {
+  changepoint: 0.7303984
+}
+stepwise_params {
+  changepoint: 0.7302203
+}
+stepwise_params {
+  changepoint: 0.73017645
+}
+stepwise_params {
+  changepoint: 0.73017645
+}
+stepwise_params {
+  changepoint: 0.7301605
+}
+stepwise_params {
+  changepoint: 0.7300091
+}
+stepwise_params {
+  changepoint: 0.7300091
+}
 
 daily_fraction_work: 0.5
