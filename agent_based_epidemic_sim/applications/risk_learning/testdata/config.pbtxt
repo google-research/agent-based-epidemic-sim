@@ -28,29 +28,33 @@ tracing_policy {
   }
 }
 
-risk_score_model {
-  risk_scale_factor: 0.5
-  ble_buckets: { weight: 0.1 }
-  ble_buckets: { weight: 0.2 max_attenuation: 1 }
-  infectiousness_buckets: {
-    level: 3
-    weight: 0.3
-    days_since_symptom_onset_min: -1
-    days_since_symptom_onset_max: 1
+risk_score_config {
+  model_proto: {
+    ble_buckets: { weight: 0.1 }
+    ble_buckets: { weight: 0.2 max_attenuation: 1 }
+    infectiousness_buckets: {
+      level: 3
+      weight: 0.3
+      days_since_symptom_onset_min: -1
+      days_since_symptom_onset_max: 1
+    }
+    infectiousness_buckets: {
+      level: 2
+      weight: 0.2
+      days_since_symptom_onset_min: -2
+      days_since_symptom_onset_max: 2
+    }
+    infectiousness_buckets: {
+      level: 1
+      weight: 0.1
+      days_since_symptom_onset_min: -999
+      days_since_symptom_onset_max: 999
+    }
   }
-  infectiousness_buckets: {
-    level: 2
-    weight: 0.2
-    days_since_symptom_onset_min: -2
-    days_since_symptom_onset_max: 2
+  policy_proto: {
+    exposure_notification_window_days: 14
+    risk_scale_factor: 0.5
   }
-  infectiousness_buckets: {
-    level: 1
-    weight: 0.1
-    days_since_symptom_onset_min: -999
-    days_since_symptom_onset_max: 999
-  }
-  exposure_notification_window_days: 14
 }
 
 # What follows is the population profiles for different age groups.

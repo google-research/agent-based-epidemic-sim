@@ -29,6 +29,7 @@ cc_library(
     testonly = 1,
     hdrs = ["test_util.h"],
     deps = [
+        "//agent_based_epidemic_sim/applications/risk_learning:risk_score",
         "//agent_based_epidemic_sim/core:agent",
         "//agent_based_epidemic_sim/core:broker",
         "//agent_based_epidemic_sim/core:event",
@@ -40,6 +41,8 @@ cc_library(
         "//agent_based_epidemic_sim/core:transmission_model",
         "//agent_based_epidemic_sim/core:visit",
         "//agent_based_epidemic_sim/core:visit_generator",
+        "@com_google_absl//absl/time",
+        "@com_google_absl//absl/types:optional",
         "@com_google_googletest//:gtest",
     ],
 )

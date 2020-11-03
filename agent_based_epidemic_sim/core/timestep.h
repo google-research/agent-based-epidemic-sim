@@ -36,6 +36,11 @@ class Timestep {
     return start_ == other.start_ && duration_ == other.duration_;
   }
   bool operator!=(const Timestep& other) const { return !(*this == other); }
+  friend std::ostream& operator<<(std::ostream& strm,
+                                  const Timestep& timestep) {
+    return strm << "{" << timestep.start_time() << "," << timestep.end_time()
+                << "," << timestep.duration() << "}";
+  }
 
  private:
   absl::Time start_;

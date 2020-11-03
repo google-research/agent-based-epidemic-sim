@@ -245,11 +245,28 @@ class RiskLearningSimulation : public Simulation {
               std::negative_binomial_distribution<int>(k, p)};
     }
 
-    // Read in risk model config.
+    if (!config.has_risk_score_config()) {
+      return absl::InvalidArgumentError("No risk_score_config found.");
+    }
+
+    if (!config.risk_score_config().has_model_proto()) {
+      return absl::InvalidArgumentError(
+          "No model_proto found in risk_score_config.");
+    }
+
+    // Read in risk score model config.
     auto risk_score_model_or =
-        CreateLearningRiskScoreModel(config.risk_score_model());
+        CreateLearningRiskScoreModel(config.risk_score_config().model_proto());
     if (!risk_score_model_or.ok()) return risk_score_model_or.status();
     result->risk_score_model_ = risk_score_model_or.value();
+
+    // Read in risk score policy config.
+    if (config.risk_score_config().has_policy_proto()) {
+      auto risk_score_policy_or = CreateLearningRiskScorePolicy(
+          config.risk_score_config().policy_proto());
+      if (!risk_score_policy_or.ok()) return risk_score_policy_or.status();
+      result->risk_score_policy_ = risk_score_policy_or.value();
+    }
 
     // Read in agents.
     std::vector<std::unique_ptr<Agent>> agents;
@@ -270,7 +287,7 @@ class RiskLearningSimulation : public Simulation {
         // absl::discrete_distribution::operator() is non-const.
         auto risk_score_or = CreateLearningRiskScore(
             config.tracing_policy(), result->risk_score_model_,
-            result->get_location_type_);
+            result->risk_score_policy_, result->get_location_type_);
         if (!risk_score_or.ok()) return risk_score_or.status();
         auto risk_score = CreateAppEnabledRiskScore(
             absl::Bernoulli(GetBitGen(),
@@ -364,6 +381,7 @@ class RiskLearningSimulation : public Simulation {
   std::unique_ptr<ExposureGenerator> exposure_generator_;
   std::unique_ptr<HazardTransmissionModel> transmission_model_;
   LearningRiskScoreModel risk_score_model_;
+  LearningRiskScorePolicy risk_score_policy_;
   absl::flat_hash_map<int64, LocationReference::Type> location_types_;
   const LocationTypeFn get_location_type_;
   // location_types is filled during location loading in the constructor and is

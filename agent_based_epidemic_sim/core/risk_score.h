@@ -29,7 +29,8 @@ class RiskScore {
   // Informs the RiskScore of a HealthTransition.
   virtual void AddHealthStateTransistion(HealthTransition transition) = 0;
   // Informs the RiskScore of new exposures.
-  virtual void AddExposures(absl::Span<const Exposure* const> exposures) = 0;
+  virtual void AddExposures(const Timestep& timestep,
+                            absl::Span<const Exposure* const> exposures) = 0;
   // Informs the RiskScore of received exposure notifications.
   virtual void AddExposureNotification(const Exposure& exposure,
                                        const ContactReport& notification) = 0;

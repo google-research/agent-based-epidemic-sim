@@ -41,7 +41,8 @@ class TogglingRiskScore : public RiskScore {
       : location_type_(std::move(location_type)), toggles_(toggles) {}
 
   void AddHealthStateTransistion(HealthTransition transition) override {}
-  void AddExposures(absl::Span<const Exposure* const> exposures) override {}
+  void AddExposures(const Timestep& timestep,
+                    absl::Span<const Exposure* const> exposures) override {}
   void AddExposureNotification(const Exposure& exposure,
                                const ContactReport& notification) override {}
 

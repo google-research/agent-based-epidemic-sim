@@ -479,10 +479,12 @@ TEST(SEIRAgentTest,
   EXPECT_CALL(*risk_score, GetContactTracingPolicy(_))
       .WillOnce(Return(RiskScore::ContactTracingPolicy{}));
 
+  Timestep timestep(absl::UnixEpoch(), absl::Hours(24));
   // This is a key assertion that we pass on exposures from
   // ProcessInfectionOutcomes to the risk score.
-  EXPECT_CALL(*risk_score, AddExposures(testing::ElementsAre(
-                               &outcomes[0].exposure, &outcomes[1].exposure)));
+  EXPECT_CALL(*risk_score, AddExposures(timestep, testing::ElementsAre(
+                                                      &outcomes[0].exposure,
+                                                      &outcomes[1].exposure)));
 
   // This is a key assertion that we do pass on contact reports to the
   // risk score.
@@ -497,7 +499,6 @@ TEST(SEIRAgentTest,
       kUuid, &transmission_model, std::move(transition_model), *visit_generator,
       std::move(risk_score), VisitLocationDynamics());
 
-  Timestep timestep(absl::UnixEpoch(), absl::Hours(24));
   agent->ProcessInfectionOutcomes(timestep, outcomes);
   agent->UpdateContactReports(timestep, contact_reports,
                               contact_report_broker.get());
@@ -528,8 +529,10 @@ TEST(SEIRAgentTest, PositiveTest) {
   }};
   std::vector<InfectionOutcome> outcomes =
       OutcomesFromContacts(kUuid, contacts);
-  EXPECT_CALL(*risk_score,
-              AddExposures(testing::ElementsAre(&outcomes[0].exposure)));
+  const Timestep timestep(absl::UnixEpoch(), absl::Hours(24));
+  EXPECT_CALL(
+      *risk_score,
+      AddExposures(timestep, testing::ElementsAre(&outcomes[0].exposure)));
 
   EXPECT_CALL(*transition_model, GetNextHealthTransition(transition))
       .WillOnce(
@@ -560,7 +563,6 @@ TEST(SEIRAgentTest, PositiveTest) {
        .initial_symptom_onset_time = absl::FromUnixSeconds(-1LL)}};
   EXPECT_CALL(*contact_report_broker, Send(Eq(expected_contact_reports)))
       .Times(1);
-  const Timestep timestep(absl::UnixEpoch(), absl::Hours(24));
 
   agent->ProcessInfectionOutcomes(timestep, outcomes);
   agent->UpdateContactReports(timestep, {}, contact_report_broker.get());
@@ -590,8 +592,10 @@ TEST(SEIRAgentTest, NegativeTestResult) {
                                .health_state = HealthState::SUSCEPTIBLE}));
   std::vector<InfectionOutcome> outcomes =
       OutcomesFromContacts(kUuid, contacts);
-  EXPECT_CALL(*risk_score,
-              AddExposures(testing::ElementsAre(&outcomes[0].exposure)));
+  const Timestep timestep(absl::UnixEpoch(), absl::Hours(24));
+  EXPECT_CALL(
+      *risk_score,
+      AddExposures(timestep, testing::ElementsAre(&outcomes[0].exposure)));
   EXPECT_CALL(*risk_score, AddExposureNotification(contacts[0].exposure,
                                                    contact_reports[0]));
 
@@ -608,7 +612,6 @@ TEST(SEIRAgentTest, NegativeTestResult) {
 
   auto contact_report_broker = absl::make_unique<MockBroker<ContactReport>>();
   EXPECT_CALL(*contact_report_broker, Send(testing::_)).Times(0);
-  const Timestep timestep(absl::UnixEpoch(), absl::Hours(24));
   agent->ProcessInfectionOutcomes(timestep, outcomes);
   agent->UpdateContactReports(timestep, contact_reports,
                               contact_report_broker.get());
@@ -629,7 +632,7 @@ TEST(SEIRAgentTest, SendContactReports) {
   auto risk_score = absl::make_unique<MockRiskScore>();
   // That we add exposures to the risk score is tested elsewhere so we ignore it
   // in this test.
-  EXPECT_CALL(*risk_score, AddExposures(_)).Times(testing::AnyNumber());
+  EXPECT_CALL(*risk_score, AddExposures(_, _)).Times(testing::AnyNumber());
   EXPECT_CALL(*risk_score, ContactRetentionDuration)
       .WillRepeatedly(Return(absl::Hours(24 * 7)));
   EXPECT_CALL(*risk_score, GetContactTracingPolicy(_))
@@ -820,7 +823,7 @@ TEST(SEIRAgentTest, SendContactReportsBeforeAndAfterSymptoms) {
   auto risk_score = absl::make_unique<MockRiskScore>();
   // That we add exposures to the risk score is tested elsewhere so we ignore it
   // in this test.
-  EXPECT_CALL(*risk_score, AddExposures(_)).Times(testing::AnyNumber());
+  EXPECT_CALL(*risk_score, AddExposures(_, _)).Times(testing::AnyNumber());
   EXPECT_CALL(*risk_score, ContactRetentionDuration)
       .WillRepeatedly(Return(absl::Hours(24 * 7)));
   EXPECT_CALL(*risk_score, GetContactTracingPolicy(_))

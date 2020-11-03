@@ -64,28 +64,25 @@ class RiskScoreTest : public testing::Test {
   std::unique_ptr<RiskScore> GetRiskScore() {
     auto risk_score_model_or =
         CreateLearningRiskScoreModel(GetLearningRiskScoreModelProto());
-    model_ = risk_score_model_or.value();
+    return GetRiskScore(risk_score_model_or.value());
+  }
+
+  std::unique_ptr<RiskScore> GetRiskScore(const LearningRiskScoreModel& model) {
+    model_ = model;
+    auto risk_score_policy_or =
+        CreateLearningRiskScorePolicy(GetLearningRiskScorePolicyProto());
+    policy_ = risk_score_policy_or.value();
     auto risk_score_or = CreateLearningRiskScore(
-        GetTracingPolicyProto(), model_, [](const int64 location_uuid) {
+        GetTracingPolicyProto(), model_, policy_,
+        [](const int64 location_uuid) {
           return location_uuid == 0 ? LocationReference::BUSINESS
                                     : LocationReference::HOUSEHOLD;
         });
     return std::move(risk_score_or.value());
   }
 
- private:
-  TracingPolicyProto GetTracingPolicyProto() {
-    return ParseTextProtoOrDie<TracingPolicyProto>(R"(
-      test_validity_duration { seconds: 604800 }
-      contact_retention_duration { seconds: 1209600 }
-      quarantine_duration { seconds: 1209600 }
-      test_latency { seconds: 86400 }
-    )");
-  }
-
   LearningRiskScoreModelProto GetLearningRiskScoreModelProto() {
     return ParseTextProtoOrDie<LearningRiskScoreModelProto>(R"(
-      risk_scale_factor: 0.5
       ble_buckets: { weight: 0.1 }
       ble_buckets: { weight: 0.2 max_attenuation: 1 }
       infectiousness_buckets: {
@@ -106,11 +103,27 @@ class RiskScoreTest : public testing::Test {
         days_since_symptom_onset_min: -999
         days_since_symptom_onset_max: 999
       }
-      exposure_notification_window_days: 14
+    )");
+  }
+
+  LearningRiskScorePolicyProto GetLearningRiskScorePolicyProto() {
+    return ParseTextProtoOrDie<LearningRiskScorePolicyProto>(R"(
+      risk_scale_factor: 1
+      exposure_notification_window_days: 3
+    )");
+  }
+
+  TracingPolicyProto GetTracingPolicyProto() {
+    return ParseTextProtoOrDie<TracingPolicyProto>(R"(
+      test_validity_duration { seconds: 604800 }
+      contact_retention_duration { seconds: 1209600 }
+      quarantine_duration { seconds: 1209600 }
+      test_latency { seconds: 86400 }
     )");
   }
 
   LearningRiskScoreModel model_;
+  LearningRiskScorePolicy policy_;
 };
 
 OVERLOAD_VECTOR_OSTREAM_OPS
@@ -314,7 +327,8 @@ TEST_F(RiskScoreTest, AppEnabledRiskScoreTogglesBehaviorOn) {
           .report_recursively = false, .send_report = true}));
   auto app_enabled_risk_score = CreateAppEnabledRiskScore(
       /*is_app_enabled=*/true, std::move(risk_score));
-  app_enabled_risk_score->AddExposures({});
+  app_enabled_risk_score->AddExposures(
+      Timestep(TimeFromDay(-1), absl::Hours(24)), {});
   app_enabled_risk_score->AddExposureNotification({}, {});
   EXPECT_THAT(app_enabled_risk_score->GetContactTracingPolicy(
                   Timestep(TimeFromDay(21), absl::Hours(24))),
@@ -329,7 +343,8 @@ TEST_F(RiskScoreTest, AppEnabledRiskScoreTogglesBehaviorOff) {
   EXPECT_CALL(*risk_score, GetContactTracingPolicy).Times(0);
   auto app_enabled_risk_score = CreateAppEnabledRiskScore(
       /*is_app_enabled=*/false, std::move(risk_score));
-  app_enabled_risk_score->AddExposures({});
+  app_enabled_risk_score->AddExposures(
+      Timestep(TimeFromDay(-1), absl::Hours(24)), {});
   app_enabled_risk_score->AddExposureNotification({}, {});
   EXPECT_THAT(app_enabled_risk_score->GetContactTracingPolicy(
                   Timestep(TimeFromDay(21), absl::Hours(24))),
