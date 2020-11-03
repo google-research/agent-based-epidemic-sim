@@ -50,6 +50,7 @@ cc_library(
         "//agent_based_epidemic_sim/core:pandemic_cc_proto",
         "//agent_based_epidemic_sim/core:random",
         "//agent_based_epidemic_sim/core:risk_score",
+        "//agent_based_epidemic_sim/core:risk_score_model",
         "//agent_based_epidemic_sim/port:time_proto_util",
         "//agent_based_epidemic_sim/util:time_utils",
         "@com_google_absl//absl/memory",
