@@ -79,7 +79,11 @@ class RiskScoreTest : public testing::Test {
       test_validity_duration { seconds: 604800 }
       contact_retention_duration { seconds: 1209600 }
       quarantine_duration { seconds: 1209600 }
-      test_latency { seconds: 86400 }
+      test_properties {
+        sensitivity: 1.0
+        specificity: 1.0
+        latency { seconds: 86400 }
+      }
     )");
   }
 

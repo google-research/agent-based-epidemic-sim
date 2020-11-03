@@ -21,6 +21,20 @@ import "agent_based_epidemic_sim/core/parameter_distribution.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 
+// Defines test properties.
+message TestPropertiesProto {
+  // Proportion of those with the disease who are correctly identified as
+  // positives.
+  float sensitivity = 1;
+  // Proportion of those identified by the test as having the disease who
+  // actually have it.
+  float specificity = 2;
+  // The latency in receiving a test result.
+  // May be generalized in the future to account for randomness, different test
+  // types.
+  google.protobuf.Duration latency = 3;
+}
+
 // Configures a TracingPolicy that defines test, trace, and isolation
 // parameters.
 message TracingPolicyProto {
@@ -31,10 +45,9 @@ message TracingPolicyProto {
   google.protobuf.Duration contact_retention_duration = 2;
   // The duration to remain quarantined following the latest positive contact.
   google.protobuf.Duration quarantine_duration = 3;
-  // The latency in receiving a test result.
-  // May be generalized in the future to account for randomness, different test
-  // types.
-  google.protobuf.Duration test_latency = 4;
+  // The properties of the test available within the TracingPolicy.
+  TestPropertiesProto test_properties = 5;
+  reserved 4;  // Deprecated fields.
 }
 
 message InfectiousnessLevel {
@@ -153,6 +166,7 @@ message RiskLearningSimulationConfig {
   int32 steps = 5;
 
   TracingPolicyProto tracing_policy = 6;
+
   repeated PopulationProfile profiles = 7;
   // Number of infections that exist at the beginning of the simulation.
   float n_seed_infections = 9;

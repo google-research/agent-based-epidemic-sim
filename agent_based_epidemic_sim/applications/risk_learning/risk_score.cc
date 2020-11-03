@@ -20,6 +20,7 @@
 #include <cstddef>
 
 #include "absl/memory/memory.h"
+#include "absl/random/distributions.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
@@ -32,6 +33,7 @@
 #include "agent_based_epidemic_sim/core/integral_types.h"
 #include "agent_based_epidemic_sim/core/location_type.h"
 #include "agent_based_epidemic_sim/core/pandemic.pb.h"
+#include "agent_based_epidemic_sim/core/random.h"
 #include "agent_based_epidemic_sim/port/time_proto_util.h"
 #include "agent_based_epidemic_sim/util/time_utils.h"
 
@@ -44,6 +46,8 @@ struct LearningRiskScoreConfig {
   absl::Duration contact_retention_duration;
   absl::Duration quarantine_duration;
   absl::Duration test_latency;
+  float test_sensitivity;
+  float test_specificity;
 };
 
 // A policy that implements testing, tracing, and isolation guidelines.
@@ -65,6 +69,20 @@ class LearningRiskScore : public RiskScore {
     }
   }
   void AddExposures(absl::Span<const Exposure* const> exposures) override {}
+
+  TestOutcome::Outcome GetOutcome(const absl::Time request_time) {
+    if (request_time >= infection_onset_time_) {
+      // Actual positive.
+      return absl::Bernoulli(GetBitGen(), tracing_policy_.test_sensitivity)
+                 ? TestOutcome::POSITIVE
+                 : TestOutcome::NEGATIVE;
+    }
+    // Actual negative.
+    return absl::Bernoulli(GetBitGen(), tracing_policy_.test_specificity)
+               ? TestOutcome::NEGATIVE
+               : TestOutcome::POSITIVE;
+  }
+
   void AddExposureNotification(const Exposure& exposure,
                                const ContactReport& notification) override {
     // Actuate based on app user flag.
@@ -92,13 +110,10 @@ class LearningRiskScore : public RiskScore {
     // a test, we ignore that exposure.
     if (HasActiveTest(request_time)) return;
 
-    // TODO: Introduce some noise into the test result.
     test_results_.push_back({
         .time_requested = notification.test_result.time_received,
         .time_received = request_time + tracing_policy_.test_latency,
-        .outcome = request_time >= infection_onset_time_
-                       ? TestOutcome::POSITIVE
-                       : TestOutcome::NEGATIVE,
+        .outcome = GetOutcome(request_time),
     });
   }
 
@@ -361,12 +376,27 @@ absl::StatusOr<std::unique_ptr<RiskScore>> CreateLearningRiskScore(
     return quarantine_duration_or.status();
   }
   config.quarantine_duration = *quarantine_duration_or;
+  if (!tracing_policy_proto.has_test_properties()) {
+    return absl::InvalidArgumentError("Config is missing test properties.");
+  }
   auto test_latency_or =
-      DecodeGoogleApiProto(tracing_policy_proto.test_latency());
+      DecodeGoogleApiProto(tracing_policy_proto.test_properties().latency());
   if (!test_latency_or.ok()) {
     return test_latency_or.status();
   }
   config.test_latency = *test_latency_or;
+  if (tracing_policy_proto.test_properties().sensitivity() <= 0 ||
+      tracing_policy_proto.test_properties().sensitivity() > 1) {
+    return absl::InvalidArgumentError("Test sensitivity not within (0, 1].");
+  }
+  config.test_sensitivity =
+      tracing_policy_proto.test_properties().sensitivity();
+  if (tracing_policy_proto.test_properties().specificity() <= 0 ||
+      tracing_policy_proto.test_properties().specificity() > 1) {
+    return absl::InvalidArgumentError("Test specificity not within (0, 1].");
+  }
+  config.test_specificity =
+      tracing_policy_proto.test_properties().specificity();
   LearningRiskScore risk_score(location_type, config, risk_score_model);
 
   return absl::make_unique<LearningRiskScore>(location_type, config,

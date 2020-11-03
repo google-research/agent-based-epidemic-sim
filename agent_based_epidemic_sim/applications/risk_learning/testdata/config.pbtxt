@@ -22,8 +22,12 @@ tracing_policy {
   quarantine_duration {
     seconds: 1209600
   }
-  test_latency {
-    seconds: 86400
+  test_properties {
+    sensitivity: 1.0
+    specificity: 1.0
+    latency {
+      seconds: 86400
+    }
   }
 }
 
