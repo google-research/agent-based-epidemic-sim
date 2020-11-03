@@ -41,7 +41,7 @@ namespace abesim {
 
 namespace {
 
-struct LearningRiskScoreConfig {
+struct TracingPolicy {
   absl::Duration test_validity_duration;
   absl::Duration contact_retention_duration;
   absl::Duration quarantine_duration;
@@ -54,7 +54,7 @@ struct LearningRiskScoreConfig {
 class LearningRiskScore : public RiskScore {
  public:
   LearningRiskScore(LocationTypeFn location_type,
-                    const LearningRiskScoreConfig& tracing_policy,
+                    const TracingPolicy& tracing_policy,
                     const LearningRiskScoreModel& risk_score_model)
       : tracing_policy_(tracing_policy),
         location_type_(std::move(location_type)),
@@ -68,7 +68,10 @@ class LearningRiskScore : public RiskScore {
       infection_onset_time_ = std::min(infection_onset_time_, transition.time);
     }
   }
-  void AddExposures(absl::Span<const Exposure* const> exposures) override {}
+  void UpdateLatestTimestep(const Timestep& timestep) override {
+    // Assume this is called each timestep for each agent.
+    latest_timestep_ = timestep;
+  }
 
   TestOutcome::Outcome GetOutcome(const absl::Time request_time) {
     if (request_time >= infection_onset_time_) {
@@ -173,13 +176,14 @@ class LearningRiskScore : public RiskScore {
             timestep.end_time() > earliest_quarantine_time);
   }
 
-  const LearningRiskScoreConfig tracing_policy_;
+  const TracingPolicy tracing_policy_;
   const LocationTypeFn location_type_;
   const LearningRiskScoreModel& risk_score_model_;
   absl::Time infection_onset_time_;
   std::vector<TestResult> test_results_;
   absl::Time latest_contact_time_;
   float current_risk_score_sum_;
+  absl::optional<Timestep> latest_timestep_;
 };
 
 class AppEnabledRiskScore : public RiskScore {
@@ -191,9 +195,9 @@ class AppEnabledRiskScore : public RiskScore {
   void AddHealthStateTransistion(HealthTransition transition) override {
     risk_score_->AddHealthStateTransistion(transition);
   }
-  void AddExposures(absl::Span<const Exposure* const> exposures) override {
+  void UpdateLatestTimestep(const Timestep& timestep) override {
     if (is_app_enabled_) {
-      risk_score_->AddExposures(exposures);
+      risk_score_->UpdateLatestTimestep(timestep);
     }
   }
   void AddExposureNotification(const Exposure& exposure,
@@ -343,13 +347,8 @@ absl::StatusOr<const LearningRiskScoreModel> CreateLearningRiskScoreModel(
                      b.days_since_symptom_onset_max();
             });
 
-  if (proto.exposure_notification_window_days() <= 0) {
-    return absl::InvalidArgumentError(
-        "exposure_notification_window_days must be a positive integer.");
-  }
-  const LearningRiskScoreModel model = LearningRiskScoreModel(
-      proto.risk_scale_factor(), ble_buckets, infectiousness_buckets,
-      proto.exposure_notification_window_days());
+  const LearningRiskScoreModel model =
+      LearningRiskScoreModel(ble_buckets, infectiousness_buckets);
   return model;
 }
 
@@ -357,25 +356,25 @@ absl::StatusOr<std::unique_ptr<RiskScore>> CreateLearningRiskScore(
     const TracingPolicyProto& tracing_policy_proto,
     const LearningRiskScoreModel& risk_score_model,
     LocationTypeFn location_type) {
-  LearningRiskScoreConfig config;
+  TracingPolicy tracing_policy;
   auto test_validity_duration_or =
       DecodeGoogleApiProto(tracing_policy_proto.test_validity_duration());
   if (!test_validity_duration_or.ok()) {
     return test_validity_duration_or.status();
   }
-  config.test_validity_duration = *test_validity_duration_or;
+  tracing_policy.test_validity_duration = *test_validity_duration_or;
   auto contact_retention_duration_or =
       DecodeGoogleApiProto(tracing_policy_proto.contact_retention_duration());
   if (!contact_retention_duration_or.ok()) {
     return contact_retention_duration_or.status();
   }
-  config.contact_retention_duration = *contact_retention_duration_or;
+  tracing_policy.contact_retention_duration = *contact_retention_duration_or;
   auto quarantine_duration_or =
       DecodeGoogleApiProto(tracing_policy_proto.quarantine_duration());
   if (!quarantine_duration_or.ok()) {
     return quarantine_duration_or.status();
   }
-  config.quarantine_duration = *quarantine_duration_or;
+  tracing_policy.quarantine_duration = *quarantine_duration_or;
   if (!tracing_policy_proto.has_test_properties()) {
     return absl::InvalidArgumentError("Config is missing test properties.");
   }
@@ -384,22 +383,22 @@ absl::StatusOr<std::unique_ptr<RiskScore>> CreateLearningRiskScore(
   if (!test_latency_or.ok()) {
     return test_latency_or.status();
   }
-  config.test_latency = *test_latency_or;
+  tracing_policy.test_latency = *test_latency_or;
   if (tracing_policy_proto.test_properties().sensitivity() <= 0 ||
       tracing_policy_proto.test_properties().sensitivity() > 1) {
     return absl::InvalidArgumentError("Test sensitivity not within (0, 1].");
   }
-  config.test_sensitivity =
+  tracing_policy.test_sensitivity =
       tracing_policy_proto.test_properties().sensitivity();
   if (tracing_policy_proto.test_properties().specificity() <= 0 ||
       tracing_policy_proto.test_properties().specificity() > 1) {
     return absl::InvalidArgumentError("Test specificity not within (0, 1].");
   }
-  config.test_specificity =
+  tracing_policy.test_specificity =
       tracing_policy_proto.test_properties().specificity();
-  LearningRiskScore risk_score(location_type, config, risk_score_model);
+  LearningRiskScore risk_score(location_type, tracing_policy, risk_score_model);
 
-  return absl::make_unique<LearningRiskScore>(location_type, config,
+  return absl::make_unique<LearningRiskScore>(location_type, tracing_policy,
                                               risk_score_model);
 }
 

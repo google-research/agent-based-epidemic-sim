@@ -24,7 +24,7 @@ namespace {
 class NullRiskScore : public RiskScore {
  public:
   void AddHealthStateTransistion(HealthTransition transition) override {}
-  void AddExposures(absl::Span<const Exposure* const> exposures) override {}
+  void UpdateLatestTimestep(const Timestep& timestep) override {}
   void AddExposureNotification(const Exposure& contact,
                                const ContactReport& notification) override {}
 

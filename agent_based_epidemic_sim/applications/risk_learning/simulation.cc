@@ -245,9 +245,18 @@ class RiskLearningSimulation : public Simulation {
               std::negative_binomial_distribution<int>(k, p)};
     }
 
-    // Read in risk model config.
+    if (!config.has_risk_score_config()) {
+      return absl::InvalidArgumentError("No risk_score_config found.");
+    }
+
+    if (!config.risk_score_config().has_model_proto()) {
+      return absl::InvalidArgumentError(
+          "No model_proto found in risk_score_config.");
+    }
+
+    // Read in risk score model config.
     auto risk_score_model_or =
-        CreateLearningRiskScoreModel(config.risk_score_model());
+        CreateLearningRiskScoreModel(config.risk_score_config().model_proto());
     if (!risk_score_model_or.ok()) return risk_score_model_or.status();
     result->risk_score_model_ = risk_score_model_or.value();
 

@@ -89,7 +89,6 @@ class RiskScoreTest : public testing::Test {
 
   LearningRiskScoreModelProto GetLearningRiskScoreModelProto() {
     return ParseTextProtoOrDie<LearningRiskScoreModelProto>(R"(
-      risk_scale_factor: 0.5
       ble_buckets: { weight: 0.1 }
       ble_buckets: { weight: 0.2 max_attenuation: 1 }
       infectiousness_buckets: {
@@ -110,7 +109,6 @@ class RiskScoreTest : public testing::Test {
         days_since_symptom_onset_min: -999
         days_since_symptom_onset_max: 999
       }
-      exposure_notification_window_days: 14
     )");
   }
 
@@ -311,14 +309,15 @@ TEST_F(RiskScoreTest, GetsContactRetentionDuration) {
 
 TEST_F(RiskScoreTest, AppEnabledRiskScoreTogglesBehaviorOn) {
   auto risk_score = absl::make_unique<MockRiskScore>();
-  EXPECT_CALL(*risk_score, AddExposures).Times(1);
+  EXPECT_CALL(*risk_score, UpdateLatestTimestep).Times(1);
   EXPECT_CALL(*risk_score, AddExposureNotification).Times(1);
   EXPECT_CALL(*risk_score, GetContactTracingPolicy)
       .WillOnce(testing::Return(RiskScore::ContactTracingPolicy{
           .report_recursively = false, .send_report = true}));
   auto app_enabled_risk_score = CreateAppEnabledRiskScore(
       /*is_app_enabled=*/true, std::move(risk_score));
-  app_enabled_risk_score->AddExposures({});
+  app_enabled_risk_score->UpdateLatestTimestep(
+      Timestep(TimeFromDay(-1), absl::Hours(24)));
   app_enabled_risk_score->AddExposureNotification({}, {});
   EXPECT_THAT(app_enabled_risk_score->GetContactTracingPolicy(
                   Timestep(TimeFromDay(21), absl::Hours(24))),
@@ -328,12 +327,13 @@ TEST_F(RiskScoreTest, AppEnabledRiskScoreTogglesBehaviorOn) {
 
 TEST_F(RiskScoreTest, AppEnabledRiskScoreTogglesBehaviorOff) {
   auto risk_score = absl::make_unique<MockRiskScore>();
-  EXPECT_CALL(*risk_score, AddExposures).Times(0);
+  EXPECT_CALL(*risk_score, UpdateLatestTimestep).Times(0);
   EXPECT_CALL(*risk_score, AddExposureNotification).Times(0);
   EXPECT_CALL(*risk_score, GetContactTracingPolicy).Times(0);
   auto app_enabled_risk_score = CreateAppEnabledRiskScore(
       /*is_app_enabled=*/false, std::move(risk_score));
-  app_enabled_risk_score->AddExposures({});
+  app_enabled_risk_score->UpdateLatestTimestep(
+      Timestep(TimeFromDay(-1), absl::Hours(24)));
   app_enabled_risk_score->AddExposureNotification({}, {});
   EXPECT_THAT(app_enabled_risk_score->GetContactTracingPolicy(
                   Timestep(TimeFromDay(21), absl::Hours(24))),
