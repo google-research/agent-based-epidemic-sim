@@ -26,6 +26,7 @@
 #include "agent_based_epidemic_sim/core/broker.h"
 #include "agent_based_epidemic_sim/core/event.h"
 #include "agent_based_epidemic_sim/core/exposure_store.h"
+#include "agent_based_epidemic_sim/core/infectivity_model.h"
 #include "agent_based_epidemic_sim/core/integral_types.h"
 #include "agent_based_epidemic_sim/core/pandemic.pb.h"
 #include "agent_based_epidemic_sim/core/risk_score.h"
@@ -66,6 +67,7 @@ class SEIRAgent : public Agent {
   // Convenience factory method to construct a SUSCEPTIBLE agent.
   static std::unique_ptr<SEIRAgent> CreateSusceptible(
       const int64 uuid, TransmissionModel* transmission_model,
+      const InfectivityModel* infectivity_model,
       std::unique_ptr<TransitionModel> transition_model,
       const VisitGenerator& visit_generator,
       std::unique_ptr<RiskScore> risk_score,
@@ -75,6 +77,7 @@ class SEIRAgent : public Agent {
   static std::unique_ptr<SEIRAgent> Create(
       const int64 uuid, const HealthTransition& health_transition,
       TransmissionModel* transmission_model,
+      const InfectivityModel* infectivity_model,
       std::unique_ptr<TransitionModel> transition_model,
       const VisitGenerator& visit_generator,
       std::unique_ptr<RiskScore> risk_score,
@@ -135,9 +138,12 @@ class SEIRAgent : public Agent {
 
   const ExposureStore* exposure_store() const override { return &exposures_; }
 
+  static const InfectivityModel* default_infectivity_model();
+
  private:
   SEIRAgent(const int64 uuid, const HealthTransition& initial_health_transition,
             TransmissionModel* transmission_model,
+            const InfectivityModel* infectivity_model,
             std::unique_ptr<TransitionModel> transition_model,
             const VisitGenerator& visit_generator,
             std::unique_ptr<RiskScore> risk_score,
@@ -150,6 +156,7 @@ class SEIRAgent : public Agent {
             .outcome = TestOutcome::NEGATIVE,
         }),
         transmission_model_(transmission_model),
+        infectivity_model_(infectivity_model),
         transition_model_(std::move(transition_model)),
         visit_generator_(visit_generator),
         risk_score_(std::move(risk_score)),
@@ -211,6 +218,8 @@ class SEIRAgent : public Agent {
 
   // Unowned (shared between agents at risk for the given disease).
   TransmissionModel* const transmission_model_;
+  const InfectivityModel* infectivity_model_;
+
   // TODO: It may be possible to share the transition_model. The
   // visit_generator will likely be initialized uniquely for the agent, but may
   // be shared among "equivalence" classes of agents.

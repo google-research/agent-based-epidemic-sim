@@ -35,6 +35,7 @@
 #include "absl/strings/string_view.h"
 #include "agent_based_epidemic_sim/agent_synthesis/population_profile.pb.h"
 #include "agent_based_epidemic_sim/applications/risk_learning/config.pb.h"
+#include "agent_based_epidemic_sim/applications/risk_learning/infectivity_model.h"
 #include "agent_based_epidemic_sim/applications/risk_learning/observers.h"
 #include "agent_based_epidemic_sim/applications/risk_learning/risk_score.h"
 #include "agent_based_epidemic_sim/applications/risk_learning/triple_exposure_generator.h"
@@ -259,6 +260,11 @@ class RiskLearningSimulation : public Simulation {
 
     // TODO: Specify parameters explicitly here.
     result->transmission_model_ = absl::make_unique<HazardTransmissionModel>();
+
+    result->infectivity_model_ =
+        absl::make_unique<RiskLearningInfectivityModel>(
+            config.global_profile());
+
     // Read in population profiles.
     absl::flat_hash_map<int, PopulationProfileData> profile_data;
     for (const PopulationProfile& profile : config.profiles()) {
@@ -316,6 +322,7 @@ class RiskLearningSimulation : public Simulation {
             absl::MutexLock l(&agent_mu);
             agents.push_back(SEIRAgent::CreateSusceptible(
                 proto.uuid(), result->transmission_model_.get(),
+                result->infectivity_model_.get(),
                 PTTSTransitionModel::CreateFromProto(
                     agent_profile.profile->transition_model()),
                 GetVisitGenerator(proto, *agent_profile.profile,
@@ -411,6 +418,7 @@ class RiskLearningSimulation : public Simulation {
   const RiskLearningSimulationConfig config_;
   std::unique_ptr<ExposureGenerator> exposure_generator_;
   std::unique_ptr<HazardTransmissionModel> transmission_model_;
+  std::unique_ptr<RiskLearningInfectivityModel> infectivity_model_;
   LearningRiskScoreModel risk_score_model_;
   absl::flat_hash_map<int64, LocationReference::Type> location_types_;
   const LocationTypeFn get_location_type_;

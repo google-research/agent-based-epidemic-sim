@@ -521,6 +521,7 @@ cc_library(
         ":constants",
         ":event",
         ":exposure_store",
+        ":infectivity_model",
         ":integral_types",
         ":pandemic_cc_proto",
         ":risk_score",
@@ -794,6 +795,15 @@ cc_library(
     ] + select({
         "//conditions:default": ["@com_google_protobuf//:protobuf"],
     }),
+)
+
+cc_library(
+    name = "infectivity_model",
+    hdrs = ["infectivity_model.h"],
+    deps = [
+        ":pandemic_cc_proto",
+        "@com_google_absl//absl/time",
+    ],
 )
 
 cc_test(

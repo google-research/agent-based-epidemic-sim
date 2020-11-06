@@ -269,7 +269,7 @@ void RunSimulation(
     seir_agents.push_back(SEIRAgent::Create(
         agent.uuid(),
         {.time = init_time, .health_state = agent.initial_health_state()},
-        transmission_model.get(),
+        transmission_model.get(), SEIRAgent::default_infectivity_model(),
         absl::make_unique<WrappedTransitionModel>(
             transition_models[agent.population_profile_id()].get()),
         *visit_generators.back(), policy_generator->NextRiskScore(),

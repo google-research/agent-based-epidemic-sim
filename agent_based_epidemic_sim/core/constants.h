@@ -67,6 +67,11 @@ inline const std::array<float, kMaxDaysAfterInfection + 1> kInfectivityArray = {
     0.004188825154643472,
     0};
 
+// Symptom-dependent infectivity. Source:
+// https://www.medrxiv.org/content/10.1101/2020.09.16.20195925v1.full.pdf, p8.
+inline constexpr float kInfectivityAsymptomatic = 0.33;
+inline constexpr float kInfectivityMildlySymptomatic = 0.72;
+
 }  // namespace abesim
 
 #endif  // AGENT_BASED_EPIDEMIC_SIM_CORE_CONSTANTS_H_

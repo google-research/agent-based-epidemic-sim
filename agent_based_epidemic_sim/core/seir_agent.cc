@@ -21,6 +21,7 @@
 #include "absl/time/time.h"
 #include "agent_based_epidemic_sim/core/constants.h"
 #include "agent_based_epidemic_sim/core/event.h"
+#include "agent_based_epidemic_sim/core/infectivity_model.h"
 #include "agent_based_epidemic_sim/core/visit.h"
 #include "agent_based_epidemic_sim/port/logging.h"
 #include "agent_based_epidemic_sim/util/time_utils.h"
@@ -28,36 +29,55 @@
 namespace abesim {
 namespace {
 
-// TODO: Move to a more appropriate location when this gets more
-// sophisticated like taking into account covariates.
-float SymptomFactor(const HealthState::State health_state) {
-  // Symptoms are not infectious.
-  if (health_state == HealthState::SUSCEPTIBLE ||
-      health_state == HealthState::RECOVERED ||
-      health_state == HealthState::REMOVED ||
-      health_state == HealthState::EXPOSED) {
-    return 0.0f;
+class DefaultInfectivityModel : public InfectivityModel {
+ public:
+  float SymptomFactor(const HealthState::State health_state) const final {
+    // TODO: Add reference to source of HealthState -> factor mapping.
+    // Symptoms are not infectious.
+    if (health_state == HealthState::SUSCEPTIBLE ||
+        health_state == HealthState::RECOVERED ||
+        health_state == HealthState::REMOVED ||
+        health_state == HealthState::EXPOSED ||
+        health_state == HealthState::SYMPTOMATIC_HOSPITALIZED ||
+        health_state == HealthState::SYMPTOMATIC_HOSPITALIZED_RECOVERING) {
+      return 0.0f;
+    }
+
+    // Symptoms are mildly infectious.
+    if (health_state == HealthState::ASYMPTOMATIC) {
+      return kInfectivityAsymptomatic;
+    }
+
+    // Symptoms are moderately infectious.
+    if (health_state == HealthState::PRE_SYMPTOMATIC_MILD ||
+        health_state == HealthState::SYMPTOMATIC_MILD) {
+      return kInfectivityMildlySymptomatic;
+    }
+
+    // Symptoms are severely infectious.
+    return 1.0f;
   }
 
-  // Symptoms are mildly infectious.
-  if (health_state == HealthState::ASYMPTOMATIC) {
-    return 0.33f;
-  }
+  float Infectivity(const absl::Duration duration_since_infection) const final {
+    if (duration_since_infection < absl::ZeroDuration()) {
+      return 0;
+    }
 
-  // Symptoms are moderately infectious.
-  if (health_state == HealthState::PRE_SYMPTOMATIC_MILD ||
-      health_state == HealthState::SYMPTOMATIC_MILD) {
-    return 0.72f;
-  }
+    const int discrete_days_since_infection =
+        ConvertDurationToDiscreteDays(duration_since_infection);
 
-  // Symptoms are severely infectious.
-  return 1.0f;
-}
+    if (discrete_days_since_infection > 14) return 0;
+
+    return kInfectivityArray[discrete_days_since_infection];
+  }
+};
+
 }  // namespace
 
 /* static */
 std::unique_ptr<SEIRAgent> SEIRAgent::CreateSusceptible(
     const int64 uuid, TransmissionModel* transmission_model,
+    const InfectivityModel* infectivity_model,
     std::unique_ptr<TransitionModel> transition_model,
     const VisitGenerator& visit_generator,
     std::unique_ptr<RiskScore> risk_score,
@@ -65,22 +85,24 @@ std::unique_ptr<SEIRAgent> SEIRAgent::CreateSusceptible(
   return SEIRAgent::Create(uuid,
                            {.time = absl::InfiniteFuture(),
                             .health_state = HealthState::SUSCEPTIBLE},
-                           transmission_model, std::move(transition_model),
-                           visit_generator, std::move(risk_score),
-                           std::move(visit_dynamics));
+                           transmission_model, infectivity_model,
+                           std::move(transition_model), visit_generator,
+                           std::move(risk_score), std::move(visit_dynamics));
 }
 
 /* static */
 std::unique_ptr<SEIRAgent> SEIRAgent::Create(
     const int64 uuid, const HealthTransition& health_transition,
     TransmissionModel* transmission_model,
+    const InfectivityModel* infectivity_model,
     std::unique_ptr<TransitionModel> transition_model,
     const VisitGenerator& visit_generator,
     std::unique_ptr<RiskScore> risk_score,
     VisitLocationDynamics visit_dynamics) {
   return absl::WrapUnique(new SEIRAgent(
-      uuid, health_transition, transmission_model, std::move(transition_model),
-      visit_generator, std::move(risk_score), std::move(visit_dynamics)));
+      uuid, health_transition, transmission_model, infectivity_model,
+      std::move(transition_model), visit_generator, std::move(risk_score),
+      std::move(visit_dynamics)));
 }
 
 void SEIRAgent::SplitAndAssignHealthStates(std::vector<Visit>* visits) const {
@@ -89,7 +111,8 @@ void SEIRAgent::SplitAndAssignHealthStates(std::vector<Visit>* visits) const {
     Visit& visit = (*visits)[i];
     visit.health_state = interval->health_state;
     visit.infectivity = CurrentInfectivity(visit.start_time);
-    visit.symptom_factor = SymptomFactor(interval->health_state);
+    visit.symptom_factor =
+        infectivity_model_->SymptomFactor(interval->health_state);
     visit.agent_uuid = uuid_;
     if (visit.start_time >= interval->time) {
       --i;
@@ -99,10 +122,15 @@ void SEIRAgent::SplitAndAssignHealthStates(std::vector<Visit>* visits) const {
       Visit split_visit = visit;
       visit.end_time = interval->time;
       // No visit should ever come before the first health transition.
-      visit.symptom_factor = SymptomFactor((interval + 1)->health_state);
+      visit.symptom_factor =
+          infectivity_model_->SymptomFactor((interval + 1)->health_state);
       split_visit.start_time = interval->time;
+      // TODO: To reduce the size of the message that gets passed, it
+      // would be nice to collapse infectivity and symptom factor -- however,
+      // this could pose a problem for generating training data for learning.
       split_visit.infectivity = CurrentInfectivity(split_visit.start_time);
-      split_visit.symptom_factor = SymptomFactor(interval->health_state);
+      split_visit.symptom_factor =
+          infectivity_model_->SymptomFactor(interval->health_state);
       visits->push_back(split_visit);
     }
     ++interval;
@@ -225,7 +253,7 @@ absl::Duration SEIRAgent::DurationSinceFirstInfection(
   if (initial_infection_time_.has_value()) {
     return current_time - initial_infection_time_.value();
   }
-  return absl::InfiniteDuration();
+  return -1.0 * absl::InfiniteDuration();
 }
 
 void SEIRAgent::ProcessInfectionOutcomes(
@@ -271,20 +299,16 @@ void SEIRAgent::ProcessInfectionOutcomes(
 }
 
 float SEIRAgent::CurrentInfectivity(const absl::Time& current_time) const {
-  if (!IsInfectedState(CurrentHealthState()) ||
-      !initial_infection_time_.has_value() ||
-      current_time < initial_infection_time_) {
-    return 0;
-  }
+  return IsInfectedState(CurrentHealthState())
+             ? infectivity_model_->Infectivity(
+                   DurationSinceFirstInfection(current_time))
+             : 0.0f;
+}
 
-  const absl::Duration duration_since_infection =
-      DurationSinceFirstInfection(current_time);
-  const int discrete_days_since_infection =
-      ConvertDurationToDiscreteDays(duration_since_infection);
-
-  if (discrete_days_since_infection > 14) return 0;
-
-  return kInfectivityArray[discrete_days_since_infection];
+// static
+const InfectivityModel* SEIRAgent::default_infectivity_model() {
+  static const DefaultInfectivityModel default_instance;
+  return &default_instance;
 }
 
 }  // namespace abesim

@@ -168,6 +168,7 @@ message RiskLearningSimulationConfig {
   TracingPolicyProto tracing_policy = 6;
 
   repeated PopulationProfile profiles = 7;
+  GlobalProfile global_profile = 17;
   // Number of infections that exist at the beginning of the simulation.
   float n_seed_infections = 9;
 
@@ -187,6 +188,6 @@ message RiskLearningSimulationConfig {
 
   // The interaction scale factors that apply during lockdown.
   repeated LockdownMultiplier lockdown_multipliers = 16;
-  // Next id: 17
+  // Next id: 18
   reserved 8;  // Deprecated fields.
 }

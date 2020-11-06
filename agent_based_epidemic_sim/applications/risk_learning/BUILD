@@ -144,6 +144,7 @@ cc_library(
     hdrs = ["simulation.h"],
     deps = [
         ":config_cc_proto",
+        ":infectivity_model",
         ":observers",
         ":risk_score",
         ":triple_exposure_generator",
@@ -177,6 +178,19 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library(
+    name = "infectivity_model",
+    srcs = ["infectivity_model.cc"],
+    hdrs = ["infectivity_model.h"],
+    deps = [
+        "//agent_based_epidemic_sim/agent_synthesis:population_profile_cc_proto",
+        "//agent_based_epidemic_sim/core:constants",
+        "//agent_based_epidemic_sim/core:infectivity_model",
+        "//agent_based_epidemic_sim/core:pandemic_cc_proto",
+        "@com_google_absl//absl/time",
     ],
 )
 

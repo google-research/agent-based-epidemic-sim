@@ -50,6 +50,13 @@ message PopulationProfile {
   float app_users_fraction = 8;
 }
 
+// Properties shared by all users, independent of age or other comorbities.
+message GlobalProfile {
+  // Infectivity scaling factors for asymptomatic and mildly symptomatic users.
+  float asymptomatic_infectious_factor = 1;
+  float mild_infectious_factor = 2;
+}
+
 message PopulationProfiles {
   repeated PopulationProfile population_profiles = 1;
 }
