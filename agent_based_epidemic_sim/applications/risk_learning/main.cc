@@ -23,10 +23,6 @@
 ABSL_FLAG(std::string, simulation_config_pbtxt_path, "",
           "Path to SimulationConfig pbtxt file.");
 ABSL_FLAG(int, num_workers, 1, "The number of thread workers to use.");
-ABSL_FLAG(std::string, output, "", "The output file path.");
-ABSL_FLAG(std::string, learning_output_base, "",
-          "The base path for the three learning output files. See "
-          "(broken link) for further details.");
 
 namespace abesim {
 
