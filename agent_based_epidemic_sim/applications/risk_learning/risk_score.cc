@@ -68,7 +68,10 @@ class LearningRiskScore : public RiskScore {
       infection_onset_time_ = std::min(infection_onset_time_, transition.time);
     }
   }
-  void AddExposures(absl::Span<const Exposure* const> exposures) override {}
+  void UpdateLatestTimestep(const Timestep& timestep) override {
+    // Assume this is called each timestep for each agent.
+    latest_timestep_ = timestep;
+  }
 
   TestOutcome::Outcome GetOutcome(const absl::Time request_time) {
     if (request_time >= infection_onset_time_) {
@@ -180,6 +183,7 @@ class LearningRiskScore : public RiskScore {
   std::vector<TestResult> test_results_;
   absl::Time latest_contact_time_;
   float current_risk_score_sum_;
+  absl::optional<Timestep> latest_timestep_;
 };
 
 class AppEnabledRiskScore : public RiskScore {
@@ -191,10 +195,8 @@ class AppEnabledRiskScore : public RiskScore {
   void AddHealthStateTransistion(HealthTransition transition) override {
     risk_score_->AddHealthStateTransistion(transition);
   }
-  void AddExposures(absl::Span<const Exposure* const> exposures) override {
-    if (is_app_enabled_) {
-      risk_score_->AddExposures(exposures);
-    }
+  void UpdateLatestTimestep(const Timestep& timestep) override {
+    risk_score_->UpdateLatestTimestep(timestep);
   }
   void AddExposureNotification(const Exposure& exposure,
                                const ContactReport& notification) override {
