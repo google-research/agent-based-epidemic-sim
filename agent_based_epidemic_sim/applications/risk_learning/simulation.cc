@@ -24,6 +24,7 @@
 
 #include "absl/container/fixed_array.h"
 #include "absl/container/flat_hash_map.h"
+#include "absl/flags/flag.h"
 #include "absl/functional/bind_front.h"
 #include "absl/memory/memory.h"
 #include "absl/random/bit_gen_ref.h"
@@ -54,8 +55,12 @@
 #include "agent_based_epidemic_sim/core/transmission_model.h"
 #include "agent_based_epidemic_sim/core/visit.h"
 #include "agent_based_epidemic_sim/core/visit_generator.h"
+#include "agent_based_epidemic_sim/port/executor.h"
 #include "agent_based_epidemic_sim/port/time_proto_util.h"
 #include "agent_based_epidemic_sim/util/records.h"
+
+ABSL_FLAG(int, num_reader_threads, 16,
+          "Number of agent and location reader threads to use.");
 
 namespace abesim {
 namespace {
@@ -184,50 +189,72 @@ class RiskLearningSimulation : public Simulation {
     TripleExposureGeneratorBuilder seg_builder(config.proximity_config());
     result->exposure_generator_ = seg_builder.Build();
 
+    auto executor = NewExecutor(absl::GetFlag(FLAGS_num_reader_threads));
+    auto exec = executor->NewExecution();
+    absl::Mutex status_mu;
+    absl::Mutex location_mu;
     // Read in locations.
     std::vector<std::unique_ptr<Location>> locations;
     int i = 0;
+    std::vector<absl::Status> statuses;
     for (const std::string& location_file : config.location_file()) {
-      auto reader = MakeRecordReader(location_file);
-      LocationProto proto;
-      while (reader.ReadRecord(proto)) {
-        result->location_types_[proto.reference().uuid()] =
-            proto.reference().type();
-        auto transmissibility =
-            (proto.reference().type() == LocationReference::HOUSEHOLD)
-                ? home_transmissibility
-                : work_random_transmissibility;
-        switch (proto.location_case()) {
-          case LocationProto::kGraph: {
-            std::vector<std::pair<int64, int64>> edges;
-            edges.reserve(proto.graph().edges_size());
-            for (const GraphLocation::Edge& edge : proto.graph().edges()) {
-              edges.push_back({edge.uuid_a(), edge.uuid_b()});
+      exec->Add([&location_file, &locations, &home_transmissibility,
+                 &work_random_transmissibility, &work_interaction_drop_prob,
+                 &non_work_drop_prob, &result, &random_interaction_multiplier,
+                 &i, &location_mu, &status_mu, &statuses]() {
+        auto reader = MakeRecordReader(location_file);
+        LocationProto proto;
+        while (reader.ReadRecord(proto)) {
+          result->location_types_[proto.reference().uuid()] =
+              proto.reference().type();
+          auto transmissibility =
+              (proto.reference().type() == LocationReference::HOUSEHOLD)
+                  ? home_transmissibility
+                  : work_random_transmissibility;
+          switch (proto.location_case()) {
+            case LocationProto::kGraph: {
+              std::vector<std::pair<int64, int64>> edges;
+              edges.reserve(proto.graph().edges_size());
+              for (const GraphLocation::Edge& edge : proto.graph().edges()) {
+                edges.push_back({edge.uuid_a(), edge.uuid_b()});
+              }
+              std::function<float()> drop_prob =
+                  proto.reference().type() == LocationReference::BUSINESS
+                      ? absl::bind_front(work_interaction_drop_prob,
+                                         proto.graph().type())
+                      : non_work_drop_prob;
+              {
+                absl::MutexLock l(&location_mu);
+                locations.push_back(NewGraphLocation(
+                    proto.reference().uuid(), transmissibility, drop_prob,
+                    std::move(edges), *result->exposure_generator_));
+              }
+              break;
             }
-            std::function<float()> drop_prob =
-                proto.reference().type() == LocationReference::BUSINESS
-                    ? absl::bind_front(work_interaction_drop_prob,
-                                       proto.graph().type())
-                    : non_work_drop_prob;
-            locations.push_back(NewGraphLocation(
-                proto.reference().uuid(), transmissibility, drop_prob,
-                std::move(edges), *result->exposure_generator_));
-            break;
+            case LocationProto::kRandom: {
+              absl::MutexLock l(&location_mu);
+              locations.push_back(NewRandomGraphLocation(
+                  proto.reference().uuid(), transmissibility,
+                  random_interaction_multiplier, *result->exposure_generator_));
+            } break;
+            default: {
+              absl::MutexLock l(&status_mu);
+              statuses.push_back(absl::InvalidArgumentError(absl::StrCat(
+                  "Invalid location ", i, ": ", proto.DebugString())));
+            }
+              return;
           }
-          case LocationProto::kRandom:
-            locations.push_back(NewRandomGraphLocation(
-                proto.reference().uuid(), transmissibility,
-                random_interaction_multiplier, *result->exposure_generator_));
-            break;
-          default:
-            return absl::InvalidArgumentError(absl::StrCat(
-                "Invalid location ", i, ": ", proto.DebugString()));
+          i++;
         }
-        i++;
-      }
-      absl::Status status = reader.status();
-      if (!status.ok()) return status;
-      reader.Close();
+        absl::Status status = reader.status();
+        if (!status.ok()) {
+          absl::MutexLock l(&status_mu);
+          statuses.push_back(status);
+          return;
+        }
+        reader.Close();
+        LOG(INFO) << "Finished reading location_file: " << location_file;
+      });
     }
 
     // TODO: Specify parameters explicitly here.
@@ -252,43 +279,64 @@ class RiskLearningSimulation : public Simulation {
     result->risk_score_model_ = risk_score_model_or.value();
 
     // Read in agents.
+    absl::Mutex agent_mu;
     std::vector<std::unique_ptr<Agent>> agents;
     for (const std::string& agent_file : config.agent_file()) {
-      auto reader = MakeRecordReader(agent_file);
-      AgentProto proto;
-      while (reader.ReadRecord(proto)) {
-        auto profile_iter = profile_data.find(proto.population_profile_id());
-        if (profile_iter == profile_data.end()) {
-          return absl::InvalidArgumentError(
-              absl::StrCat("Invalid population profile id for agent: ",
-                           proto.DebugString()));
+      exec->Add([&agent_file, &config, &result, &profile_data, &agents,
+                 &agent_mu, &status_mu, &statuses]() {
+        auto reader = MakeRecordReader(agent_file);
+        AgentProto proto;
+        while (reader.ReadRecord(proto)) {
+          auto profile_iter = profile_data.find(proto.population_profile_id());
+          if (profile_iter == profile_data.end()) {
+            absl::MutexLock l(&status_mu);
+            statuses.push_back(absl::InvalidArgumentError(
+                absl::StrCat("Invalid population profile id for agent: ",
+                             proto.DebugString())));
+            return;
+          }
+          PopulationProfileData& agent_profile = profile_iter->second;
+          // TODO: It is wasteful that we are making a new transition
+          // model for each agent.  To fix this we need to make
+          // GetNextHealthTransition thread safe.  This is complicated by the
+          // fact that absl::discrete_distribution::operator() is non-const.
+          auto risk_score_or = CreateLearningRiskScore(
+              config.tracing_policy(), result->risk_score_model_,
+              result->get_location_type_);
+          if (!risk_score_or.ok()) {
+            absl::MutexLock l(&status_mu);
+            statuses.push_back(risk_score_or.status());
+            return;
+          }
+          auto risk_score = CreateAppEnabledRiskScore(
+              absl::Bernoulli(GetBitGen(),
+                              agent_profile.profile->app_users_fraction()),
+              std::move(*risk_score_or));
+          {
+            absl::MutexLock l(&agent_mu);
+            agents.push_back(SEIRAgent::CreateSusceptible(
+                proto.uuid(), result->transmission_model_.get(),
+                PTTSTransitionModel::CreateFromProto(
+                    agent_profile.profile->transition_model()),
+                GetVisitGenerator(proto, *agent_profile.profile,
+                                  result->visit_gen_cache_),
+                std::move(risk_score), GenerateVisitDynamics(agent_profile)));
+          }
         }
-        PopulationProfileData& agent_profile = profile_iter->second;
-        // TODO: It is wasteful that we are making a new transition model
-        // for each agent.  To fix this we need to make GetNextHealthTransition
-        // thread safe.  This is complicated by the fact that
-        // absl::discrete_distribution::operator() is non-const.
-        auto risk_score_or = CreateLearningRiskScore(
-            config.tracing_policy(), result->risk_score_model_,
-            result->get_location_type_);
-        if (!risk_score_or.ok()) return risk_score_or.status();
-        auto risk_score = CreateAppEnabledRiskScore(
-            absl::Bernoulli(GetBitGen(),
-                            agent_profile.profile->app_users_fraction()),
-            std::move(*risk_score_or));
-        agents.push_back(SEIRAgent::CreateSusceptible(
-            proto.uuid(), result->transmission_model_.get(),
-            PTTSTransitionModel::CreateFromProto(
-                agent_profile.profile->transition_model()),
-            GetVisitGenerator(proto, *agent_profile.profile,
-                              result->visit_gen_cache_),
-            std::move(risk_score), GenerateVisitDynamics(agent_profile)));
-      }
-      absl::Status status = reader.status();
-      if (!status.ok()) return status;
-      reader.Close();
+        absl::Status status = reader.status();
+        if (!status.ok()) {
+          absl::MutexLock l(&status_mu);
+          statuses.push_back(status);
+        }
+        reader.Close();
+        LOG(INFO) << "Finished reading agent_file: " << agent_file;
+      });
     }
-
+    exec->Wait();
+    if (!statuses.empty()) {
+      // Arbitrarily return the first status.
+      return statuses[0];
+    }
     auto time_or = DecodeGoogleApiProto(config.init_time());
     if (!time_or.ok()) return time_or.status();
     const auto init_time = time_or.value();
