@@ -272,8 +272,7 @@ void RunSimulation(
         transmission_model.get(), SEIRAgent::default_infectivity_model(),
         absl::make_unique<WrappedTransitionModel>(
             transition_models[agent.population_profile_id()].get()),
-        *visit_generators.back(), policy_generator->NextRiskScore(),
-        VisitLocationDynamics()));
+        *visit_generators.back(), policy_generator->NextRiskScore()));
   }
   MicroExposureGeneratorBuilder meg_builder(kNonParametricTraceDistribution);
   std::vector<std::unique_ptr<Location>> location_des;

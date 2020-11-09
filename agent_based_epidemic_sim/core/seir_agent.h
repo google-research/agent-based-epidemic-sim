@@ -70,8 +70,7 @@ class SEIRAgent : public Agent {
       const InfectivityModel* infectivity_model,
       std::unique_ptr<TransitionModel> transition_model,
       const VisitGenerator& visit_generator,
-      std::unique_ptr<RiskScore> risk_score,
-      VisitLocationDynamics visit_dynamics);
+      std::unique_ptr<RiskScore> risk_score);
 
   // Constructs an agent with a specified health state transition.
   static std::unique_ptr<SEIRAgent> Create(
@@ -80,8 +79,7 @@ class SEIRAgent : public Agent {
       const InfectivityModel* infectivity_model,
       std::unique_ptr<TransitionModel> transition_model,
       const VisitGenerator& visit_generator,
-      std::unique_ptr<RiskScore> risk_score,
-      VisitLocationDynamics visit_dynamics);
+      std::unique_ptr<RiskScore> risk_score);
 
   SEIRAgent(const SEIRAgent&) = delete;
   SEIRAgent& operator=(const SEIRAgent&) = delete;
@@ -146,8 +144,7 @@ class SEIRAgent : public Agent {
             const InfectivityModel* infectivity_model,
             std::unique_ptr<TransitionModel> transition_model,
             const VisitGenerator& visit_generator,
-            std::unique_ptr<RiskScore> risk_score,
-            VisitLocationDynamics visit_dynamics)
+            std::unique_ptr<RiskScore> risk_score)
       : uuid_(uuid),
         contact_report_send_cutoff_(absl::InfinitePast()),
         last_test_result_sent_({
@@ -159,8 +156,7 @@ class SEIRAgent : public Agent {
         infectivity_model_(infectivity_model),
         transition_model_(std::move(transition_model)),
         visit_generator_(visit_generator),
-        risk_score_(std::move(risk_score)),
-        visit_dynamics_(visit_dynamics) {
+        risk_score_(std::move(risk_score)) {
     next_health_transition_ = initial_health_transition;
     health_transitions_.push_back({.time = absl::InfinitePast(),
                                    .health_state = HealthState::SUSCEPTIBLE});
@@ -179,9 +175,6 @@ class SEIRAgent : public Agent {
   // Splits visits on HealthTransition boundaries so that a unique HealthState
   // can be assigned to each visit.
   void SplitAndAssignHealthStates(std::vector<Visit>* visits) const;
-
-  // Sets Visit::location_dynamics from agent's visit_dynamics_.
-  void AssignVisitDynamics(std::vector<Visit>* visits) const;
 
   void SendContactReports(const Timestep& timestep,
                           Broker<ContactReport>* broker);
@@ -226,7 +219,6 @@ class SEIRAgent : public Agent {
   std::unique_ptr<TransitionModel> transition_model_;
   const VisitGenerator& visit_generator_;
   std::unique_ptr<RiskScore> risk_score_;
-  const VisitLocationDynamics visit_dynamics_;
 };
 
 }  // namespace abesim

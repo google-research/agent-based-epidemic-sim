@@ -80,14 +80,13 @@ std::unique_ptr<SEIRAgent> SEIRAgent::CreateSusceptible(
     const InfectivityModel* infectivity_model,
     std::unique_ptr<TransitionModel> transition_model,
     const VisitGenerator& visit_generator,
-    std::unique_ptr<RiskScore> risk_score,
-    VisitLocationDynamics visit_dynamics) {
+    std::unique_ptr<RiskScore> risk_score) {
   return SEIRAgent::Create(uuid,
                            {.time = absl::InfiniteFuture(),
                             .health_state = HealthState::SUSCEPTIBLE},
                            transmission_model, infectivity_model,
                            std::move(transition_model), visit_generator,
-                           std::move(risk_score), std::move(visit_dynamics));
+                           std::move(risk_score));
 }
 
 /* static */
@@ -97,12 +96,10 @@ std::unique_ptr<SEIRAgent> SEIRAgent::Create(
     const InfectivityModel* infectivity_model,
     std::unique_ptr<TransitionModel> transition_model,
     const VisitGenerator& visit_generator,
-    std::unique_ptr<RiskScore> risk_score,
-    VisitLocationDynamics visit_dynamics) {
+    std::unique_ptr<RiskScore> risk_score) {
   return absl::WrapUnique(new SEIRAgent(
       uuid, health_transition, transmission_model, infectivity_model,
-      std::move(transition_model), visit_generator, std::move(risk_score),
-      std::move(visit_dynamics)));
+      std::move(transition_model), visit_generator, std::move(risk_score)));
 }
 
 void SEIRAgent::SplitAndAssignHealthStates(std::vector<Visit>* visits) const {
@@ -175,19 +172,12 @@ void SEIRAgent::MaybeUpdateHealthTransitions(const Timestep& timestep) {
   }
 }
 
-void SEIRAgent::AssignVisitDynamics(std::vector<Visit>* visits) const {
-  for (Visit& visit : *visits) {
-    visit.location_dynamics = visit_dynamics_;
-  }
-}
-
 void SEIRAgent::ComputeVisits(const Timestep& timestep,
                               Broker<Visit>* visit_broker) const {
   thread_local std::vector<Visit> visits;
   visits.clear();
   visit_generator_.GenerateVisits(timestep, *risk_score_, &visits);
   SplitAndAssignHealthStates(&visits);
-  AssignVisitDynamics(&visits);
   visit_broker->Send(visits);
 }
 

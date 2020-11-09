@@ -73,21 +73,23 @@ struct PopulationProfileData {
 
 // Generates visits to an agent's configured locations lasting a
 // profile-dependent duration, and having a profile-dependent susceptibility.
-// TODO: Also add random location params here.
 class RiskLearningVisitGenerator : public VisitGenerator {
  public:
   RiskLearningVisitGenerator(const AgentProto& agent,
-                             const PopulationProfile& profile)
+                             PopulationProfileData& profile)
       : generator_(absl::make_unique<DurationSpecifiedVisitGenerator>(
-            GetLocationDurations(agent, profile))),
-        susceptibility_(profile.susceptibility()) {}
+            GetLocationDurations(agent, *profile.profile))),
+        susceptibility_(profile.profile->susceptibility()),
+        visit_dynamics_(GenerateVisitDynamics(profile)) {}
 
   void GenerateVisits(const Timestep& timestep, const RiskScore& risk_score,
                       std::vector<Visit>* visits) const final {
     int i = visits->size();  // Index of first element added below.
     generator_->GenerateVisits(timestep, risk_score, visits);
     for (; i < visits->size(); ++i) {
-      (*visits)[i].susceptibility = susceptibility_;
+      Visit& visit = (*visits)[i];
+      visit.susceptibility = susceptibility_;
+      visit.location_dynamics = visit_dynamics_;
     }
   }
 
@@ -121,12 +123,21 @@ class RiskLearningVisitGenerator : public VisitGenerator {
     LOG(FATAL) << "Location not found for type: " << type;
   }
 
-  std::unique_ptr<DurationSpecifiedVisitGenerator> generator_;
-  float susceptibility_;
+  static VisitLocationDynamics GenerateVisitDynamics(
+      PopulationProfileData& profile) {
+    absl::BitGenRef gen = GetBitGen();
+    return {
+        .random_location_edges = profile.random_edges_distribution(gen),
+    };
+  }
+
+  const std::unique_ptr<DurationSpecifiedVisitGenerator> generator_;
+  const float susceptibility_;
+  const VisitLocationDynamics visit_dynamics_;
 };
 
 const VisitGenerator& GetVisitGenerator(
-    const AgentProto& agent, const PopulationProfile& profile,
+    const AgentProto& agent, PopulationProfileData& profile,
     absl::flat_hash_map<std::string, std::unique_ptr<VisitGenerator>>& cache) {
   // Agents with the same set of locations and the same profile can share
   // a visit generator.
@@ -325,9 +336,9 @@ class RiskLearningSimulation : public Simulation {
                 result->infectivity_model_.get(),
                 PTTSTransitionModel::CreateFromProto(
                     agent_profile.profile->transition_model()),
-                GetVisitGenerator(proto, *agent_profile.profile,
+                GetVisitGenerator(proto, agent_profile,
                                   result->visit_gen_cache_),
-                std::move(risk_score), GenerateVisitDynamics(agent_profile)));
+                std::move(risk_score)));
           }
         }
         absl::Status status = reader.status();
