@@ -217,8 +217,11 @@ class RiskLearningSimulation : public Simulation {
         auto reader = MakeRecordReader(location_file);
         LocationProto proto;
         while (reader.ReadRecord(proto)) {
-          result->location_types_[proto.reference().uuid()] =
-              proto.reference().type();
+          {
+            absl::MutexLock l(&location_mu);
+            result->location_types_[proto.reference().uuid()] =
+                proto.reference().type();
+          }
           auto transmissibility =
               (proto.reference().type() == LocationReference::HOUSEHOLD)
                   ? home_transmissibility
@@ -256,7 +259,10 @@ class RiskLearningSimulation : public Simulation {
             }
               return;
           }
-          i++;
+          {
+            absl::MutexLock l(&location_mu);
+            i++;
+          }
         }
         absl::Status status = reader.status();
         if (!status.ok()) {
