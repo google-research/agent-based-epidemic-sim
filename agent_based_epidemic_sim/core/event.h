@@ -212,13 +212,13 @@ static_assert(absl::is_trivially_copy_constructible<ContactSummary>::value,
 // An outcome of a visit to a location.
 // May contain a contact, or background_exposure, representing an exposure
 // to an INFECTIOUS entity (contact, fomite, location etc.) with a given
-// infectivity.
+// infectivity. Default UUIDs are set to -1.
 // TODO: Rename to VisitOutcome. Also, consider a move to v<Contact>.
 struct InfectionOutcome {
-  int64 agent_uuid;
+  int64 agent_uuid = -1;
   Exposure exposure;
   InfectionOutcomeProto::ExposureType exposure_type;
-  int64 source_uuid;
+  int64 source_uuid = -1;
 
   friend bool operator==(const InfectionOutcome& a, const InfectionOutcome& b) {
     return (a.agent_uuid == b.agent_uuid && a.exposure == b.exposure &&
@@ -282,11 +282,12 @@ struct TestResult {
 static_assert(absl::is_trivially_copy_constructible<TestResult>::value,
               "TestResult must be trivially copyable.");
 
-// Health information that is to be broadcasted to a contact.
+// Health information that is to be broadcasted to a contact. Default UUIDs are
+// set to -1.
 // TODO: Represent and report self-reported symptoms.
 struct ContactReport {
-  int64 from_agent_uuid;
-  int64 to_agent_uuid;
+  int64 from_agent_uuid = -1;
+  int64 to_agent_uuid = -1;
   TestResult test_result;
 
   absl::optional<absl::Time> initial_symptom_onset_time;
