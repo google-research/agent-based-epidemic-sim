@@ -78,6 +78,8 @@ cc_library(
         "//agent_based_epidemic_sim/core:exposure_generator",
         "//agent_based_epidemic_sim/core:parameter_distribution_cc_proto",
         "//agent_based_epidemic_sim/core:random",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/random",
         "@com_google_absl//absl/random:distributions",

@@ -19,6 +19,8 @@
 #include <cmath>
 #include <random>
 
+#include "absl/base/optimization.h"
+#include "absl/flags/flag.h"
 #include "absl/random/distributions.h"
 #include "absl/random/random.h"
 #include "absl/time/time.h"
@@ -26,23 +28,42 @@
 #include "agent_based_epidemic_sim/core/exposure_generator.h"
 #include "agent_based_epidemic_sim/core/random.h"
 
+ABSL_FLAG(bool, test_triple_exposure_generator_fixed_distance, false,
+          "Whether the distance between agents at the time of an exposure "
+          "should be fixed to the mean of the given Gamma distribution.");
+ABSL_FLAG(bool, test_triple_exposure_generator_fixed_duration, false,
+          "Whether the duration of interaction between agents at the time of "
+          "an exposure should be fixed to the mean of the given distribution.");
+
 namespace abesim {
 
 float TripleExposureGenerator::DrawDistance() const {
-  absl::BitGenRef bitgen = GetBitGen();
-  std::gamma_distribution<float> distance_distribution(distance_params_.shape,
-                                                       distance_params_.scale);
-  return distance_distribution(bitgen);
+  if (ABSL_PREDICT_TRUE(!absl::GetFlag(
+          FLAGS_test_triple_exposure_generator_fixed_distance))) {
+    absl::BitGenRef bitgen = GetBitGen();
+    std::gamma_distribution<float> distance_distribution(
+        distance_params_.shape, distance_params_.scale);
+    return distance_distribution(bitgen);
+  }
+  return distance_params_.shape * distance_params_.scale;  // Mean.
 }
 
 absl::Duration TripleExposureGenerator::DrawDuration() const {
-  const float u = absl::Uniform(GetBitGen(), 0.0, 1.0);
-  const float duration_intervals =
-      duration_params_.shape / std::pow(u, 1 / duration_params_.scale);
-  return duration_intervals * duration_params_.output_multiplier_minutes;
+  if (ABSL_PREDICT_TRUE(!absl::GetFlag(
+          FLAGS_test_triple_exposure_generator_fixed_duration))) {
+    const float u = absl::Uniform(GetBitGen(), 0.0, 1.0);
+    const float duration_intervals =
+        duration_params_.shape / std::pow(u, 1 / duration_params_.scale);
+    return duration_intervals * duration_params_.output_multiplier_minutes;
+  }
+  return duration_params_.output_multiplier_minutes * duration_params_.shape *
+         duration_params_.scale / (duration_params_.scale - 1);  // Mean.
 }
 
 float TripleExposureGenerator::DistanceToAttenuation(float distance) const {
+  // If distance is held fixed by setting
+  // FLAGS_test_triple_exposure_generator_fixed_distance, then so is
+  // attenuation, since it is a deterministic function of distance.
   const float mu =
       ble_params_.intercept + ble_params_.slope * std::log(distance);
   const float rssi = -std::exp(mu);
