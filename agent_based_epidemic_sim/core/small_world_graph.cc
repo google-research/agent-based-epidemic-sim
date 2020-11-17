@@ -42,12 +42,11 @@ int SmallWorldGraph::Degree(int i) const { return degrees_[i]; }
 
 std::vector<std::pair<int, int>> SmallWorldGraph::GetEdges() const {
   std::vector<std::pair<int, int>> edges;
+  edges.reserve(n_);
   CHECK(graph_.size() == n_);
   for (int i = 0; i < n_; ++i) {
-    for (int j = i + 1; j < n_; ++j) {
-      if (HasEdge(i, j)) {
-        edges.push_back(std::make_pair(i, j));
-      }
+    for (const int j : graph_[i]) {
+      edges.push_back(std::make_pair(i, j));
     }
   }
   CHECK(edges.size() == n_ * (k_ / 2));
@@ -74,10 +73,12 @@ SmallWorldGraph::GenerateWattsStrogatzGraph(int n, int k, float p) {
   ws->p_ = p;
 
   // 1. Create nodes labeled 0,...n-1
+  LOG(INFO) << "Creating nodes: n=" << n;
   ws->AddNode(n - 1);
 
   // 2. Create ring lattice. There is an edge (u,v) iff
   //    0 < |u-v| mod (n - 1 - k/2) <= k/2
+  LOG(INFO) << "Creating ring lattice: k=" << k;
   for (int u = 0; u < n; ++u) {
     // Add k/2 edges to the right for node 'u'.
     for (int v = u + 1; v <= u + k / 2; ++v) {
@@ -94,6 +95,7 @@ SmallWorldGraph::GenerateWattsStrogatzGraph(int n, int k, float p) {
   // from all possible nodes while avoiding self-loops (w != u) and link
   // duplication (there is no edge (u, w') with w'=w at this point in the
   // algorithm).
+  LOG(INFO) << "Rewiring edges: p=" << p;
   absl::BitGenRef gen = GetBitGen();
   for (int u = 0; u < n; ++u) {
     if (ws->Degree(u) >= n - 1) {
@@ -119,6 +121,7 @@ SmallWorldGraph::GenerateWattsStrogatzGraph(int n, int k, float p) {
     }
   }
   CHECK(ws->graph_.size() == ws->n_);
+  LOG(INFO) << "Finished building graph. n=" << n << ", k=" << k << ", p=" << p;
 
   return ws;
 }
