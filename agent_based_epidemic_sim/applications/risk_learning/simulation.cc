@@ -157,13 +157,12 @@ const VisitGenerator& GetVisitGenerator(
 class RiskLearningSimulation : public Simulation {
  public:
   void Step(int steps, absl::Duration step_duration) override {
-    current_changepoint_ =
-        (config_.stepwise_params_size() > current_step_)
-            ? config_.stepwise_params(current_step_).changepoint()
-            : 1.0f;
+    current_changepoint_ = (stepwise_params_.size() > current_step_)
+                               ? stepwise_params_[current_step_].changepoint()
+                               : 1.0f;
     current_mobility_glm_scale_factor_ =
-        (config_.stepwise_params_size() > current_step_)
-            ? config_.stepwise_params(current_step_).mobility_glm_scale_factor()
+        (stepwise_params_.size() > current_step_)
+            ? stepwise_params_[current_step_].mobility_glm_scale_factor()
             : 1.0f;
     UpdateCurrentLockdownMultipliers();
     sim_->Step(steps, step_duration);
@@ -177,24 +176,56 @@ class RiskLearningSimulation : public Simulation {
   }
   static absl::StatusOr<std::unique_ptr<Simulation>> Build(
       const RiskLearningSimulationConfig& config, int num_workers) {
-    auto result = absl::WrapUnique(new RiskLearningSimulation(config));
+    std::vector<StepwiseParams> stepwise_params;
+    stepwise_params.reserve(config.seeding_date_delta_days() +
+                            config.stepwise_params_size());
+    for (int i = 0; i < config.seeding_date_delta_days(); ++i) {
+      stepwise_params.emplace_back();
+      auto& entry = stepwise_params.back();
+      entry.mutable_lockdown_state()->set_lockdown_status(
+          LockdownStateProto::OFF);
+      entry.mutable_lockdown_state()->set_lockdown_elderly_status(
+          LockdownStateProto::OFF);
+      entry.set_changepoint(1.0);
+      entry.set_mobility_glm_scale_factor(1.0);
+    }
+    stepwise_params.insert(stepwise_params.end(),
+                           config.stepwise_params().begin(),
+                           config.stepwise_params().end());
+    auto result =
+        absl::WrapUnique(new RiskLearningSimulation(config, stepwise_params));
 
-    std::function<float()> home_transmissibility =
-        [sim = result.get()]() -> float {
+    // Home transmissibility is impacted by current lockdown multiplier.
+    std::function<float()> home_transmissibility = [sim = result.get(),
+                                                    &config]() -> float {
       return 1.0f *
-             sim->current_lockdown_multipliers_[GraphLocation::HOUSEHOLD];
+             sim->current_lockdown_multipliers_[GraphLocation::HOUSEHOLD] *
+             config.relative_transmission_home();
     };
-    std::function<float()> work_random_transmissibility =
-        [sim = result.get()]() -> float { return sim->current_changepoint_; };
+    // Work and random network transmissibility is impacted by changepoint.
+    std::function<float()> work_transmissibility = [sim = result.get(),
+                                                    &config]() -> float {
+      return config.relative_transmission_occupation() *
+             sim->current_changepoint_;
+    };
+    std::function<float()> random_transmissibility = [sim = result.get(),
+                                                      &config]() -> float {
+      return config.relative_transmission_random() * sim->current_changepoint_;
+    };
+    // Work interaction drop prob. depends on the current lockdown multiplier
+    // multiplied by the mobility glm scale factor.
     std::function<float(const GraphLocation::Type)> work_interaction_drop_prob =
         [sim = result.get(), &config](const GraphLocation::Type type) -> float {
       return 1.0 - config.daily_fraction_work() *
                        sim->current_lockdown_multipliers_[type] *
                        sim->current_mobility_glm_scale_factor_;
     };
+    // Random interaction depends on lockdown multiplier and mobility glm scale
+    // factor.
     std::function<float()> random_interaction_multiplier =
         [sim = result.get()]() -> float {
-      return sim->current_lockdown_multipliers_[GraphLocation::RANDOM];
+      return sim->current_lockdown_multipliers_[GraphLocation::RANDOM] *
+             sim->current_mobility_glm_scale_factor_;
     };
     std::function<float()> non_work_drop_prob = []() -> float { return 0.0f; };
 
@@ -211,9 +242,10 @@ class RiskLearningSimulation : public Simulation {
     std::vector<absl::Status> statuses;
     for (const std::string& location_file : config.location_file()) {
       exec->Add([&location_file, &locations, &home_transmissibility,
-                 &work_random_transmissibility, &work_interaction_drop_prob,
-                 &non_work_drop_prob, &result, &random_interaction_multiplier,
-                 &i, &location_mu, &status_mu, &statuses]() {
+                 &work_transmissibility, &random_transmissibility,
+                 &work_interaction_drop_prob, &non_work_drop_prob, &result,
+                 &random_interaction_multiplier, &i, &location_mu, &status_mu,
+                 &statuses]() {
         auto reader = MakeRecordReader(location_file);
         LocationProto proto;
         while (reader.ReadRecord(proto)) {
@@ -222,10 +254,19 @@ class RiskLearningSimulation : public Simulation {
             result->location_types_[proto.reference().uuid()] =
                 proto.reference().type();
           }
-          auto transmissibility =
-              (proto.reference().type() == LocationReference::HOUSEHOLD)
-                  ? home_transmissibility
-                  : work_random_transmissibility;
+          std::function<float()> transmissibility;
+          if (proto.reference().type() == LocationReference::HOUSEHOLD) {
+            transmissibility = home_transmissibility;
+          } else if (proto.reference().type() == LocationReference::BUSINESS) {
+            transmissibility = work_transmissibility;
+          } else if (proto.reference().type() == LocationReference::RANDOM) {
+            transmissibility = random_transmissibility;
+          } else {
+            absl::MutexLock l(&status_mu);
+            statuses.push_back(absl::InvalidArgumentError(absl::StrCat(
+                "Invalid type ", i, ": ", proto.reference().DebugString())));
+            return;
+          }
           switch (proto.location_case()) {
             case LocationProto::kGraph: {
               std::vector<std::pair<int64, int64>> edges;
@@ -394,8 +435,10 @@ class RiskLearningSimulation : public Simulation {
   }
 
  private:
-  RiskLearningSimulation(const RiskLearningSimulationConfig& config)
+  RiskLearningSimulation(const RiskLearningSimulationConfig& config,
+                         const std::vector<StepwiseParams>& stepwise_params)
       : config_(config),
+        stepwise_params_(stepwise_params),
         get_location_type_(
             [this](int64 uuid) { return location_types_[uuid]; }),
         summary_observer_(config.summary_filename()),
@@ -412,8 +455,8 @@ class RiskLearningSimulation : public Simulation {
   }
   void UpdateCurrentLockdownMultipliers() {
     const LockdownStateProto& lockdown_state =
-        (config_.stepwise_params_size() > current_step_)
-            ? config_.stepwise_params(current_step_).lockdown_state()
+        (stepwise_params_.size() > current_step_)
+            ? stepwise_params_[current_step_].lockdown_state()
             : LockdownStateProto();
 
     for (const auto& lockdown_multiplier : config_.lockdown_multipliers()) {
@@ -431,8 +474,8 @@ class RiskLearningSimulation : public Simulation {
       }
     }
   }
-
   const RiskLearningSimulationConfig config_;
+  const std::vector<StepwiseParams> stepwise_params_;
   std::unique_ptr<ExposureGenerator> exposure_generator_;
   std::unique_ptr<HazardTransmissionModel> transmission_model_;
   std::unique_ptr<RiskLearningInfectivityModel> infectivity_model_;

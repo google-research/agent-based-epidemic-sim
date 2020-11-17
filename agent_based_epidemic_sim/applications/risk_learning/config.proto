@@ -188,6 +188,17 @@ message RiskLearningSimulationConfig {
 
   // The interaction scale factors that apply during lockdown.
   repeated LockdownMultiplier lockdown_multipliers = 16;
-  // Next id: 18
+
+  // Transmission multipliers by location type.
+  float relative_transmission_home = 18;
+  float relative_transmission_occupation = 19;
+  float relative_transmission_random = 20;
+
+  // The number of days to run to seed the simulation. In effect,
+  // stepwise_params is left-padded with no-op scalars with a number of
+  // entries equal to seeding_date_delta.
+  int32 seeding_date_delta_days = 21;
+
+  // Next id: 22
   reserved 8;  // Deprecated fields.
 }

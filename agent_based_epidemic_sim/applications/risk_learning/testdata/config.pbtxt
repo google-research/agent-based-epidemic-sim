@@ -12,6 +12,11 @@ steps: 2
 
 n_seed_infections: 30
 
+global_profile {
+  asymptomatic_infectious_factor: 0.33
+  mild_infectious_factor: 0.72
+}
+
 tracing_policy {
   test_validity_duration {
     seconds: 604800
@@ -1811,3 +1816,6 @@ stepwise_params {
 }
 
 daily_fraction_work: 0.5
+relative_transmission_home: 2.
+relative_transmission_occupation: 1.
+relative_transmission_random: 1.
