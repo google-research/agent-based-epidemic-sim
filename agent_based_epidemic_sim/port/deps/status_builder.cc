@@ -69,8 +69,6 @@ absl::Status StatusBuilder::JoinMessageToStatus(absl::Status s,
 void StatusBuilder::ConditionallyLog(const absl::Status& result) const {
   if (rep_->logging_mode == Rep::LoggingMode::kDisabled) return;
 
-  absl::LogSeverity severity = rep_->log_severity;
-
   logging_internal::LogMessage log_message(location_.file_name(),
                                            location_.line(), severity);
   log_message.stream() << result;
