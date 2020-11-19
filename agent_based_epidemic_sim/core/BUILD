@@ -51,6 +51,18 @@ cc_library(
 )
 
 cc_library(
+    name = "risk_score_model",
+    srcs = ["risk_score_model.cc"],
+    hdrs = ["risk_score_model.h"],
+    deps = [
+        ":event",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/time",
+        "@com_google_absl//absl/types:optional",
+    ],
+)
+
+cc_library(
     name = "location_type",
     hdrs = ["location_type.h"],
     deps = [

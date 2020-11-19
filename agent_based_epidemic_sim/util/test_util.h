@@ -1,12 +1,15 @@
 #ifndef AGENT_BASED_EPIDEMIC_SIM_UTIL_TEST_UTIL_H_
 #define AGENT_BASED_EPIDEMIC_SIM_UTIL_TEST_UTIL_H_
 
+#include "absl/time/time.h"
+#include "absl/types/optional.h"
 #include "agent_based_epidemic_sim/core/agent.h"
 #include "agent_based_epidemic_sim/core/broker.h"
 #include "agent_based_epidemic_sim/core/event.h"
 #include "agent_based_epidemic_sim/core/integral_types.h"
 #include "agent_based_epidemic_sim/core/location.h"
 #include "agent_based_epidemic_sim/core/risk_score.h"
+#include "agent_based_epidemic_sim/core/risk_score_model.h"
 #include "agent_based_epidemic_sim/core/timestep.h"
 #include "agent_based_epidemic_sim/core/transition_model.h"
 #include "agent_based_epidemic_sim/core/transmission_model.h"
@@ -63,6 +66,14 @@ class MockRiskScore : public RiskScore {
   MOCK_METHOD(ContactTracingPolicy, GetContactTracingPolicy,
               (const Timestep& timestep), (const, override));
   MOCK_METHOD(absl::Duration, ContactRetentionDuration, (), (const, override));
+};
+
+class MockRiskScoreModel : public RiskScoreModel {
+ public:
+  MOCK_METHOD(float, ComputeRiskScore,
+              (const Exposure& exposure,
+               absl::optional<absl::Time> initial_symtom_onset_time),
+              (const));
 };
 
 class MockAgent : public Agent {
