@@ -71,6 +71,8 @@ class TogglingRiskScore : public RiskScore {
     return absl::ZeroDuration();
   }
 
+  float GetRiskScore() const override { return 0; }
+
  private:
   bool SkipVisit(const Timestep& timestep, const int64 location_uuid) const {
     if (location_type_(location_uuid) != LocationReference::BUSINESS) {

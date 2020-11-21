@@ -66,6 +66,7 @@ class MockRiskScore : public RiskScore {
   MOCK_METHOD(ContactTracingPolicy, GetContactTracingPolicy,
               (const Timestep& timestep), (const, override));
   MOCK_METHOD(absl::Duration, ContactRetentionDuration, (), (const, override));
+  MOCK_METHOD(float, GetRiskScore, (), (const, override));
 };
 
 class MockRiskScoreModel : public RiskScoreModel {

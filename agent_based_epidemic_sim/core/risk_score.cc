@@ -48,6 +48,8 @@ class NullRiskScore : public RiskScore {
   absl::Duration ContactRetentionDuration() const override {
     return absl::ZeroDuration();
   }
+
+  float GetRiskScore() const override { return 0; }
 };
 
 }  // namespace

@@ -119,6 +119,8 @@ class TracingRiskScore : public RiskScore {
     return tracing_policy_.contact_retention_duration;
   }
 
+  float GetRiskScore() const override { return 0; }
+
  private:
   bool HasActiveTest(absl::Time request_time) const {
     return !test_results_.empty() &&

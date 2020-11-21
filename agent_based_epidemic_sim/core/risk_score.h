@@ -95,6 +95,9 @@ class RiskScore {
   // Gets the duration for which to retain contacts.
   virtual absl::Duration ContactRetentionDuration() const = 0;
 
+  // Gets the current risk score for the agent.
+  virtual float GetRiskScore() const = 0;
+
   virtual ~RiskScore() = default;
 };
 
