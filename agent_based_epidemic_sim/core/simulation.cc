@@ -147,7 +147,9 @@ class BaseSimulation : public Simulation {
             }
           });
       VLOG(1) << "Location phase took " << absl::Now() - location_start;
+      auto observer_start = absl::Now();
       observer_manager_.AggregateForTimestep(timestep);
+      VLOG(1) << "Observer phase took " << absl::Now() - observer_start;
       timestep.Advance();
     }
     time_ = timestep.start_time();
