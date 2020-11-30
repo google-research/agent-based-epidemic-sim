@@ -18,15 +18,10 @@ global_profile {
 }
 
 tracing_policy {
-  test_validity_duration {
-    seconds: 604800
-  }
-  contact_retention_duration {
+  quarantine_duration_contacts {
     seconds: 1209600
   }
-  quarantine_duration {
-    seconds: 1209600
-  }
+  self_quarantine_on_symptoms_fraction: 1.0
   test_properties {
     sensitivity: 1.0
     specificity: 1.0
@@ -34,6 +29,14 @@ tracing_policy {
       seconds: 86400
     }
   }
+  test_validity_duration {
+    seconds: 604800
+  }
+  contact_retention_duration {
+    seconds: 1209600
+  }
+  trace_on_positive: true
+  traceable_interaction_fraction: 1.0
 }
 
 risk_score_config {

@@ -38,16 +38,49 @@ message TestPropertiesProto {
 // Configures a TracingPolicy that defines test, trace, and isolation
 // parameters.
 message TracingPolicyProto {
+  // Quarantine parameters.
+  //
+  // The duration to remain quarantined following the latest date of a positive
+  // contact report.
+  google.protobuf.Duration quarantine_duration_contacts = 3;
+  // The duration to quarantine given in SYMPTOMATIC or MILD_SYMPTOMATIC states,
+  // assuming adherence to policy via app or otherwise.
+  google.protobuf.Duration quarantine_duration_symptoms = 6;
+  // The duration to quarantine following the latest positive test result.
+  google.protobuf.Duration quarantine_duration_positive = 7;
+  // The duration to remain quarantined following the latest date of risk score
+  // above threshold.
+  google.protobuf.Duration quarantine_duration_risk_score = 8;
+  // Quarantine if risk score above threshold.
+  float quarantine_risk_score_threshold = 9;
+  // Fraction of individuals that quarantine on symptoms.
+  float self_quarantine_on_symptoms_fraction = 14;
+
+  // Test parameters.
+  //
+  // The properties of the test available within the TracingPolicy.
+  TestPropertiesProto test_properties = 5;
   // The duration for which test results are valid (e.g., a negative).
   // May serve as a buffering between test requests.
   google.protobuf.Duration test_validity_duration = 1;
+  // Test on symptoms.
+  bool test_on_symptoms = 10;
+  // Test given risk score above threshold.
+  float test_risk_score_threshold = 11;
+
+  // Tracing parameters.
+  //
   // The duration to retain contacts.
   google.protobuf.Duration contact_retention_duration = 2;
-  // The duration to remain quarantined following the latest positive contact.
-  google.protobuf.Duration quarantine_duration = 3;
-  // The properties of the test available within the TracingPolicy.
-  TestPropertiesProto test_properties = 5;
+  // Trace given a positive test result.
+  bool trace_on_positive = 12;
+  // Fraction of interactions captured given both users have the app.
+  // Instrumented as a probability of censoring a given Exposure with a uuid
+  // matching that of a ContactReport.
+  float traceable_interaction_fraction = 13;
+
   reserved 4;  // Deprecated fields.
+  // Next field id: 15
 }
 
 message InfectiousnessLevel {

@@ -88,6 +88,22 @@ class RiskScoreTest : public testing::Test {
     )");
   }
 
+  TracingPolicyProto GetTracingPolicyProto() {
+    return ParseTextProtoOrDie<TracingPolicyProto>(R"(
+      test_validity_duration { seconds: 604800 }
+      contact_retention_duration { seconds: 1209600 }
+      quarantine_duration_contacts { seconds: 1209600 }
+      test_properties {
+        sensitivity: 1.0
+        specificity: 1.0
+        latency { seconds: 86400 }
+      }
+      test_risk_score_threshold: 0.0
+      trace_on_positive: true
+      traceable_interaction_fraction: 1.0
+    )");
+  }
+
   LearningRiskScoreModelProto GetLearningRiskScoreModelProto() {
     return ParseTextProtoOrDie<LearningRiskScoreModelProto>(R"(
       ble_buckets: { weight: 0.1 }
@@ -109,19 +125,6 @@ class RiskScoreTest : public testing::Test {
         weight: 0.1
         days_since_symptom_onset_min: -999
         days_since_symptom_onset_max: 999
-      }
-    )");
-  }
-
-  TracingPolicyProto GetTracingPolicyProto() {
-    return ParseTextProtoOrDie<TracingPolicyProto>(R"(
-      test_validity_duration { seconds: 604800 }
-      contact_retention_duration { seconds: 1209600 }
-      quarantine_duration { seconds: 1209600 }
-      test_properties {
-        sensitivity: 1.0
-        specificity: 1.0
-        latency { seconds: 86400 }
       }
     )");
   }
