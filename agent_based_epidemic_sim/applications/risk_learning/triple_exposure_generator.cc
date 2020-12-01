@@ -57,7 +57,7 @@ absl::Duration TripleExposureGenerator::DrawDuration() const {
     return duration_intervals * duration_params_.output_multiplier_minutes;
   }
   return duration_params_.output_multiplier_minutes * duration_params_.shape *
-         duration_params_.scale / (duration_params_.scale - 1);  // Mean.
+         duration_params_.scale / (duration_params_.shape - 1);  // Mean.
 }
 
 float TripleExposureGenerator::DistanceToAttenuation(float distance) const {
