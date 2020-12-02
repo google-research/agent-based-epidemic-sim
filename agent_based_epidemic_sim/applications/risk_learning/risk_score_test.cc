@@ -20,6 +20,7 @@
 
 #include "absl/memory/memory.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/str_format.h"
 #include "absl/time/time.h"
 #include "agent_based_epidemic_sim/applications/risk_learning/config.pb.h"
 #include "agent_based_epidemic_sim/core/location_type.h"
@@ -39,6 +40,9 @@ namespace {
 
 using testing::Eq;
 using testing::Return;
+
+constexpr char kContacts[] = "contacts";
+constexpr char kPositive[] = "positive";
 
 absl::Time TimeFromDayAndHour(const int day, const int hour) {
   return absl::UnixEpoch() + absl::Hours(24 * day + hour);
@@ -68,12 +72,14 @@ std::vector<float> FrequencyAdjustments(RiskScore& risk_score,
 
 class RiskScoreTest : public testing::Test {
  protected:
-  void InitializeRiskScoreFromModel(const RiskScoreModel* risk_score_model) {
+  void InitializeRiskScoreFromModel(
+      const TracingPolicyProto& tracing_policy_proto,
+      const RiskScoreModel* risk_score_model) {
     auto risk_score_policy_or =
         CreateLearningRiskScorePolicy(GetLearningRiskScorePolicyProto());
     policy_ = *risk_score_policy_or;
     auto risk_score_or = CreateLearningRiskScore(
-        GetTracingPolicyProto(), policy_, risk_score_model,
+        tracing_policy_proto, policy_, risk_score_model,
         [](const int64 location_uuid) {
           return location_uuid == 0 ? LocationReference::BUSINESS
                                     : LocationReference::HOUSEHOLD;
@@ -88,20 +94,25 @@ class RiskScoreTest : public testing::Test {
     )");
   }
 
-  TracingPolicyProto GetTracingPolicyProto() {
-    return ParseTextProtoOrDie<TracingPolicyProto>(R"(
+  TracingPolicyProto GetTracingPolicyProto(
+      const bool test_on_symptoms, const float traceable_interaction_fraction,
+      const std::string& quarantine_type) {
+    return ParseTextProtoOrDie<TracingPolicyProto>(absl::StrFormat(
+        R"(
       test_validity_duration { seconds: 604800 }
       contact_retention_duration { seconds: 1209600 }
-      quarantine_duration_contacts { seconds: 1209600 }
+      quarantine_duration_%s { seconds: 1209600 }
       test_properties {
         sensitivity: 1.0
         specificity: 1.0
         latency { seconds: 86400 }
       }
+      test_on_symptoms: %d
       test_risk_score_threshold: 0.0
       trace_on_positive: true
-      traceable_interaction_fraction: 1.0
-    )");
+      traceable_interaction_fraction: %f
+    )",
+        quarantine_type, test_on_symptoms, traceable_interaction_fraction));
   }
 
   LearningRiskScoreModelProto GetLearningRiskScoreModelProto() {
@@ -192,7 +203,11 @@ TEST_F(RiskScoreTest, GetVisitAdjustment) {
   };
 
   for (const Case& c : cases) {
-    InitializeRiskScoreFromModel((*risk_score_model).get());
+    InitializeRiskScoreFromModel(
+        GetTracingPolicyProto(/*test_on_symptoms=*/false,
+                              /*traceable_interaction_fraction=*/1.0,
+                              /*quarantine_type=*/kContacts),
+        (*risk_score_model).get());
     risk_score_->AddHealthStateTransistion({
         .time = absl::InfinitePast(),
         .health_state = c.initial_health_state,
@@ -207,7 +222,11 @@ TEST_F(RiskScoreTest, GetVisitAdjustment) {
 TEST_F(RiskScoreTest, GetTestResult) {
   auto risk_score_model =
       CreateLearningRiskScoreModel(GetLearningRiskScoreModelProto());
-  InitializeRiskScoreFromModel((*risk_score_model).get());
+  InitializeRiskScoreFromModel(
+      GetTracingPolicyProto(/*test_on_symptoms=*/false,
+                            /*traceable_interaction_fraction=*/1.0,
+                            /*quarantine_type=*/kContacts),
+      (*risk_score_model).get());
 
   {
     // Before there is a test we return the null result.
@@ -295,7 +314,11 @@ TEST_F(RiskScoreTest, GetTestResult) {
 TEST_F(RiskScoreTest, GetsContactTracingPolicy) {
   auto risk_score_model =
       CreateLearningRiskScoreModel(GetLearningRiskScoreModelProto());
-  InitializeRiskScoreFromModel((*risk_score_model).get());
+  InitializeRiskScoreFromModel(
+      GetTracingPolicyProto(/*test_on_symptoms=*/false,
+                            /*traceable_interaction_fraction=*/1.0,
+                            /*quarantine_type=*/kContacts),
+      (*risk_score_model).get());
 
   // If there's no positive test, we don't send.
   EXPECT_THAT(risk_score_->GetContactTracingPolicy(
@@ -332,7 +355,11 @@ TEST_F(RiskScoreTest, GetsContactTracingPolicy) {
 TEST_F(RiskScoreTest, GetsContactRetentionDuration) {
   auto risk_score_model =
       CreateLearningRiskScoreModel(GetLearningRiskScoreModelProto());
-  InitializeRiskScoreFromModel((*risk_score_model).get());
+  InitializeRiskScoreFromModel(
+      GetTracingPolicyProto(/*test_on_symptoms=*/false,
+                            /*traceable_interaction_fraction=*/1.0,
+                            /*quarantine_type=*/kContacts),
+      (*risk_score_model).get());
   EXPECT_EQ(risk_score_->ContactRetentionDuration(), absl::Hours(24 * 14));
 }
 
@@ -366,7 +393,11 @@ TEST_F(RiskScoreTest, AppEnabledRiskScoreTogglesBehaviorOff) {
 
 TEST_F(RiskScoreTest, GetRiskScoreCountsCorrectly) {
   auto risk_score_model = absl::make_unique<MockRiskScoreModel>();
-  InitializeRiskScoreFromModel(risk_score_model.get());
+  InitializeRiskScoreFromModel(
+      GetTracingPolicyProto(/*test_on_symptoms=*/false,
+                            /*traceable_interaction_fraction=*/1.0,
+                            /*quarantine_type=*/kContacts),
+      risk_score_model.get());
 
   Timestep timestep(TimeFromDay(1), absl::Hours(24));
   // risk_score->GetRiskScore returns the sum of risk scores in the first (and
@@ -455,6 +486,73 @@ TEST_F(RiskScoreTest, GetRiskScoreCountsCorrectly) {
 
     EXPECT_THAT(risk_score_->GetRiskScore(), Eq(10));
   }
+}
+
+TEST_F(RiskScoreTest, TestsOnSymptoms) {
+  auto risk_score_model = absl::make_unique<MockRiskScoreModel>();
+  InitializeRiskScoreFromModel(
+      GetTracingPolicyProto(/*test_on_symptoms=*/true,
+                            /*traceable_interaction_fraction=*/1.0,
+                            /*quarantine_type=*/kContacts),
+      risk_score_model.get());
+  risk_score_->AddHealthStateTransistion(
+      {.time = TimeFromDay(2),
+       .health_state = HealthState::SYMPTOMATIC_SEVERE});
+  TestResult expected = {.time_requested = TimeFromDay(2),
+                         .time_received = TimeFromDay(3),
+                         .outcome = TestOutcome::POSITIVE};
+  {
+    TestResult result =
+        risk_score_->GetTestResult(Timestep(TimeFromDay(5), absl::Hours(24)));
+    EXPECT_EQ(result, expected);
+  }
+  risk_score_->AddHealthStateTransistion(
+      {.time = TimeFromDay(10),
+       .health_state = HealthState::SYMPTOMATIC_HOSPITALIZED_RECOVERING});
+  {
+    TestResult result =
+        risk_score_->GetTestResult(Timestep(TimeFromDay(10), absl::Hours(24)));
+    EXPECT_EQ(result, expected);
+  }
+}
+
+TEST_F(RiskScoreTest, QuarantinesOnPositive) {
+  auto risk_score_model = absl::make_unique<MockRiskScoreModel>();
+  InitializeRiskScoreFromModel(
+      GetTracingPolicyProto(/*test_on_symptoms=*/true,
+                            /*traceable_interaction_fraction=*/1.0,
+                            /*quarantine_type=*/kPositive),
+      risk_score_model.get());
+  risk_score_->AddHealthStateTransistion(
+      {.time = TimeFromDay(2),
+       .health_state = HealthState::SYMPTOMATIC_SEVERE});
+  EXPECT_EQ(1.0,
+            risk_score_
+                ->GetVisitAdjustment(Timestep(TimeFromDay(2), absl::Hours(24)),
+                                     /*location_uuid=*/0)
+                .frequency_adjustment);
+  EXPECT_EQ(0.0,
+            risk_score_
+                ->GetVisitAdjustment(Timestep(TimeFromDay(5), absl::Hours(24)),
+                                     /*location_uuid=*/0)
+                .frequency_adjustment);
+}
+
+TEST_F(RiskScoreTest, DropsIfNoTraceableInteractionFraction) {
+  auto risk_score_model = absl::make_unique<MockRiskScoreModel>();
+  EXPECT_CALL(*risk_score_model, ComputeRiskScore).Times(0);
+  InitializeRiskScoreFromModel(GetTracingPolicyProto(
+                                   /*test_on_symptoms=*/false,
+                                   /*traceable_interaction_fraction=*/0.0,
+                                   /*quarantine_type=*/kContacts),
+                               risk_score_model.get());
+  Timestep timestep(TimeFromDay(1), absl::Hours(24));
+  risk_score_->AddExposureNotification({.start_time = TimeFromDay(1)},
+                                       {.test_result = {
+                                            .time_requested = TimeFromDay(1),
+                                            .time_received = TimeFromDay(2),
+                                            .outcome = TestOutcome::POSITIVE,
+                                        }});
 }
 
 }  // namespace

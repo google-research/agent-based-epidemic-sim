@@ -215,6 +215,7 @@ cc_test(
         "//agent_based_epidemic_sim/util:test_util",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/time",
         "@com_google_googletest//:gtest_main",
     ],

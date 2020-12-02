@@ -29,6 +29,8 @@
 
 namespace abesim {
 
+// TODO: The following struct and two factory methods can be hidden
+// within the implementation of a RiskScoreBuilder class.
 struct LearningRiskScorePolicy {
   // The number of days of exposure history to use when determining whether to
   // take policy actions e.g. quarantine, test.
@@ -43,39 +45,6 @@ struct LearningRiskScorePolicy {
   // Zsombor Szabo, Kacey Ernst, Joanna Masel. July 2020."
   // https://www.medrxiv.org/content/10.1101/2020.07.17.20156539v2
   float risk_scale_factor_ = 3.1 * 1e-4;
-};
-
-// A static representation of the risk score model loaded at simulation start.
-// All usages of this class should be const& to prevent us creating a new copy
-// for each agent.
-class LearningRiskScoreModel : public RiskScoreModel {
- public:
-  LearningRiskScoreModel() {}
-  LearningRiskScoreModel(
-      const std::vector<BLEBucket>& ble_buckets,
-      const std::vector<InfectiousnessBucket>& infectiousness_buckets)
-      : ble_buckets_(ble_buckets),
-        infectiousness_buckets_(infectiousness_buckets) {}
-
-  float ComputeRiskScore(
-      const Exposure& exposure,
-      absl::optional<absl::Time> initial_symptom_onset_time) const;
-
- private:
-  absl::StatusOr<int> AttenuationToBinIndex(const int attenuation) const;
-
-  float ComputeDurationRiskScore(const Exposure& exposure) const;
-  // Note: This method assumes infectiousness_buckets_ has a particular
-  // ordering. Specifically the ordering is asc on days_since_symptom_onset_max.
-  float ComputeInfectionRiskScore(
-      absl::optional<int64> days_since_symptom_onset) const;
-
-  // Buckets representing threshold and corresponding weight of ble attenuation
-  // signals.
-  std::vector<BLEBucket> ble_buckets_;
-  // Buckets representing days_since_symptom onset and a mapping to a
-  // corresponding infectiousness level and model weight.
-  std::vector<InfectiousnessBucket> infectiousness_buckets_;
 };
 
 absl::StatusOr<std::unique_ptr<RiskScoreModel>> CreateLearningRiskScoreModel(
