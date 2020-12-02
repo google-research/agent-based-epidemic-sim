@@ -23,7 +23,7 @@ inline constexpr float kSusceptibility = 1;
 // the last recording. This effectively caps the maximum length of a given
 // exposure. If a longer exposure takes place, multiple Exposure objects should
 // be created.
-inline constexpr uint8 kMaxTraceLength = 20;
+inline constexpr uint8 kMaxTraceLength = 1;
 
 // Number of days after initial infection that the host is considered to still
 // be infectious.
