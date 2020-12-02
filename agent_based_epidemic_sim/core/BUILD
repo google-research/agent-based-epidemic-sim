@@ -795,6 +795,8 @@ cc_library(
 cc_library(
     name = "integral_types",
     hdrs = ["integral_types.h"],
+    deps = [
+    ],
 )
 
 cc_library(
@@ -804,9 +806,8 @@ cc_library(
     ],
     deps = [
         "//agent_based_epidemic_sim/port:logging",
-    ] + select({
-        "//conditions:default": ["@com_google_protobuf//:protobuf"],
-    }),
+        "@com_google_protobuf//:protobuf",
+    ],
 )
 
 cc_library(

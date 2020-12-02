@@ -36,9 +36,8 @@ cc_library(
     ],
     deps = [
         "@com_google_absl//absl/types:span",
-    ] + select({
-        "//conditions:default": ["@com_google_protobuf//:protobuf"],
-    }),
+        "@com_google_protobuf//:protobuf",
+    ],
 )
 
 cc_test(

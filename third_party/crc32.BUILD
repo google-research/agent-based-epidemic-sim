@@ -91,4 +91,5 @@ cc_library(
     hdrs = crc32c_HDRS + ["crc32c/crc32c_config.h"],
     copts = sse42_copts,
     includes = ["include"],
+    deps = [],
 )

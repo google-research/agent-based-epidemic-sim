@@ -106,13 +106,12 @@ cc_test(
     deps = [
         ":status",
         ":test_payload_cc_proto",
-        "@com_google_googletest//:gtest_main",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
-    ] + select({
-        "//conditions:default": ["@com_google_protobuf//:protobuf"],
-    }),
+        "@com_google_googletest//:gtest_main",
+        "@com_google_protobuf//:protobuf",
+    ],
 )
 
 cc_test(
@@ -123,13 +122,12 @@ cc_test(
         ":status",
         ":status_matchers",
         ":test_payload_cc_proto",
-        "@com_google_googletest//:gtest_main",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
-    ] + select({
-        "//conditions:default": ["@com_google_protobuf//:protobuf"],
-    }),
+        "@com_google_googletest//:gtest_main",
+        "@com_google_protobuf//:protobuf",
+    ],
 )
 
 proto_library(
