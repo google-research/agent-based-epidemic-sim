@@ -52,6 +52,17 @@ http_archive(
 )
 
 http_archive(
+    name = "six_archive",
+    build_file = "//third_party:six.BUILD",
+    sha256 = "d16a0141ec1a18405cd4ce8b4613101da75da0e9a7aec5bdd4fa804d0e0eba73",
+    strip_prefix = "six-1.12.0",
+    urls = [
+        "http://mirror.bazel.build/pypi.python.org/packages/source/s/six/six-1.12.0.tar.gz",
+        "https://pypi.python.org/packages/source/s/six/six-1.12.0.tar.gz",  # 2018-12-10
+    ],
+)
+
+http_archive(
     name = "com_google_riegeli",
     urls = ["https://github.com/google/riegeli/archive/master.zip"],
     strip_prefix = "riegeli-master",
@@ -166,3 +177,19 @@ http_archive(
 
 load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 protobuf_deps()
+
+bind(
+    name = "python_headers",
+    actual = "@local_config_python//:python_headers",
+)
+
+load("@com_google_riegeli//python/riegeli:python_configure.bzl", "python_configure")
+
+bind(
+    name = "six",
+    actual = "@six_archive//:six",
+)
+
+python_configure(name = "local_config_python")
+
+register_toolchains("@local_config_python//:toolchain")

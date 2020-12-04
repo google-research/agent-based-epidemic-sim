@@ -15,7 +15,7 @@ class AbesimDataLoaderTest(absltest.TestCase):
 
   def test_abesim_data_loader(self):
     data_path = os.path.join(
-        FLAGS.test_srcdir,
+        "./",
         'agent_based_epidemic_sim/learning/testdata/fake_data_size_30'
     )
 

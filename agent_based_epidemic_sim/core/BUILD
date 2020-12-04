@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@com_google_protobuf//:protobuf.bzl", "py_proto_library")
+
 licenses(["notice"])
 
 package(default_visibility = [
@@ -730,6 +732,14 @@ proto_library(
     deps = [
         "@com_google_protobuf//:duration_proto",
         "@com_google_protobuf//:timestamp_proto",
+    ],
+)
+
+py_proto_library(
+    name = "pandemic_py_pb2",
+    srcs = ["pandemic.proto"],
+    deps = [
+        "@com_google_protobuf//:protobuf_python",
     ],
 )
 

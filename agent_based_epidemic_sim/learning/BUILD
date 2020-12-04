@@ -50,3 +50,27 @@ py_test(
         requirement("six"),
     ],
 )
+
+py_library(
+    name = "abesim_data_loader",
+    srcs = ["abesim_data_loader.py"],
+    srcs_version = "PY3",
+    deps = [
+        "//agent_based_epidemic_sim/applications/risk_learning:exposures_per_test_result_py_pb2",
+        "@com_google_riegeli//python/riegeli",
+    ],
+)
+
+py_test(
+    name = "abesim_data_loader_test",
+    srcs = ["abesim_data_loader_test.py"],
+    data = [
+        "testdata/fake_data_size_30",
+    ],
+    python_version = "PY3",
+    srcs_version = "PY3",
+    deps = [
+        ":abesim_data_loader",
+        requirement("absl-py"),
+    ],
+)
