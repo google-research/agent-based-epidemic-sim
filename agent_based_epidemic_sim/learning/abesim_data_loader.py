@@ -18,7 +18,8 @@ class AbesimExposureDataLoader(object):
                unconfirmed_exposures=False,
                window_around_infection_onset_time=False,
                selection_window_left=10,
-               selection_window_right=0):
+               selection_window_right=0,
+               file_io=io.FileIO):
     """Initialize the Abesim exposure data loder.
 
     Args:
@@ -29,13 +30,15 @@ class AbesimExposureDataLoader(object):
         time (False).
       selection_window_left: Days from the left selection bound to the center.
       selection_window_right: Days from the right selection bound to the center.
+      file_io: A method for constructing a file object for reading.
     """
     self.file_path = file_path
     self.unconfirmed_exposures = unconfirmed_exposures
     self.window_around_infection_onset_time = window_around_infection_onset_time
     self.selection_window_left = selection_window_left
     self.selection_window_right = selection_window_right
-    self.index_reader = riegeli.RecordReader(io.FileIO(file_path, mode='rb'))
+    self.file_io = file_io
+    self.index_reader = riegeli.RecordReader(self.file_io(file_path, mode='rb'))
 
   def __del__(self):
     self.index_reader.close()
@@ -44,13 +47,10 @@ class AbesimExposureDataLoader(object):
     # Reset to the start of the riegeli file.
     self.index_reader.close()
     self.index_reader = riegeli.RecordReader(
-        io.FileIO(self.file_path, mode='rb'))
+        self.file_io(self.file_path, mode='rb'))
 
-  def _seconds_to_days(self, seconds):
-    return int(round(seconds / 60 / 60 / 24))
-
-  def _seconds_to_mins(self, seconds):
-    return int(round(seconds / 60))
+  def _seconds_to_mins(self, timedelta):
+    return timedelta.seconds // 60
 
   def print_all_data(self):
     # Util function to print out all data in the riegeli file.
@@ -61,65 +61,82 @@ class AbesimExposureDataLoader(object):
 
   def get_next_batch(self, batch_size=128):
     """Function to query next batch from the index reader."""
+
+    def is_confirmed(exposure):
+      return (exposure.exposure_type ==
+              exposures_per_test_result_pb2.ExposuresPerTestResult.CONFIRMED)
+
+    def is_valid_unconfirmed(exposure):
+      return (exposure.exposure_type == exposures_per_test_result_pb2
+              .ExposuresPerTestResult.UNCONFIRMED and
+              self.unconfirmed_exposures)
+
+    def is_contained_in_window(exposure, date_window_left, date_window_right):
+      return (exposure.exposure_time.ToDatetime() >= date_window_left) and (
+          exposure.exposure_time.ToDatetime() <= date_window_right)
+
     batch_exposure_list = []
     batch_label_list = []
     grouping_list = []
-    while len(
-        batch_label_list
-    ) < batch_size and self.index_reader.pos.numeric != self.index_reader.size(
-    ):
+    while (len(batch_label_list) < batch_size and
+           self.index_reader.pos.numeric != self.index_reader.size()):
       record = self.index_reader.read_message(
           exposures_per_test_result_pb2.ExposuresPerTestResult.ExposureResult)
-      if record:
-        if not self.window_around_infection_onset_time:
-          # Set window around test_administered_date when
-          # window_around_infection_onset_time is False.
-          test_administered_date = record.test_administered_time.ToDatetime()
-          date_window_left = test_administered_date + datetime.timedelta(
-              days=-self.selection_window_left)
-          date_window_right = test_administered_date + datetime.timedelta(
-              days=self.selection_window_right)
-        elif record.infection_onset_time:
-          # Set window around infection_onset_time when
-          # window_around_infection_onset_time is True and
-          # record.infection_onset_time is not None.
-          infection_date = record.infection_onset_time.ToDatetime()
-          date_window_left = infection_date + datetime.timedelta(
-              days=-self.selection_window_left)
-          date_window_right = infection_date + datetime.timedelta(
-              days=self.selection_window_right)
-        else:
-          # Remove this record if window_around_infection_onset_time is True and
-          # record.infection_onset_time is None.
-          continue
+      if not record:
+        continue
+      if not self.window_around_infection_onset_time:
+        # Set window around test_administered_date when
+        # window_around_infection_onset_time is False.
+        test_administered_date = record.test_administered_time.ToDatetime()
+        date_window_left = test_administered_date + datetime.timedelta(
+            days=-self.selection_window_left)
+        date_window_right = test_administered_date + datetime.timedelta(
+            days=self.selection_window_right)
+      elif record.infection_onset_time:
+        # Set window around infection_onset_time when
+        # window_around_infection_onset_time is True and
+        # record.infection_onset_time is not None.
+        infection_date = record.infection_onset_time.ToDatetime()
+        date_window_left = infection_date + datetime.timedelta(
+            days=-self.selection_window_left)
+        date_window_right = infection_date + datetime.timedelta(
+            days=self.selection_window_right)
+      else:
+        # Remove this record if window_around_infection_onset_time is True and
+        # record.infection_onset_time is None.
+        continue
 
-        exposure_count = 0
-        for exposure in record.exposures:
-          if (exposure.exposure_type ==
-              exposures_per_test_result_pb2.ExposuresPerTestResult.CONFIRMED or
-              (exposure.exposure_type == exposures_per_test_result_pb2.
-               ExposuresPerTestResult.UNCONFIRMED and self.unconfirmed_exposures
-              )) and exposure.exposure_time.ToDatetime(
-              ) >= date_window_left and exposure.exposure_time.ToDatetime(
-              ) <= date_window_right:
-
-            # check if duration_since_symptom_onset is valid or None.
-            if exposure.duration_since_symptom_onset:
-              duration_since_symptom_onset_day = self._seconds_to_days(
-                  exposure.duration_since_symptom_onset.seconds)
-            else:
-              duration_since_symptom_onset_day = None
+      exposure_count = 0
+      for exposure in record.exposures:
+        if (is_confirmed(exposure) or
+            is_valid_unconfirmed(exposure)) and (is_contained_in_window(
+                exposure, date_window_left, date_window_right)):
+          # check if duration_since_symptom_onset is valid or None.
+          if exposure.duration_since_symptom_onset:
+            duration_since_symptom_onset_day = (
+                exposure.duration_since_symptom_onset.ToTimedelta().days)
+          else:
+            duration_since_symptom_onset_day = None
+          # If proximity trace is not present (for example, if
+          # TripleExposureGenerator is used to sample exposures), we add one
+          # entry to the proximity_trace returned in batch_exposure_list.
+          if not exposure.proximity_trace:
+            if not exposure.distance:
+              raise ValueError('Proximity trace or distance must be present. '
+                               'Encountered: %s' % exposure)
+            proximity_trace = [exposure.distance]
             proximity_trace_temporal_resolution_minute = self._seconds_to_mins(
-                exposure.proximity_trace_temporal_resolution.seconds)
+                exposure.duration.ToTimedelta())
+          else:
+            proximity_trace = list(exposure.proximity_trace)
+            proximity_trace_temporal_resolution_minute = self._seconds_to_mins(
+                exposure.proximity_trace_temporal_resolution.ToTimedelta())
+          batch_exposure_list.append(
+              (proximity_trace, duration_since_symptom_onset_day,
+               proximity_trace_temporal_resolution_minute))
 
-            batch_exposure_list.append(
-                (list(exposure.proximity_trace),
-                 duration_since_symptom_onset_day,
-                 proximity_trace_temporal_resolution_minute))
-
-            exposure_count += 1
-
-        batch_label_list.append(record.outcome)
-        grouping_list.append(exposure_count)
+          exposure_count += 1
+      batch_label_list.append(record.outcome)
+      grouping_list.append(exposure_count)
 
     return batch_exposure_list, batch_label_list, grouping_list

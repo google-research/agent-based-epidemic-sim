@@ -71,6 +71,9 @@ py_test(
     srcs_version = "PY3",
     deps = [
         ":abesim_data_loader",
+        "//agent_based_epidemic_sim/applications/risk_learning:exposures_per_test_result_py_pb2",
+        "@com_google_protobuf//:protobuf_python",
         requirement("absl-py"),
+        "@com_google_riegeli//python/riegeli",
     ],
 )
