@@ -62,6 +62,8 @@
 
 ABSL_FLAG(int, num_reader_threads, 16,
           "Number of agent and location reader threads to use.");
+ABSL_FLAG(bool, disable_learning_observer, false,
+          "If true, disable writing learning outputs.");
 
 namespace abesim {
 namespace {
@@ -450,7 +452,11 @@ class RiskLearningSimulation : public Simulation {
                        : SerialSimulation(init_time, std::move(agents),
                                           std::move(locations));
     result->sim_->AddObserverFactory(&result->summary_observer_);
-    result->sim_->AddObserverFactory(&result->learning_observer_);
+    if (ABSL_PREDICT_TRUE(absl::GetFlag(FLAGS_disable_learning_observer))) {
+      LOG(WARNING) << "Learning outputs disabled.";
+    } else {
+      result->sim_->AddObserverFactory(&result->learning_observer_);
+    }
     return std::move(result);
   }
 
