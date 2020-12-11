@@ -21,9 +21,18 @@ namespace {
 
 using ::testing::Return;
 
-std::unique_ptr<Agent> MakeAgentInState(HealthState::State state) {
+std::unique_ptr<Agent> MakeAgentInState(HealthState::State state,
+                                        const Timestep& timestep) {
   auto agent = absl::make_unique<testing::NiceMock<MockAgent>>();
   ON_CALL(*agent, CurrentHealthState()).WillByDefault(testing::Return(state));
+  ON_CALL(*agent, CurrentTestResult(testing::_))
+      .WillByDefault(testing::Return(TestResult{
+          .time_received = timestep.start_time(),
+          .outcome = IsSymptomaticState(state) ? TestOutcome::POSITIVE
+                                               : TestOutcome::NEGATIVE}));
+  ON_CALL(*agent, HealthTransitions())
+      .WillByDefault(testing::Return(std::vector<HealthTransition>{
+          HealthTransition{.time = timestep.start_time()}}));
   return agent;
 }
 
@@ -36,24 +45,27 @@ TEST(SummaryObserverTest, RecordsOutputSuccessfully) {
     std::vector<std::unique_ptr<SummaryObserver>> observers;
     observers.push_back(factory.MakeObserver(timestep));
     observers.push_back(factory.MakeObserver(timestep));
-    auto add_agents = [&observers](HealthState::State state, int n) {
-      auto agent = MakeAgentInState(state);
+    auto add_agents = [&observers](HealthState::State state, int n,
+                                   const Timestep& timestep) {
+      auto agent = MakeAgentInState(state, timestep);
       for (int i = 0; i < n; ++i) {
         observers[i % 2]->Observe(*agent, {});
       }
     };
     for (int i = 0; i < SummaryObserverFactory::kOutputStates.size(); ++i) {
       add_agents(SummaryObserverFactory::kOutputStates[i],
-                 SummaryObserverFactory::kOutputStates.size() - i);
+                 SummaryObserverFactory::kOutputStates.size() - i, timestep);
     }
     factory.Aggregate(timestep, observers);
 
+    auto first_timestep = timestep;
     timestep.Advance();
     observers.clear();
     observers.push_back(factory.MakeObserver(timestep));
     observers.push_back(factory.MakeObserver(timestep));
     for (int i = 0; i < SummaryObserverFactory::kOutputStates.size(); ++i) {
-      add_agents(SummaryObserverFactory::kOutputStates[i], i + 1);
+      add_agents(SummaryObserverFactory::kOutputStates[i], i + 1,
+                 i % 2 ? first_timestep : timestep);
     }
     factory.Aggregate(timestep, observers);
   }
@@ -63,9 +75,11 @@ TEST(SummaryObserverTest, RecordsOutputSuccessfully) {
             "DATE, SUSCEPTIBLE, ASYMPTOMATIC, PRE_SYMPTOMATIC_MILD, "
             "PRE_SYMPTOMATIC_SEVERE, SYMPTOMATIC_MILD, SYMPTOMATIC_SEVERE, "
             "SYMPTOMATIC_HOSPITALIZED, SYMPTOMATIC_CRITICAL, "
-            "SYMPTOMATIC_HOSPITALIZED_RECOVERING, RECOVERED, REMOVED\n"
-            "1970-01-01, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1\n"
-            "1970-01-02, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11\n");
+            "SYMPTOMATIC_HOSPITALIZED_RECOVERING, RECOVERED, REMOVED, "
+            "NEWLY_SYMPTOMATIC_MILD, NEWLY_SYMPTOMATIC_SEVERE, "
+            "NEWLY_TEST_POSITIVE\n"
+            "1970-01-01, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 7, 6, 25\n"
+            "1970-01-02, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 5, 0, 21\n");
 }
 
 absl::Time TestTime(int day, int hour) {

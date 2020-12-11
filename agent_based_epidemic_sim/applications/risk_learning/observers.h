@@ -28,6 +28,9 @@ class SummaryObserver : public AgentInfectionObserver {
   friend class SummaryObserverFactory;
   const Timestep timestep_;
   HealthStateCounts counts_;
+  int newly_symptomatic_mild_ = 0;
+  int newly_symptomatic_severe_ = 0;
+  int newly_test_positive_ = 0;
 };
 
 // SummaryObserverFactory writes summary statistics to the given file for

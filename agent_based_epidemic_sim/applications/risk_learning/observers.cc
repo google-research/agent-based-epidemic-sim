@@ -8,6 +8,11 @@
 #include "agent_based_epidemic_sim/util/records.h"
 
 namespace abesim {
+namespace {
+constexpr char kNewlySymptomaticMild[] = "NEWLY_SYMPTOMATIC_MILD";
+constexpr char kNewlySymptomaticSevere[] = "NEWLY_SYMPTOMATIC_SEVERE";
+constexpr char kNewlyTestPositive[] = "NEWLY_TEST_POSITIVE";
+}  // namespace
 
 SummaryObserver::SummaryObserver(const Timestep timestep)
     : timestep_(timestep), counts_({}) {}
@@ -15,6 +20,18 @@ SummaryObserver::SummaryObserver(const Timestep timestep)
 void SummaryObserver::Observe(const Agent& agent,
                               absl::Span<const InfectionOutcome>) {
   counts_[agent.CurrentHealthState()]++;
+  if (agent.HealthTransitions().back().time >= timestep_.start_time()) {
+    if (agent.CurrentHealthState() == HealthState::SYMPTOMATIC_MILD) {
+      newly_symptomatic_mild_++;
+    } else if (agent.CurrentHealthState() == HealthState::SYMPTOMATIC_SEVERE) {
+      newly_symptomatic_severe_++;
+    }
+  }
+  if (agent.CurrentTestResult(timestep_).time_received >=
+          timestep_.start_time() &&
+      agent.CurrentTestResult(timestep_).outcome == TestOutcome::POSITIVE) {
+    newly_test_positive_++;
+  }
 }
 
 SummaryObserverFactory::SummaryObserverFactory(
@@ -24,6 +41,9 @@ SummaryObserverFactory::SummaryObserverFactory(
   for (const HealthState::State state : kOutputStates) {
     header += ", " + HealthState::State_Name(state);
   }
+  absl::StrAppendFormat(&header, ", %s", kNewlySymptomaticMild);
+  absl::StrAppendFormat(&header, ", %s", kNewlySymptomaticSevere);
+  absl::StrAppendFormat(&header, ", %s", kNewlyTestPositive);
   header += "\n";
   absl::Status status = writer_->WriteString(header);
   if (!status.ok()) LOG(ERROR) << status;
@@ -43,10 +63,16 @@ void SummaryObserverFactory::Aggregate(
     const Timestep& timestep,
     absl::Span<std::unique_ptr<SummaryObserver> const> observers) {
   HealthStateCounts counts = {};
+  int newly_test_positive = 0;
+  int newly_symptomatic_mild = 0;
+  int newly_symptomatic_severe = 0;
   for (const auto& observer : observers) {
     for (HealthState::State state : kOutputStates) {
       counts[state] += observer->counts_[state];
     }
+    newly_symptomatic_mild += observer->newly_symptomatic_mild_;
+    newly_symptomatic_severe += observer->newly_symptomatic_severe_;
+    newly_test_positive += observer->newly_test_positive_;
   }
 
   std::string line =
@@ -54,6 +80,9 @@ void SummaryObserverFactory::Aggregate(
   for (HealthState::State state : kOutputStates) {
     absl::StrAppendFormat(&line, ", %d", counts[state]);
   }
+  absl::StrAppendFormat(&line, ", %d", newly_symptomatic_mild);
+  absl::StrAppendFormat(&line, ", %d", newly_symptomatic_severe);
+  absl::StrAppendFormat(&line, ", %d", newly_test_positive);
   line += "\n";
   absl::Status status = writer_->WriteString(line);
   if (!status.ok()) LOG(ERROR) << status;

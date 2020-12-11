@@ -37,30 +37,6 @@
 
 namespace abesim {
 
-constexpr std::array<HealthState::State, 4> kNotInfectedHealthStates = {
-    HealthState::SUSCEPTIBLE, HealthState::REMOVED, HealthState::RECOVERED,
-    HealthState::EXPOSED};
-
-constexpr std::array<HealthState::State, 6> kSymptomaticHealthStates = {
-    HealthState::SYMPTOMATIC_MILD,
-    HealthState::SYMPTOMATIC_SEVERE,
-    HealthState::SYMPTOMATIC_CRITICAL,
-    HealthState::INFECTIOUS,
-    HealthState::SYMPTOMATIC_HOSPITALIZED_RECOVERING,
-    HealthState::SYMPTOMATIC_HOSPITALIZED};
-
-inline bool IsInfectedState(const HealthState::State& subject_health_state) {
-  return std::find(kNotInfectedHealthStates.begin(),
-                   kNotInfectedHealthStates.end(),
-                   subject_health_state) == kNotInfectedHealthStates.end();
-}
-
-inline bool IsSymptomaticState(const HealthState::State& subject_health_state) {
-  return std::find(kSymptomaticHealthStates.begin(),
-                   kSymptomaticHealthStates.end(),
-                   subject_health_state) != kSymptomaticHealthStates.end();
-}
-
 // An agent that implements a stochastic SEIR model.
 class SEIRAgent : public Agent {
  public:

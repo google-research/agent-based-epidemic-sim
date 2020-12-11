@@ -169,7 +169,7 @@ class LearningRiskScore : public RiskScore {
   TestResult GetTestResult(const Timestep& timestep) const override {
     for (auto result = test_results_.rbegin(); result != test_results_.rend();
          ++result) {
-      if (result->time_requested < timestep.end_time()) return *result;
+      if (result->time_received < timestep.end_time()) return *result;
     }
     return {.time_requested = absl::InfiniteFuture(),
             .time_received = absl::InfiniteFuture(),
