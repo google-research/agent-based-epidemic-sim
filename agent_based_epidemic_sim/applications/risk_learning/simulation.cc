@@ -451,11 +451,13 @@ class RiskLearningSimulation : public Simulation {
                                             std::move(locations), num_workers)
                        : SerialSimulation(init_time, std::move(agents),
                                           std::move(locations));
-    result->sim_->AddObserverFactory(&result->summary_observer_);
+    result->sim_->AddObserverFactory(result->summary_observer_.get());
     if (ABSL_PREDICT_TRUE(absl::GetFlag(FLAGS_disable_learning_observer))) {
       LOG(WARNING) << "Learning outputs disabled.";
+    } else if (nullptr == result->learning_observer_) {
+      LOG(WARNING) << "No learning filename specified, not writing outputs.";
     } else {
-      result->sim_->AddObserverFactory(&result->learning_observer_);
+      result->sim_->AddObserverFactory(result->learning_observer_.get());
     }
     return std::move(result);
   }
@@ -468,8 +470,12 @@ class RiskLearningSimulation : public Simulation {
         stepwise_params_(stepwise_params),
         get_location_type_(
             [this](int64 uuid) { return location_types_[uuid]; }),
-        summary_observer_(config.summary_filename()),
-        learning_observer_(config.learning_filename(), num_workers) {
+        summary_observer_(absl::make_unique<SummaryObserverFactory>(
+            config.summary_filename())) {
+    if (!config.learning_filename().empty()) {
+      learning_observer_ = absl::make_unique<LearningObserverFactory>(
+          config.learning_filename(), num_workers);
+    }
     current_lockdown_multipliers_.fill(1.0f);
   }
 
@@ -516,8 +522,8 @@ class RiskLearningSimulation : public Simulation {
   // run of the simulation.
   absl::flat_hash_map<std::string, std::unique_ptr<VisitGenerator>>
       visit_gen_cache_;
-  SummaryObserverFactory summary_observer_;
-  LearningObserverFactory learning_observer_;
+  std::unique_ptr<ObserverFactoryBase> summary_observer_;
+  std::unique_ptr<ObserverFactoryBase> learning_observer_;
   std::unique_ptr<Simulation> sim_;
   int current_step_ = 0;
   float current_changepoint_ = 1.0f;

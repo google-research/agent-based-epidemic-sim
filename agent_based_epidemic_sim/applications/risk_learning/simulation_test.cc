@@ -63,21 +63,19 @@ void FillAgent(AgentProto& agent, int64 uuid, HealthState::State initial,
   }
 }
 
-TEST(SimulationTest, RunsSimulation) {
+void PrepareConfig(RiskLearningSimulationConfig* config) {
   const std::string config_path = absl::StrCat("./", "/", kConfigPath);
   std::string contents;
   PANDEMIC_ASSERT_OK(file::GetContents(config_path, &contents));
-  RiskLearningSimulationConfig config =
-      ParseTextProtoOrDie<RiskLearningSimulationConfig>(contents);
-
+  *config = ParseTextProtoOrDie<RiskLearningSimulationConfig>(contents);
   // Write some locations to a file.
   std::vector<LocationProto> locations(2);
   FillLocation(locations[0], 1000, LocationReference::HOUSEHOLD);
   FillLocation(locations[1], 1001, LocationReference::BUSINESS);
-  config.add_location_file(
+  config->add_location_file(
       absl::StrCat(getenv("TEST_TMPDIR"), "/", "locations"));
   {
-    auto writer = MakeRecordWriter(config.location_file(0), /*parallelism=*/0);
+    auto writer = MakeRecordWriter(config->location_file(0), /*parallelism=*/0);
     for (const LocationProto& location : locations) {
       writer.WriteRecord(location);
     }
@@ -91,21 +89,34 @@ TEST(SimulationTest, RunsSimulation) {
               i == 0 ? HealthState::INFECTIOUS : HealthState::SUSCEPTIBLE,
               locations);
   }
-  config.add_agent_file(absl::StrCat(getenv("TEST_TMPDIR"), "/", "agents"));
+  config->add_agent_file(absl::StrCat(getenv("TEST_TMPDIR"), "/", "agents"));
   {
-    auto writer = MakeRecordWriter(config.agent_file(0), /*parallelism=*/0);
+    auto writer = MakeRecordWriter(config->agent_file(0), /*parallelism=*/0);
     for (const AgentProto& agent : agents) {
       writer.WriteRecord(agent);
     }
     if (!writer.Close()) PANDEMIC_ASSERT_OK(writer.status());
   }
+}
 
+TEST(SimulationTest, RunsSimulation) {
+  RiskLearningSimulationConfig config;
+  PrepareConfig(&config);
   // Add paths for output files.
   config.set_summary_filename(
       absl::StrCat(getenv("TEST_TMPDIR"), "/", "summary"));
   config.set_learning_filename(
       absl::StrCat(getenv("TEST_TMPDIR"), "/", "learning"));
+  absl::Status status = RunSimulation(config, /*num_workers=*/1);
+  PANDEMIC_ASSERT_OK(status);
+}
 
+TEST(SimulationTest, RunsSimulationNoLearningPath) {
+  RiskLearningSimulationConfig config;
+  PrepareConfig(&config);
+  // Add paths for output files.
+  config.set_summary_filename(
+      absl::StrCat(getenv("TEST_TMPDIR"), "/", "summary_no_learning"));
   absl::Status status = RunSimulation(config, /*num_workers=*/1);
   PANDEMIC_ASSERT_OK(status);
 }
