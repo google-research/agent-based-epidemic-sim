@@ -110,11 +110,15 @@ void LearningObserver::Observe(const Agent& agent,
       });
 }
 
+// Note: num_workers is reduced by 1 since 1 means no parallelism in the
+// risk_learning application, while 0 means no parallelism for the RecordWriter.
 LearningObserverFactory::LearningObserverFactory(
-    absl::string_view learning_filename)
-    : writer_(MakeRecordWriter(learning_filename)) {}
+    absl::string_view learning_filename, const int num_workers)
+    : writer_(MakeRecordWriter(learning_filename, num_workers - 1)) {}
 
-LearningObserverFactory::~LearningObserverFactory() { writer_.Close(); }
+LearningObserverFactory::~LearningObserverFactory() {
+  if (!writer_.Close()) LOG(ERROR) << writer_.status();
+}
 
 std::unique_ptr<LearningObserver> LearningObserverFactory::MakeObserver(
     const Timestep& timestep) const {

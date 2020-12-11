@@ -79,7 +79,7 @@ class LearningObserver : public AgentInfectionObserver {
 // by appending timestep information to the given base filename.
 class LearningObserverFactory : public ObserverFactory<LearningObserver> {
  public:
-  LearningObserverFactory(absl::string_view learning_filename);
+  LearningObserverFactory(absl::string_view learning_filename, int num_workers);
   ~LearningObserverFactory();
 
   std::unique_ptr<LearningObserver> MakeObserver(

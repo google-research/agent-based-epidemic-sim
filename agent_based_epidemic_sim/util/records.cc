@@ -11,9 +11,10 @@ riegeli::RecordReader<RiegeliBytesSource> MakeRecordReader(
       std::forward_as_tuple(filename, kReadFlag));
 }
 riegeli::RecordWriter<RiegeliBytesSink> MakeRecordWriter(
-    absl::string_view filename) {
+    absl::string_view filename, const int parallelism) {
   return riegeli::RecordWriter<RiegeliBytesSink>(
-      std::forward_as_tuple(filename, kWriteFlag));
+      std::forward_as_tuple(filename, kWriteFlag),
+      riegeli::RecordWriterBase::Options().set_parallelism(parallelism));
 }
 
 }  // namespace abesim

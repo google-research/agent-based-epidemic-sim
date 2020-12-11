@@ -15,7 +15,7 @@ using RiegeliBytesSink = riegeli::FdWriter<>;
 riegeli::RecordReader<RiegeliBytesSource> MakeRecordReader(
     absl::string_view filename);
 riegeli::RecordWriter<RiegeliBytesSink> MakeRecordWriter(
-    absl::string_view filename);
+    absl::string_view filename, int parallelism);
 
 }  // namespace abesim
 

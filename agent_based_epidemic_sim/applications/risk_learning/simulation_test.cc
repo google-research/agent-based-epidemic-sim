@@ -77,12 +77,11 @@ TEST(SimulationTest, RunsSimulation) {
   config.add_location_file(
       absl::StrCat(getenv("TEST_TMPDIR"), "/", "locations"));
   {
-    auto writer = MakeRecordWriter(config.location_file(0));
+    auto writer = MakeRecordWriter(config.location_file(0), /*parallelism=*/0);
     for (const LocationProto& location : locations) {
       writer.WriteRecord(location);
     }
-    PANDEMIC_ASSERT_OK(writer.status());
-    writer.Close();
+    if (!writer.Close()) PANDEMIC_ASSERT_OK(writer.status());
   }
 
   // Write some agents to a file.
@@ -94,12 +93,11 @@ TEST(SimulationTest, RunsSimulation) {
   }
   config.add_agent_file(absl::StrCat(getenv("TEST_TMPDIR"), "/", "agents"));
   {
-    auto writer = MakeRecordWriter(config.agent_file(0));
+    auto writer = MakeRecordWriter(config.agent_file(0), /*parallelism=*/0);
     for (const AgentProto& agent : agents) {
       writer.WriteRecord(agent);
     }
-    PANDEMIC_ASSERT_OK(writer.status());
-    writer.Close();
+    if (!writer.Close()) PANDEMIC_ASSERT_OK(writer.status());
   }
 
   // Add paths for output files.

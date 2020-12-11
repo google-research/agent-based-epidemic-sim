@@ -194,8 +194,8 @@ class RiskLearningSimulation : public Simulation {
     stepwise_params.insert(stepwise_params.end(),
                            config.stepwise_params().begin(),
                            config.stepwise_params().end());
-    auto result =
-        absl::WrapUnique(new RiskLearningSimulation(config, stepwise_params));
+    auto result = absl::WrapUnique(
+        new RiskLearningSimulation(config, stepwise_params, num_workers));
 
     // Home transmissibility is impacted by current lockdown multiplier.
     std::function<float()> home_transmissibility = [sim = result.get(),
@@ -462,13 +462,14 @@ class RiskLearningSimulation : public Simulation {
 
  private:
   RiskLearningSimulation(const RiskLearningSimulationConfig& config,
-                         const std::vector<StepwiseParams>& stepwise_params)
+                         const std::vector<StepwiseParams>& stepwise_params,
+                         const int num_workers)
       : config_(config),
         stepwise_params_(stepwise_params),
         get_location_type_(
             [this](int64 uuid) { return location_types_[uuid]; }),
         summary_observer_(config.summary_filename()),
-        learning_observer_(config.learning_filename()) {
+        learning_observer_(config.learning_filename(), num_workers) {
     current_lockdown_multipliers_.fill(1.0f);
   }
 
