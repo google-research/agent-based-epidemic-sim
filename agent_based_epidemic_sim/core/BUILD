@@ -126,45 +126,6 @@ cc_test(
 )
 
 cc_library(
-    name = "hazard_transmission_model",
-    srcs = [
-        "hazard_transmission_model.cc",
-    ],
-    hdrs = [
-        "hazard_transmission_model.h",
-    ],
-    deps = [
-        ":constants",
-        ":event",
-        ":integral_types",
-        ":random",
-        ":transmission_model",
-        "//agent_based_epidemic_sim/agent_synthesis:population_profile_cc_proto",
-        "//agent_based_epidemic_sim/port:logging",
-        "@com_google_absl//absl/memory",
-        "@com_google_absl//absl/random",
-        "@com_google_absl//absl/random:distributions",
-        "@com_google_absl//absl/time",
-        "@com_google_absl//absl/types:span",
-    ],
-)
-
-cc_test(
-    name = "hazard_transmission_model_test",
-    srcs = [
-        "hazard_transmission_model_test.cc",
-    ],
-    deps = [
-        ":event",
-        ":hazard_transmission_model",
-        ":random",
-        ":visit",
-        "@com_google_absl//absl/time",
-        "@com_google_googletest//:gtest_main",
-    ],
-)
-
-cc_library(
     name = "distribution_sampler",
     hdrs = [
         "distribution_sampler.h",

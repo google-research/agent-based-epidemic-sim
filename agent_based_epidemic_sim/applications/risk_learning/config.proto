@@ -67,6 +67,8 @@ message TracingPolicyProto {
   bool test_on_symptoms = 10;
   // Test given risk score above threshold.
   float test_risk_score_threshold = 11;
+  // If true, test all agents each timestep.
+  bool test_all_per_timestep = 15;
 
   // Tracing parameters.
   //
@@ -80,7 +82,7 @@ message TracingPolicyProto {
   float traceable_interaction_fraction = 13;
 
   reserved 4;  // Deprecated fields.
-  // Next field id: 15
+  // Next field id: 16
 }
 
 message InfectiousnessLevel {
@@ -243,6 +245,10 @@ message RiskLearningSimulationConfig {
   // entries equal to seeding_date_delta.
   int32 seeding_date_delta_days = 21;
 
-  // Next id: 22
+  // If true, append hazard to all TestResults. Useful for generating certain
+  // sets for learning.
+  bool append_hazard_to_test_results = 22;
+
+  // Next id: 23
   reserved 8;  // Deprecated fields.
 }

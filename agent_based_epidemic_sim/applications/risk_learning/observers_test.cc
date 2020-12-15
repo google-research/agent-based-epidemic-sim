@@ -150,11 +150,11 @@ TEST_F(LearningObserverTest, RecordsAllFields) {
   testing::NiceMock<MockAgent> agent;
   ON_CALL(agent, uuid()).WillByDefault(Return(12345));
   ON_CALL(agent, CurrentTestResult(timestep_))
-      .WillByDefault(Return(TestResult{
-          .time_requested = timestep_.start_time() - absl::Hours(16),
-          .time_received = timestep_.start_time() + absl::Hours(12),
-          .outcome = TestOutcome::POSITIVE,
-      }));
+      .WillByDefault(Return(
+          TestResult{.time_requested = timestep_.start_time() - absl::Hours(16),
+                     .time_received = timestep_.start_time() + absl::Hours(12),
+                     .outcome = TestOutcome::POSITIVE,
+                     .hazard = 1}));
   ON_CALL(agent, infection_onset())
       .WillByDefault(Return(timestep_.start_time() - absl::Hours(24 * 2)));
 
@@ -217,6 +217,7 @@ TEST_F(LearningObserverTest, RecordsAllFields) {
           source_uuid: 789
         }
         infection_onset_time { seconds: 86400 }
+        hazard: 1.0
       )");
   EXPECT_EQ(results.value()[0].DebugString(), expected.DebugString());
 }  // namespace

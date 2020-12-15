@@ -63,6 +63,10 @@ message ExposuresPerTestResult {
     // For simulation purposes only: infection_onset_time will not be available
     // in real world. It may not be set if test was a false positive.
     google.protobuf.Timestamp infection_onset_time = 6;
+    // In certain configurations, we expose hazard for the purposes of
+    // performing stratified sampling for learning. This is not a realistic
+    // configuration as hazard is of course unknown.
+    float hazard = 7;
   }
   repeated ExposureResult exposure_results = 1;
   // Each member exposure_results will contain exposures that occur between

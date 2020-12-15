@@ -35,6 +35,7 @@
 #include "absl/strings/string_view.h"
 #include "agent_based_epidemic_sim/agent_synthesis/population_profile.pb.h"
 #include "agent_based_epidemic_sim/applications/risk_learning/config.pb.h"
+#include "agent_based_epidemic_sim/applications/risk_learning/hazard_transmission_model.h"
 #include "agent_based_epidemic_sim/applications/risk_learning/infectivity_model.h"
 #include "agent_based_epidemic_sim/applications/risk_learning/observers.h"
 #include "agent_based_epidemic_sim/applications/risk_learning/risk_score.h"
@@ -44,7 +45,6 @@
 #include "agent_based_epidemic_sim/core/duration_specified_visit_generator.h"
 #include "agent_based_epidemic_sim/core/event.h"
 #include "agent_based_epidemic_sim/core/graph_location.h"
-#include "agent_based_epidemic_sim/core/hazard_transmission_model.h"
 #include "agent_based_epidemic_sim/core/micro_exposure_generator.h"
 #include "agent_based_epidemic_sim/core/parameter_distribution.pb.h"
 #include "agent_based_epidemic_sim/core/ptts_transition_model.h"
@@ -394,6 +394,15 @@ class RiskLearningSimulation : public Simulation {
               absl::Bernoulli(GetBitGen(),
                               agent_profile.profile->app_users_fraction()),
               std::move(*risk_score_or));
+          TransmissionModel* transmission_model;
+          if (config.append_hazard_to_test_results()) {
+            auto hazard = absl::make_unique<Hazard>();
+            transmission_model = hazard->GetTransmissionModel();
+            risk_score = CreateHazardQueryingRiskScore(std::move(hazard),
+                                                       std::move(risk_score));
+          } else {
+            transmission_model = result->transmission_model_.get();
+          }
           {
             absl::MutexLock l(&agent_mu);
             // TODO: It is wasteful that we are making a new transition

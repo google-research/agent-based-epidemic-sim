@@ -23,6 +23,7 @@
 #include "absl/time/time.h"
 #include "absl/types/optional.h"
 #include "agent_based_epidemic_sim/applications/risk_learning/config.pb.h"
+#include "agent_based_epidemic_sim/applications/risk_learning/hazard_transmission_model.h"
 #include "agent_based_epidemic_sim/core/location_type.h"
 #include "agent_based_epidemic_sim/core/risk_score.h"
 #include "agent_based_epidemic_sim/core/risk_score_model.h"
@@ -62,6 +63,9 @@ absl::StatusOr<std::unique_ptr<RiskScore>> CreateLearningRiskScore(
 // whether it is enabled.
 std::unique_ptr<RiskScore> CreateAppEnabledRiskScore(
     bool is_app_enabled, std::unique_ptr<RiskScore> risk_score);
+
+std::unique_ptr<RiskScore> CreateHazardQueryingRiskScore(
+    std::unique_ptr<Hazard> hazard, std::unique_ptr<RiskScore> risk_score);
 
 }  // namespace abesim
 

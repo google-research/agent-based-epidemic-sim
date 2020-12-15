@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef AGENT_BASED_EPIDEMIC_SIM_CORE_HAZARD_TRANSMISSION_MODEL_H_
-#define AGENT_BASED_EPIDEMIC_SIM_CORE_HAZARD_TRANSMISSION_MODEL_H_
+#ifndef AGENT_BASED_EPIDEMIC_SIM_APPLICATIONS_RISK_LEARNING_HAZARD_TRANSMISSION_MODEL_H_
+#define AGENT_BASED_EPIDEMIC_SIM_APPLICATIONS_RISK_LEARNING_HAZARD_TRANSMISSION_MODEL_H_
 
 #include <cmath>
 #include <memory>
@@ -52,8 +52,10 @@ struct HazardTransmissionOptions {
 class HazardTransmissionModel : public TransmissionModel {
  public:
   HazardTransmissionModel(
-      HazardTransmissionOptions options = HazardTransmissionOptions())
+      HazardTransmissionOptions options = HazardTransmissionOptions(),
+      const std::function<void(float)>& hazard_callback = [](float) { return; })
       : lambda_(options.lambda),
+        hazard_callback_(hazard_callback),
         risk_at_distance_function_(
             std::move(options.risk_at_distance_function)) {}
 
@@ -74,11 +76,32 @@ class HazardTransmissionModel : public TransmissionModel {
   //  (https://www.medrxiv.org/content/10.1101/2020.07.17.20156539v1): 2.2x10e-3
   //  Mark Briers paper (https://arxiv.org/abs/2005.11057): 0.6 / 15
   float lambda_;
-
+  std::function<void(float)> hazard_callback_;
   // Generates a risk dosage for a given distance.
   std::function<float(float)> risk_at_distance_function_;
 };
 
+class Hazard {
+ public:
+  explicit Hazard(
+      HazardTransmissionOptions options = HazardTransmissionOptions()) {
+    auto hazard_callback = [this](const float prob_infection) {
+      hazard_ = prob_infection;
+    };
+    transmission_model_ =
+        absl::make_unique<HazardTransmissionModel>(options, hazard_callback);
+  }
+
+  TransmissionModel* GetTransmissionModel() {
+    return transmission_model_.get();
+  }
+  float CurrentHazard() { return hazard_; }
+
+ private:
+  float hazard_ = 0;
+  std::unique_ptr<TransmissionModel> transmission_model_;
+};
+
 }  // namespace abesim
 
-#endif  // AGENT_BASED_EPIDEMIC_SIM_CORE_HAZARD_TRANSMISSION_MODEL_H_
+#endif  // AGENT_BASED_EPIDEMIC_SIM_APPLICATIONS_RISK_LEARNING_HAZARD_TRANSMISSION_MODEL_H_

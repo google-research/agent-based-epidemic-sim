@@ -285,6 +285,7 @@ struct TestResult {
   absl::Time time_requested;
   absl::Time time_received;
   TestOutcome::Outcome outcome;
+  float hazard = 0;
 
   friend bool operator==(const TestResult& a, const TestResult& b) {
     return (a.time_requested == b.time_requested &&

@@ -58,6 +58,7 @@ struct TracingPolicy {
   float test_specificity;
   bool test_on_symptoms;
   float test_risk_score_threshold;
+  bool test_all_per_timestep;
 
   absl::Duration contact_retention_duration;
   bool trace_on_positive;
@@ -104,6 +105,9 @@ class LearningRiskScore : public RiskScore {
     // Assume this is called each timestep for each agent.
     latest_timestep_ = timestep;
     risk_score_per_timestep_.push_back(0);
+    if (tracing_policy_.test_all_per_timestep) {
+      RequestTest(latest_symptom_time_);
+    }
   }
 
   TestOutcome::Outcome GetOutcome(const absl::Time request_time) {
@@ -360,6 +364,45 @@ class AppEnabledRiskScore : public RiskScore {
   std::unique_ptr<RiskScore> risk_score_;
 };
 
+class HazardQueryingRiskScore : public RiskScore {
+ public:
+  explicit HazardQueryingRiskScore(std::unique_ptr<Hazard> hazard,
+                                   std::unique_ptr<RiskScore> risk_score)
+      : hazard_(std::move(hazard)), risk_score_(std::move(risk_score)) {}
+
+  void AddHealthStateTransistion(HealthTransition transition) override {
+    risk_score_->AddHealthStateTransistion(transition);
+  }
+  void UpdateLatestTimestep(const Timestep& timestep) override {
+    risk_score_->UpdateLatestTimestep(timestep);
+  }
+  void AddExposureNotification(const Exposure& exposure,
+                               const ContactReport& notification) override {
+    risk_score_->AddExposureNotification(exposure, notification);
+  }
+  VisitAdjustment GetVisitAdjustment(const Timestep& timestep,
+                                     const int64 location_uuid) const override {
+    return risk_score_->GetVisitAdjustment(timestep, location_uuid);
+  }
+  TestResult GetTestResult(const Timestep& timestep) const override {
+    TestResult result = risk_score_->GetTestResult(timestep);
+    result.hazard = hazard_->CurrentHazard();
+    return result;
+  }
+  ContactTracingPolicy GetContactTracingPolicy(
+      const Timestep& timestep) const override {
+    return risk_score_->GetContactTracingPolicy(timestep);
+  }
+  absl::Duration ContactRetentionDuration() const override {
+    return risk_score_->ContactRetentionDuration();
+  }
+  float GetRiskScore() const override { return risk_score_->GetRiskScore(); }
+
+ private:
+  std::unique_ptr<Hazard> hazard_;
+  std::unique_ptr<RiskScore> risk_score_;
+};
+
 absl::Status DurationFromProto(const google::protobuf::Duration& duration_proto,
                                absl::Duration* duration) {
   auto duration_or = DecodeGoogleApiProto(duration_proto);
@@ -427,7 +470,8 @@ absl::StatusOr<TracingPolicy> FromProto(
   }
   tracing_policy.test_risk_score_threshold =
       tracing_policy_proto.test_risk_score_threshold();
-
+  tracing_policy.test_all_per_timestep =
+      tracing_policy_proto.test_all_per_timestep();
   PANDEMIC_RETURN_IF_ERROR(
       DurationFromProto(tracing_policy_proto.contact_retention_duration(),
                         &tracing_policy.contact_retention_duration));
@@ -634,6 +678,12 @@ std::unique_ptr<RiskScore> CreateAppEnabledRiskScore(
     const bool is_app_enabled, std::unique_ptr<RiskScore> risk_score) {
   return absl::make_unique<AppEnabledRiskScore>(is_app_enabled,
                                                 std::move(risk_score));
+}
+
+std::unique_ptr<RiskScore> CreateHazardQueryingRiskScore(
+    std::unique_ptr<Hazard> hazard, std::unique_ptr<RiskScore> risk_score) {
+  return absl::make_unique<HazardQueryingRiskScore>(std::move(hazard),
+                                                    std::move(risk_score));
 }
 
 }  // namespace abesim

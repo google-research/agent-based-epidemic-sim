@@ -1,4 +1,4 @@
-#include "agent_based_epidemic_sim/core/hazard_transmission_model.h"
+#include "agent_based_epidemic_sim/applications/risk_learning/hazard_transmission_model.h"
 
 #include <array>
 #include <iterator>
@@ -56,7 +56,7 @@ HealthTransition HazardTransmissionModel::GetInfectionOutcome(
       }
     }
   }
-
+  hazard_callback_(sum_dose);
   const float prob_infection = 1 - std::exp(-lambda_ * sum_dose);
   HealthTransition health_transition;
   health_transition.time = latest_exposure_time;

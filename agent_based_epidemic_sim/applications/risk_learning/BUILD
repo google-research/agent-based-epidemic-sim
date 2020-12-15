@@ -65,11 +65,51 @@ cc_proto_library(
 )
 
 cc_library(
+    name = "hazard_transmission_model",
+    srcs = [
+        "hazard_transmission_model.cc",
+    ],
+    hdrs = [
+        "hazard_transmission_model.h",
+    ],
+    deps = [
+        "//agent_based_epidemic_sim/agent_synthesis:population_profile_cc_proto",
+        "//agent_based_epidemic_sim/core:constants",
+        "//agent_based_epidemic_sim/core:event",
+        "//agent_based_epidemic_sim/core:integral_types",
+        "//agent_based_epidemic_sim/core:random",
+        "//agent_based_epidemic_sim/core:transmission_model",
+        "//agent_based_epidemic_sim/port:logging",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/random",
+        "@com_google_absl//absl/random:distributions",
+        "@com_google_absl//absl/time",
+        "@com_google_absl//absl/types:span",
+    ],
+)
+
+cc_test(
+    name = "hazard_transmission_model_test",
+    srcs = [
+        "hazard_transmission_model_test.cc",
+    ],
+    deps = [
+        ":hazard_transmission_model",
+        "//agent_based_epidemic_sim/core:event",
+        "//agent_based_epidemic_sim/core:random",
+        "//agent_based_epidemic_sim/core:visit",
+        "@com_google_absl//absl/time",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "risk_score",
     srcs = ["risk_score.cc"],
     hdrs = ["risk_score.h"],
     deps = [
         ":config_cc_proto",
+        ":hazard_transmission_model",
         "//agent_based_epidemic_sim/core:constants",
         "//agent_based_epidemic_sim/core:event",
         "//agent_based_epidemic_sim/core:integral_types",
@@ -175,6 +215,7 @@ cc_library(
     hdrs = ["simulation.h"],
     deps = [
         ":config_cc_proto",
+        ":hazard_transmission_model",
         ":infectivity_model",
         ":observers",
         ":risk_score",
@@ -184,7 +225,6 @@ cc_library(
         "//agent_based_epidemic_sim/core:duration_specified_visit_generator",
         "//agent_based_epidemic_sim/core:event",
         "//agent_based_epidemic_sim/core:graph_location",
-        "//agent_based_epidemic_sim/core:hazard_transmission_model",
         "//agent_based_epidemic_sim/core:location_type",
         "//agent_based_epidemic_sim/core:micro_exposure_generator",
         "//agent_based_epidemic_sim/core:parameter_distribution_cc_proto",

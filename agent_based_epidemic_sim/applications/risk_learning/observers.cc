@@ -110,6 +110,7 @@ void LearningObserver::Observe(const Agent& agent,
 
   result.set_agent_uuid(agent.uuid());
   result.set_outcome(test.outcome);
+  result.set_hazard(test.hazard);
   ToProto(test.time_requested, result.mutable_test_administered_time());
   ToProto(test.time_received, result.mutable_test_received_time());
   std::optional<absl::Time> infection_onset = agent.infection_onset();
