@@ -159,16 +159,36 @@ const VisitGenerator& GetVisitGenerator(
 class RiskLearningSimulation : public Simulation {
  public:
   void Step(int steps, absl::Duration step_duration) override {
-    current_changepoint_ = (stepwise_params_.size() > current_step_)
-                               ? stepwise_params_[current_step_].changepoint()
-                               : 1.0f;
-    current_mobility_glm_scale_factor_ =
-        (stepwise_params_.size() > current_step_)
-            ? stepwise_params_[current_step_].mobility_glm_scale_factor()
-            : 1.0f;
-    UpdateCurrentLockdownMultipliers();
-    sim_->Step(steps, step_duration);
-    current_step_++;
+    for (int i = 0; i < steps; ++i) {
+      LockdownStateProto lockdown_state;
+      if (stepwise_params_.empty()) {
+        current_changepoint_ = 1.0f;
+        current_mobility_glm_scale_factor_ = 1.0f;
+      } else {
+        const int stepwise_params_index =
+            stepwise_params_.size() > current_step_
+                ? current_step_
+                : stepwise_params_.size() - 1;
+        current_changepoint_ =
+            stepwise_params_[stepwise_params_index].changepoint();
+        current_mobility_glm_scale_factor_ =
+            stepwise_params_[stepwise_params_index].mobility_glm_scale_factor();
+        lockdown_state =
+            stepwise_params_[stepwise_params_index].lockdown_state();
+      }
+      UpdateCurrentLockdownMultipliers(lockdown_state);
+      VLOG(1) << "Current time-varying parameter values: \n"
+              << "current_changepoint_: " << current_changepoint_
+              << " current_mobility_glm_scale_factor_: "
+              << current_mobility_glm_scale_factor_;
+      VLOG(1) << "Current lockdown multipliers:";
+      for (int i = 0; i < GraphLocation::Type_ARRAYSIZE; ++i) {
+        VLOG(1) << "Type " << GraphLocation::Type_Name(i) << ": "
+                << current_lockdown_multipliers_[GraphLocation::Type(i)];
+      }
+      sim_->Step(/*steps=*/1, step_duration);
+      current_step_++;
+    }
   }
   void AddObserverFactory(ObserverFactoryBase* factory) override {
     sim_->AddObserverFactory(factory);
@@ -495,12 +515,9 @@ class RiskLearningSimulation : public Simulation {
         .random_location_edges = profile.random_edges_distribution(gen),
     };
   }
-  void UpdateCurrentLockdownMultipliers() {
-    const LockdownStateProto& lockdown_state =
-        (stepwise_params_.size() > current_step_)
-            ? stepwise_params_[current_step_].lockdown_state()
-            : LockdownStateProto();
 
+  void UpdateCurrentLockdownMultipliers(
+      const LockdownStateProto& lockdown_state) {
     for (const auto& lockdown_multiplier : config_.lockdown_multipliers()) {
       if (lockdown_multiplier.type() == GraphLocation::OCCUPATION_RETIRED ||
           lockdown_multiplier.type() == GraphLocation::OCCUPATION_ELDERLY) {
@@ -516,6 +533,7 @@ class RiskLearningSimulation : public Simulation {
       }
     }
   }
+
   const RiskLearningSimulationConfig config_;
   const std::vector<StepwiseParams> stepwise_params_;
   std::unique_ptr<ExposureGenerator> exposure_generator_;
