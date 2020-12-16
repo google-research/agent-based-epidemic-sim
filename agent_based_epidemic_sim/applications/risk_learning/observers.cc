@@ -1,9 +1,11 @@
 #include "agent_based_epidemic_sim/applications/risk_learning/observers.h"
 
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_format.h"
 #include "absl/time/time.h"
 #include "agent_based_epidemic_sim/applications/risk_learning/exposures_per_test_result.pb.h"
+#include "agent_based_epidemic_sim/port/deps/status_macros.h"
 #include "agent_based_epidemic_sim/port/time_proto_util.h"
 #include "agent_based_epidemic_sim/util/records.h"
 
@@ -91,9 +93,67 @@ void SummaryObserverFactory::Aggregate(
 LearningObserver::LearningObserver(Timestep timestep) : timestep_(timestep) {}
 
 template <typename T, typename P>
-void ToProto(T src, P* result) {
-  absl::Status status = EncodeGoogleApiProto(src, result);
-  if (!status.ok()) LOG(ERROR) << status;
+absl::Status ToProto(T src, P* result) {
+  return EncodeGoogleApiProto(src, result);
+}
+
+absl::StatusOr<ExposuresPerTestResult::Exposure> AddExposure(
+    int64 uuid, const Exposure& exposure, const ContactReport* report) {
+  ExposuresPerTestResult::Exposure e;
+  PANDEMIC_RETURN_IF_ERROR(
+      ToProto(exposure.start_time, e.mutable_exposure_time()));
+  e.set_exposure_type(report != nullptr ? ExposuresPerTestResult::CONFIRMED
+                                        : ExposuresPerTestResult::UNCONFIRMED);
+  e.set_source_uuid(uuid);
+  PANDEMIC_RETURN_IF_ERROR(ToProto(exposure.duration, e.mutable_duration()));
+  e.set_distance(exposure.distance);
+
+  if (report != nullptr && report->initial_symptom_onset_time.has_value()) {
+    PANDEMIC_RETURN_IF_ERROR(
+        ToProto(exposure.start_time - *report->initial_symptom_onset_time,
+                e.mutable_duration_since_symptom_onset()));
+  }
+  return e;
+}
+
+absl::StatusOr<ExposuresPerTestResult::ExposureResult> AgentToExposureResult(
+    const Agent& agent, const TestResult& test) {
+  ExposuresPerTestResult::ExposureResult result;
+  result.set_agent_uuid(agent.uuid());
+  result.set_outcome(test.outcome);
+  result.set_hazard(test.hazard);
+  PANDEMIC_RETURN_IF_ERROR(
+      ToProto(test.time_requested, result.mutable_test_administered_time()));
+  PANDEMIC_RETURN_IF_ERROR(
+      ToProto(test.time_received, result.mutable_test_received_time()));
+  std::optional<absl::Time> infection_onset = agent.infection_onset();
+  if (infection_onset.has_value()) {
+    PANDEMIC_RETURN_IF_ERROR(
+        ToProto(*infection_onset, result.mutable_infection_onset_time()));
+  }
+
+  const ExposureStore* exposures = agent.exposure_store();
+  if (exposures == nullptr) {
+    VLOG(1) << "Agent does not support storing exposures.";
+    return result;
+  }
+  bool encoded_exposures = true;
+  exposures->PerExposure(
+      absl::InfinitePast(),
+      [&result, &encoded_exposures](int64 uuid, const Exposure& exposure,
+                                    const ContactReport* report) {
+        auto exposure_or = AddExposure(uuid, exposure, report);
+        if (!exposure_or.ok()) {
+          LOG(ERROR) << exposure_or.status();
+          encoded_exposures = false;
+          return;
+        }
+        *result.add_exposures() = *exposure_or;
+      });
+  if (!encoded_exposures) {
+    return absl::InvalidArgumentError("Failed to encode all exposures.");
+  }
+  return result;
 }
 
 void LearningObserver::Observe(const Agent& agent,
@@ -104,40 +164,12 @@ void LearningObserver::Observe(const Agent& agent,
       test.time_received < timestep_.start_time() ||
       test.time_received >= timestep_.end_time())
     return;
-
-  results_.emplace_back();
-  ExposuresPerTestResult::ExposureResult& result = results_.back();
-
-  result.set_agent_uuid(agent.uuid());
-  result.set_outcome(test.outcome);
-  result.set_hazard(test.hazard);
-  ToProto(test.time_requested, result.mutable_test_administered_time());
-  ToProto(test.time_received, result.mutable_test_received_time());
-  std::optional<absl::Time> infection_onset = agent.infection_onset();
-  if (infection_onset.has_value()) {
-    ToProto(*infection_onset, result.mutable_infection_onset_time());
+  auto exposure_result_or = AgentToExposureResult(agent, test);
+  if (!exposure_result_or.ok()) {
+    LOG(ERROR) << exposure_result_or.status();
+    return;
   }
-
-  const ExposureStore* exposures = agent.exposure_store();
-  if (exposures == nullptr) return;
-  exposures->PerExposure(
-      absl::InfinitePast(), [&result](int64 uuid, const Exposure& exposure,
-                                      const ContactReport* report) {
-        auto e = result.add_exposures();
-        ToProto(exposure.start_time, e->mutable_exposure_time());
-        e->set_exposure_type(report != nullptr
-                                 ? ExposuresPerTestResult::CONFIRMED
-                                 : ExposuresPerTestResult::UNCONFIRMED);
-        e->set_source_uuid(uuid);
-        ToProto(exposure.duration, e->mutable_duration());
-        e->set_distance(exposure.distance);
-
-        if (report != nullptr &&
-            report->initial_symptom_onset_time.has_value()) {
-          ToProto(exposure.start_time - *report->initial_symptom_onset_time,
-                  e->mutable_duration_since_symptom_onset());
-        }
-      });
+  results_.emplace_back(*exposure_result_or);
 }
 
 // Note: num_workers is reduced by 1 since 1 means no parallelism in the
