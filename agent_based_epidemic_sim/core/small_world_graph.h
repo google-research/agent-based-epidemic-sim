@@ -42,8 +42,10 @@ class SmallWorldGraph {
   float p_;
 
   // undirected graph implemented as an adjacency list with edges going between
-  // nodes i, j assigned to node i where i < j.
-  std::vector<absl::InlinedVector<int, 4>> graph_;
+  // nodes i, j assigned to node i where i < j. Length of the InlinedVector is
+  // set to the expected value of k_. If k_ is larger than 20 then the
+  // InlinedVector behaves like a std::vector.
+  std::vector<absl::InlinedVector<int, 20>> graph_;
   // Store degrees for performance.
   std::vector<int> degrees_;
 
