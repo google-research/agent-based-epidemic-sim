@@ -35,6 +35,8 @@ void ExposureStore::AddExposures(
       tmp[i] = std::move(GetRecordById(id++));
     }
     std::swap(buffer_, tmp);
+    head_ = 0;
+    tail_ = current;
   }
 
   // Add new records to the tail of the buffer.
