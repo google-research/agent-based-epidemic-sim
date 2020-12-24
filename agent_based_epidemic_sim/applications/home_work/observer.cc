@@ -22,33 +22,11 @@
 #include "agent_based_epidemic_sim/core/agent.h"
 #include "agent_based_epidemic_sim/core/enum_indexed_array.h"
 #include "agent_based_epidemic_sim/port/proto_enum_utils.h"
+#include "agent_based_epidemic_sim/util/histogram.h"
 
 namespace abesim {
 
 namespace {
-
-// Very simple histogram class with powers of two bucket sizes.
-template <typename T, int Size>
-class Histogram {
- public:
-  explicit Histogram() { buckets_.fill(0); }
-
-  void Add(T value, T scale) {
-    const size_t n = static_cast<size_t>(value / scale);
-    const size_t index = n == 0 ? 0 : 1 + std::floor(std::log2(n));
-    const size_t bucket = std::min(index, buckets_.size() - 1);
-    buckets_[bucket]++;
-  }
-
-  void AppendValuesToString(std::string* dst) const {
-    for (int bucket : buckets_) {
-      absl::StrAppendFormat(dst, ",%d", bucket);
-    }
-  }
-
- private:
-  std::array<size_t, Size> buckets_;
-};
 
 const int kDurationBuckets = 6;
 const int kContactBuckets = 10;
@@ -142,7 +120,8 @@ void HomeWorkSimulationObserverFactory::Aggregate(
     absl::StrAppendFormat(&line, ",%d", health_state_counts_[state]);
   }
 
-  LocationArray<Histogram<absl::Duration, kDurationBuckets>> location_histogram;
+  LocationArray<Log2Histogram<absl::Duration, kDurationBuckets>>
+      location_histogram;
   for (const auto& iter : agent_location_type_durations_) {
     for (LocationReference::Type i :
          EnumerateEnumValues<LocationReference::Type>()) {
@@ -160,7 +139,7 @@ void HomeWorkSimulationObserverFactory::Aggregate(
     location_histogram[i].AppendValuesToString(&line);
   }
 
-  Histogram<size_t, kContactBuckets> contact_histogram;
+  Log2Histogram<size_t, kContactBuckets> contact_histogram;
   for (const auto& iter : contacts_) {
     if (iter.second.empty()) continue;
     contact_histogram.Add(iter.second.size() - 1, 1);

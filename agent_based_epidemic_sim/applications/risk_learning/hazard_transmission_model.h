@@ -53,9 +53,10 @@ class HazardTransmissionModel : public TransmissionModel {
  public:
   HazardTransmissionModel(
       HazardTransmissionOptions options = HazardTransmissionOptions(),
-      const std::function<void(float)>& hazard_callback = [](float) { return; })
+      std::function<void(const float)> hazard_callback =
+          [](const float) { return; })
       : lambda_(options.lambda),
-        hazard_callback_(hazard_callback),
+        hazard_callback_(std::move(hazard_callback)),
         risk_at_distance_function_(
             std::move(options.risk_at_distance_function)) {}
 
@@ -88,14 +89,19 @@ class Hazard {
     auto hazard_callback = [this](const float prob_infection) {
       hazard_ = prob_infection;
     };
-    transmission_model_ =
-        absl::make_unique<HazardTransmissionModel>(options, hazard_callback);
+    transmission_model_ = absl::make_unique<HazardTransmissionModel>(
+        options, std::move(hazard_callback));
   }
 
   TransmissionModel* GetTransmissionModel() {
     return transmission_model_.get();
   }
-  float CurrentHazard() { return hazard_; }
+  // Should be called exactly once per-timestep.
+  float ConsumeHazard() {
+    float hazard = hazard_;
+    hazard_ = 0;
+    return hazard;
+  }
 
  private:
   float hazard_ = 0;

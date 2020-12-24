@@ -14,6 +14,24 @@ namespace {
 constexpr char kNewlySymptomaticMild[] = "NEWLY_SYMPTOMATIC_MILD";
 constexpr char kNewlySymptomaticSevere[] = "NEWLY_SYMPTOMATIC_SEVERE";
 constexpr char kNewlyTestPositive[] = "NEWLY_TEST_POSITIVE";
+
+std::string InitializeStringWithDate(const Timestep& timestep) {
+  return absl::FormatTime("%Y-%m-%d", timestep.start_time(),
+                          absl::UTCTimeZone());
+}
+
+std::string BuildHeader() {
+  std::string header = "DATE";
+  for (const HealthState::State state : SummaryObserverFactory::kOutputStates) {
+    header += ", " + HealthState::State_Name(state);
+  }
+  absl::StrAppendFormat(&header, ", %s", kNewlySymptomaticMild);
+  absl::StrAppendFormat(&header, ", %s", kNewlySymptomaticSevere);
+  absl::StrAppendFormat(&header, ", %s", kNewlyTestPositive);
+  header += "\n";
+  return header;
+}
+
 }  // namespace
 
 SummaryObserver::SummaryObserver(const Timestep timestep)
@@ -38,16 +56,8 @@ void SummaryObserver::Observe(const Agent& agent,
 
 SummaryObserverFactory::SummaryObserverFactory(
     absl::string_view summary_filename)
-    : writer_(file::OpenOrDie(summary_filename)) {
-  std::string header = "DATE";
-  for (const HealthState::State state : kOutputStates) {
-    header += ", " + HealthState::State_Name(state);
-  }
-  absl::StrAppendFormat(&header, ", %s", kNewlySymptomaticMild);
-  absl::StrAppendFormat(&header, ", %s", kNewlySymptomaticSevere);
-  absl::StrAppendFormat(&header, ", %s", kNewlyTestPositive);
-  header += "\n";
-  absl::Status status = writer_->WriteString(header);
+    : writer_(file::OpenOrDie(summary_filename)), header_(BuildHeader()) {
+  absl::Status status = writer_->WriteString(header_);
   if (!status.ok()) LOG(ERROR) << status;
 }
 
@@ -77,8 +87,7 @@ void SummaryObserverFactory::Aggregate(
     newly_test_positive += observer->newly_test_positive_;
   }
 
-  std::string line =
-      absl::FormatTime("%Y-%m-%d", timestep.start_time(), absl::UTCTimeZone());
+  std::string line = InitializeStringWithDate(timestep);
   for (HealthState::State state : kOutputStates) {
     absl::StrAppendFormat(&line, ", %d", counts[state]);
   }
@@ -86,6 +95,7 @@ void SummaryObserverFactory::Aggregate(
   absl::StrAppendFormat(&line, ", %d", newly_symptomatic_severe);
   absl::StrAppendFormat(&line, ", %d", newly_test_positive);
   line += "\n";
+  LOG(INFO) << header_ << line;
   absl::Status status = writer_->WriteString(line);
   if (!status.ok()) LOG(ERROR) << status;
 }
@@ -195,6 +205,58 @@ void LearningObserverFactory::Aggregate(
       writer_.WriteRecord(result);
     }
   }
+}
+
+HazardHistogramObserver::HazardHistogramObserver(const Timestep timestep)
+    : timestep_(timestep), hazards_({}) {}
+
+void HazardHistogramObserver::Observe(
+    const Agent& agent, absl::Span<const InfectionOutcome> outcomes) {
+  hazards_.push_back(agent.CurrentTestResult(timestep_).hazard);
+}
+
+HazardHistogramObserverFactory::HazardHistogramObserverFactory(
+    absl::string_view hazard_histogram_filename)
+    : writer_(file::OpenOrDie(hazard_histogram_filename)) {
+  std::string header = "DATE";
+  for (int i = 0; i < internal::kHazardHistogramBuckets; ++i) {
+    absl::StrAppendFormat(&header, ",hazard_%d", i);
+  }
+  header += "\n";
+  absl::Status status = writer_->WriteString(header);
+  if (!status.ok()) LOG(ERROR) << status;
+}
+
+HazardHistogramObserverFactory::~HazardHistogramObserverFactory() {
+  std::string line = "CUMULATIVE";
+  cumulative_histogram_.AppendValuesToString(&line);
+  absl::Status status = writer_->WriteString(line);
+  if (!status.ok()) LOG(ERROR) << status;
+  status = writer_->Close();
+  if (!status.ok()) LOG(ERROR) << status;
+}
+
+std::unique_ptr<HazardHistogramObserver>
+HazardHistogramObserverFactory::MakeObserver(const Timestep& timestep) const {
+  return absl::make_unique<HazardHistogramObserver>(timestep);
+}
+
+void HazardHistogramObserverFactory::Aggregate(
+    const Timestep& timestep,
+    absl::Span<std::unique_ptr<HazardHistogramObserver> const> observers) {
+  LinearHistogram<float, internal::kHazardHistogramBuckets> histogram;
+  for (const auto& observer : observers) {
+    for (const float hazard : observer->hazards_) {
+      histogram.Add(hazard, /*scale=*/1.0f / internal::kHazardHistogramBuckets);
+      cumulative_histogram_.Add(
+          hazard, /*scale=*/1.0f / internal::kHazardHistogramBuckets);
+    }
+  }
+  std::string line = InitializeStringWithDate(timestep);
+  histogram.AppendValuesToString(&line);
+  line += "\n";
+  absl::Status status = writer_->WriteString(line);
+  if (!status.ok()) LOG(ERROR) << status;
 }
 
 }  // namespace abesim

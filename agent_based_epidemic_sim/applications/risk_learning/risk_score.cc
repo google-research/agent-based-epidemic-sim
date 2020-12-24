@@ -386,7 +386,7 @@ class HazardQueryingRiskScore : public RiskScore {
   }
   TestResult GetTestResult(const Timestep& timestep) const override {
     TestResult result = risk_score_->GetTestResult(timestep);
-    result.hazard = hazard_->CurrentHazard();
+    result.hazard = hazard_->ConsumeHazard();
     return result;
   }
   ContactTracingPolicy GetContactTracingPolicy(

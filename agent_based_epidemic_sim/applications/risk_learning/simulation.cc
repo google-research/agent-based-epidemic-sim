@@ -430,7 +430,7 @@ class RiskLearningSimulation : public Simulation {
             // GetNextHealthTransition thread safe.  This is complicated by the
             // fact that absl::discrete_distribution::operator() is non-const.
             agents.push_back(SEIRAgent::CreateSusceptible(
-                proto.uuid(), result->transmission_model_.get(),
+                proto.uuid(), transmission_model,
                 result->infectivity_model_.get(),
                 PTTSTransitionModel::CreateFromProto(
                     agent_profile.profile->transition_model()),
@@ -488,6 +488,13 @@ class RiskLearningSimulation : public Simulation {
     } else {
       result->sim_->AddObserverFactory(result->learning_observer_.get());
     }
+    if (nullptr == result->hazard_histogram_observer_) {
+      LOG(WARNING)
+          << "No hazard histogram filename specified, not writing outputs.";
+    } else {
+      result->sim_->AddObserverFactory(
+          result->hazard_histogram_observer_.get());
+    }
     return std::move(result);
   }
 
@@ -504,6 +511,11 @@ class RiskLearningSimulation : public Simulation {
     if (!config.learning_filename().empty()) {
       learning_observer_ = absl::make_unique<LearningObserverFactory>(
           config.learning_filename(), num_workers);
+    }
+    if (!config.hazard_histogram_filename().empty()) {
+      hazard_histogram_observer_ =
+          absl::make_unique<HazardHistogramObserverFactory>(
+              config.hazard_histogram_filename());
     }
     current_lockdown_multipliers_.fill(1.0f);
   }
@@ -551,6 +563,7 @@ class RiskLearningSimulation : public Simulation {
       visit_gen_cache_;
   std::unique_ptr<ObserverFactoryBase> summary_observer_;
   std::unique_ptr<ObserverFactoryBase> learning_observer_;
+  std::unique_ptr<ObserverFactoryBase> hazard_histogram_observer_;
   std::unique_ptr<Simulation> sim_;
   int current_step_ = 0;
   float current_changepoint_ = 1.0f;

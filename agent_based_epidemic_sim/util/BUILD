@@ -7,6 +7,23 @@ package(default_visibility = [
 ])
 
 cc_library(
+    name = "histogram",
+    hdrs = ["histogram.h"],
+    deps = [
+        "@com_google_absl//absl/strings:str_format",
+    ],
+)
+
+cc_test(
+    name = "histogram_test",
+    srcs = ["histogram_test.cc"],
+    deps = [
+        ":histogram",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "ostream_overload",
     hdrs = ["ostream_overload.h"],
 )

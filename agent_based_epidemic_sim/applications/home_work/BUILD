@@ -107,6 +107,7 @@ cc_library(
         "//agent_based_epidemic_sim/port:logging",
         "//agent_based_epidemic_sim/port:proto_enum_utils",
         "//agent_based_epidemic_sim/port:time_proto_util",
+        "//agent_based_epidemic_sim/util:histogram",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/memory",

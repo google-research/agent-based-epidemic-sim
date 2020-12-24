@@ -226,6 +226,7 @@ message RiskLearningSimulationConfig {
 
   string summary_filename = 12;
   string learning_filename = 13;
+  string hazard_histogram_filename = 23;
 
   ProximityConfigProto proximity_config = 14;
 
@@ -249,6 +250,6 @@ message RiskLearningSimulationConfig {
   // sets for learning.
   bool append_hazard_to_test_results = 22;
 
-  // Next id: 23
+  // Next id: 24
   reserved 8;  // Deprecated fields.
 }

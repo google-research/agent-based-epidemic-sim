@@ -11,9 +11,13 @@
 #include "agent_based_epidemic_sim/core/observer.h"
 #include "agent_based_epidemic_sim/core/timestep.h"
 #include "agent_based_epidemic_sim/port/file_utils.h"
+#include "agent_based_epidemic_sim/util/histogram.h"
 #include "agent_based_epidemic_sim/util/records.h"
 
 namespace abesim {
+namespace internal {
+constexpr int kHazardHistogramBuckets = 100;
+}  // namespace internal
 
 using HealthStateCounts =
     EnumIndexedArray<int64, HealthState::State, HealthState::State_ARRAYSIZE>;
@@ -63,6 +67,7 @@ class SummaryObserverFactory : public ObserverFactory<SummaryObserver> {
 
  private:
   std::unique_ptr<file::FileWriter> writer_;
+  std::string header_;
 };
 
 class LearningObserver : public AgentInfectionObserver {
@@ -94,6 +99,35 @@ class LearningObserverFactory : public ObserverFactory<LearningObserver> {
 
  private:
   riegeli::RecordWriter<RiegeliBytesSink> writer_;
+};
+
+class HazardHistogramObserver : public AgentInfectionObserver {
+ public:
+  explicit HazardHistogramObserver(Timestep timestep);
+  void Observe(const Agent& agent,
+               absl::Span<const InfectionOutcome> outcomes) override;
+
+ private:
+  friend class HazardHistogramObserverFactory;
+  Timestep timestep_;
+  std::vector<float> hazards_;
+};
+
+class HazardHistogramObserverFactory
+    : public ObserverFactory<HazardHistogramObserver> {
+ public:
+  ~HazardHistogramObserverFactory();
+  HazardHistogramObserverFactory(absl::string_view hazard_histogram_filename);
+  std::unique_ptr<HazardHistogramObserver> MakeObserver(
+      const Timestep& timestep) const override;
+  void Aggregate(const Timestep& timestep,
+                 absl::Span<std::unique_ptr<HazardHistogramObserver> const>
+                     observers) override;
+
+ private:
+  LinearHistogram<float, internal::kHazardHistogramBuckets>
+      cumulative_histogram_;
+  std::unique_ptr<file::FileWriter> writer_;
 };
 
 }  // namespace abesim

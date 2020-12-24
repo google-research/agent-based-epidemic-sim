@@ -182,6 +182,7 @@ cc_library(
         "//agent_based_epidemic_sim/port:file_utils",
         "//agent_based_epidemic_sim/port:time_proto_util",
         "//agent_based_epidemic_sim/port/deps:status",
+        "//agent_based_epidemic_sim/util:histogram",
         "//agent_based_epidemic_sim/util:records",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
