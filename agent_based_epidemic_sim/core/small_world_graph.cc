@@ -4,9 +4,14 @@
 #include <utility>
 #include <vector>
 
+#include "absl/flags/flag.h"
 #include "absl/random/distributions.h"
 #include "agent_based_epidemic_sim/core/random.h"
 #include "agent_based_epidemic_sim/port/logging.h"
+
+ABSL_FLAG(bool, is_large_k, false,
+          "Whether 'k' has a value that is large compared to 'n'. By default, "
+          "k << n.");
 
 namespace abesim {
 
@@ -51,6 +56,42 @@ std::vector<std::pair<int, int>> SmallWorldGraph::GetEdges() const {
   }
   CHECK(edges.size() == n_ * (k_ / 2));
   return edges;
+}
+
+int SmallWorldGraph::GetDisconnectedNode(int u) const {
+  int w;
+  absl::BitGenRef gen = GetBitGen();
+  // Alternative implementations: First implementation is efficient when
+  // k << n (the default case).
+  if (!absl::GetFlag(FLAGS_is_large_k)) {
+    // Sample edges (u, w) until a disconnected node w is found.
+    // We can expect n / (n - k) samples until finding a feasible edge,
+    // with complexity n * k * p * n / (n-k) --> ~ nkp for k << n.
+    // So for small k the while loop is preferable though the number of
+    // calls to absl::Uniform is non-deterministic.
+    w = u;
+    // Enforce no self-loops or duplicate edges.
+    while (w == u || HasEdge(u, w)) {
+      // Generate a uniform value between [0, n-1].
+      w = absl::Uniform<int>(absl::IntervalClosedClosed, gen, 0, n_ - 1);
+    }
+  } else {
+    // Since k << n is not true, sampling from n / (n-k) could be slow.
+    // Instead, compute the list of all (n-k-1) disconnected nodes from u and
+    // pick a candidate (u, w) from this list.
+    std::vector<int> disconnected;
+    for (int w = 0; w < n_; ++w) {
+      // Enforce no self-loops or duplicate edges.
+      if (w != u && !HasEdge(u, w)) {
+        disconnected.push_back(w);
+      }
+    }
+    // There is at least one available node.
+    CHECK_GT(disconnected.size(), 0);
+    // Pick a node randomly from disconnected nodes.
+    w = disconnected[absl::Uniform(gen, 0u, disconnected.size())];
+  }
+  return w;
 }
 
 // First create a ring over 'n' nodes.  Then each node in the ring is joined to
@@ -107,13 +148,7 @@ SmallWorldGraph::GenerateWattsStrogatzGraph(int n, int k, float p) {
       if (!ws->HasEdge(u, v % n)) continue;
       // Rewire with probability 'p'
       if (absl::Bernoulli(gen, p)) {
-        int w = u;
-        // Enforce no self-loops or duplicate edges. There is at least one
-        // available node.
-        while (w == u || ws->HasEdge(u, w)) {
-          // Generate a uniform value between [0, n-1].
-          w = absl::Uniform<int>(absl::IntervalClosedClosed, gen, 0, n - 1);
-        }
+        int w = ws->GetDisconnectedNode(u);
         // Rewire the edges.
         ws->RemoveEdge(u, v % n);
         ws->AddEdge(u, w);

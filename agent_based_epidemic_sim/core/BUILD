@@ -541,7 +541,7 @@ cc_library(
         ":random",
         "//agent_based_epidemic_sim/port:logging",
         "@com_google_absl//absl/container:inlined_vector",
-        "@com_google_absl//absl/random",
+        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/random:distributions",
     ],
 )
@@ -550,8 +550,8 @@ cc_test(
     name = "small_world_graph_test",
     srcs = ["small_world_graph_test.cc"],
     deps = [
-        ":random",
         ":small_world_graph",
+        "@com_google_absl//absl/flags:flag",
         "@com_google_googletest//:gtest_main",
     ],
 )

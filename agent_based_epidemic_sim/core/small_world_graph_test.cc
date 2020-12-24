@@ -2,8 +2,12 @@
 
 #include <memory>
 
+#include "absl/flags/declare.h"
+#include "absl/flags/flag.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+
+ABSL_DECLARE_FLAG(bool, is_large_k);
 
 namespace abesim {
 namespace {
@@ -98,6 +102,17 @@ TEST(SmallWorldGraph, GenerateWattsStrogatzGraphPhalfOddK) {
   EXPECT_EQ(ws->Degree(), 3);
   EXPECT_FLOAT_EQ(ws->RewireProbability(), 0.5);
   EXPECT_EQ(edges.size(), 5);
+}
+
+TEST(SmallWorldGraph, GenerateWattsStrogatzGraphLargeK) {
+  absl::SetFlag(&FLAGS_is_large_k, true);
+  std::unique_ptr<SmallWorldGraph> ws =
+      SmallWorldGraph::GenerateWattsStrogatzGraph(/*n=*/4, /*k=*/2, /*p=*/0.5);
+  std::vector<std::pair<int, int>> edges = ws->GetEdges();
+  EXPECT_EQ(ws->NumNodes(), 4);
+  EXPECT_EQ(ws->Degree(), 2);
+  EXPECT_FLOAT_EQ(ws->RewireProbability(), 0.5);
+  EXPECT_EQ(edges.size(), 4);
 }
 
 }  // namespace
