@@ -204,7 +204,7 @@ class LearningRiskScore : public RiskScore {
     int counter = 0;
     for (auto result = risk_score_per_timestep_.rbegin();
          result != risk_score_per_timestep_.rend() &&
-         counter < risk_score_policy_.exposure_notification_window_days_;
+         counter < risk_score_policy_.exposure_notification_window_days;
          ++result, ++counter) {
       total_risk += *result;
     }
@@ -277,7 +277,7 @@ class LearningRiskScore : public RiskScore {
   // TODO: Move this to the interface if we need it for actuation.
   // Gets the probability of infection for the associated agent.
   float GetProbabilisticRiskScore() const {
-    return 1 - exp(-risk_score_policy_.risk_scale_factor_ * GetRiskScore());
+    return 1 - exp(-risk_score_policy_.risk_scale_factor * GetRiskScore());
   }
 
   // Appends a risk score value to the historical record.
@@ -595,13 +595,11 @@ absl::StatusOr<int> LearningRiskScoreModel::AttenuationToBinIndex(
 
 absl::StatusOr<const LearningRiskScorePolicy> CreateLearningRiskScorePolicy(
     const LearningRiskScorePolicyProto& proto) {
-  LearningRiskScorePolicy policy;
   if (proto.risk_scale_factor() <= 0) {
     return absl::InvalidArgumentError(absl::StrCat(
         "Invalid value found for risk_scale_factor:", proto.risk_scale_factor(),
         ". Must be a positive, non-zero value."));
   }
-  policy.risk_scale_factor_ = proto.risk_scale_factor();
 
   if (proto.exposure_notification_window_days() <= 0) {
     return absl::InvalidArgumentError(absl::StrCat(
@@ -609,8 +607,12 @@ absl::StatusOr<const LearningRiskScorePolicy> CreateLearningRiskScorePolicy(
         proto.exposure_notification_window_days(),
         ". Must be a positive, non-zero value."));
   }
-  policy.exposure_notification_window_days_ =
-      proto.exposure_notification_window_days();
+
+  LearningRiskScorePolicy policy = {
+      .exposure_notification_window_days =
+          static_cast<int>(proto.exposure_notification_window_days()),
+      .risk_scale_factor = proto.risk_scale_factor()};
+
   return policy;
 }
 

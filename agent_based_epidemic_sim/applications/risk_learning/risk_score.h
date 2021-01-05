@@ -36,7 +36,7 @@ struct LearningRiskScorePolicy {
   // The number of days of exposure history to use when determining whether to
   // take policy actions e.g. quarantine, test.
   // Defaults to 14 days as this is standard in the literature.
-  int exposure_notification_window_days_ = 14;
+  int exposure_notification_window_days = 14;
 
   // Overall scaling factor for risk score. This scales the product of duration
   // and infection scores.
@@ -45,7 +45,7 @@ struct LearningRiskScorePolicy {
   // recommendations, Amanda Wilson, Nathan Aviles, Paloma Beamer,
   // Zsombor Szabo, Kacey Ernst, Joanna Masel. July 2020."
   // https://www.medrxiv.org/content/10.1101/2020.07.17.20156539v2
-  float risk_scale_factor_ = 3.1 * 1e-4;
+  float risk_scale_factor = 3.1 * 1e-4;
 };
 
 absl::StatusOr<std::unique_ptr<RiskScoreModel>> CreateLearningRiskScoreModel(
