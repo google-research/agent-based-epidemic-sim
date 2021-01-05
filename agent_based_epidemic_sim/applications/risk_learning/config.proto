@@ -69,6 +69,9 @@ message TracingPolicyProto {
   float test_risk_score_threshold = 11;
   // If true, test all agents each timestep.
   bool test_all_per_timestep = 15;
+  // If true, test an agent upon receiving an EN (notification from a contact
+  // who tested postive).
+  bool test_on_contact = 16;
 
   // Tracing parameters.
   //
@@ -82,7 +85,7 @@ message TracingPolicyProto {
   float traceable_interaction_fraction = 13;
 
   reserved 4;  // Deprecated fields.
-  // Next field id: 16
+  // Next field id: 17
 }
 
 message InfectiousnessLevel {

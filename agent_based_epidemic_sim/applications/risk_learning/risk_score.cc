@@ -59,6 +59,7 @@ struct TracingPolicy {
   bool test_on_symptoms;
   float test_risk_score_threshold;
   bool test_all_per_timestep;
+  bool test_on_contact;
 
   absl::Duration contact_retention_duration;
   bool trace_on_positive;
@@ -73,6 +74,14 @@ bool IsSymptomatic(const HealthState::State health_state) {
          health_state != HealthState::RECOVERED;
 }
 
+// NB: Timesteps are non-overlapping, so checking start_time ordering
+// suffices.
+struct TimestepComparator {
+  bool operator()(const Timestep& a, const Timestep& b) const {
+    return a.start_time() < b.start_time();
+  }
+};
+
 // A policy that implements testing, tracing, and isolation guidelines.
 class LearningRiskScore : public RiskScore {
  public:
@@ -86,7 +95,9 @@ class LearningRiskScore : public RiskScore {
         location_type_(std::move(location_type)),
         infection_onset_time_(absl::InfiniteFuture()),
         latest_symptom_time_(absl::InfinitePast()),
-        latest_contact_time_(absl::InfinitePast()) {}
+        latest_contact_time_(absl::InfinitePast()),
+        risk_score_per_timestep_(
+            risk_score_policy.exposure_notification_window_days) {}
 
   void AddHealthStateTransistion(HealthTransition transition) override {
     // QUESTION: Should this exclude EXPOSED?
@@ -101,12 +112,42 @@ class LearningRiskScore : public RiskScore {
       }
     }
   }
+  // TODO: Remove this interface and handle logic in
+  // AddExposureNotification. latest_timestep_ is no longer used.
   void UpdateLatestTimestep(const Timestep& timestep) override {
     // Assume this is called each timestep for each agent.
     latest_timestep_ = timestep;
-    risk_score_per_timestep_.push_back(0);
+    // Garbage collect.
+    for (auto iter = timestep_to_id_.begin();
+         head_ != tail_ && iter != timestep_to_id_.end();) {
+      if (iter->first.start_time() >=
+          timestep.start_time() - ContactRetentionDuration()) {
+        break;
+      }
+      GetRiskScorePerTimestepById(iter->second) = 0;
+      head_ = (head_ + 1) % risk_score_per_timestep_.size();
+      head_id_++;
+      iter = timestep_to_id_.erase(iter);
+    }
+    const size_t current = size();
+    if (current + 1 >= risk_score_per_timestep_.size()) {
+      // Reallocate buffer.
+      std::vector<float> tmp(risk_score_per_timestep_.size() * 2);
+      size_t id = head_id_;
+      for (int i = 0; i < current; ++i) {
+        tmp[i] = std::move(GetRiskScorePerTimestepById(id++));
+      }
+      std::swap(risk_score_per_timestep_, tmp);
+      head_ = 0;
+      tail_ = current;
+    }
+    tail_ = (tail_ + 1) % risk_score_per_timestep_.size();
+    size_t next_id = head_id_ + current;
+    GetRiskScorePerTimestepById(next_id) = 0.0f;
+    timestep_to_id_.insert({timestep, next_id});
+
     if (tracing_policy_.test_all_per_timestep) {
-      RequestTest(latest_symptom_time_);
+      RequestTest(timestep.start_time());
     }
   }
 
@@ -136,7 +177,8 @@ class LearningRiskScore : public RiskScore {
         exposure, notification.initial_symptom_onset_time);
     VLOG(1) << "Risk score is (" << risk_score
             << ") for exposure: " << exposure;
-    AppendRiskScoreForExposure(risk_score, exposure);
+    auto status = AppendRiskScoreForExposure(risk_score, exposure);
+    if (!status.ok()) LOG(ERROR) << status;
 
     absl::Time new_contact_time = exposure.start_time + exposure.duration;
     // If we already know about a contact that happened after this new
@@ -153,6 +195,8 @@ class LearningRiskScore : public RiskScore {
     if (HasActiveTest(request_time)) return;
 
     if (GetRiskScore() >= tracing_policy_.test_risk_score_threshold) {
+      RequestTest(request_time);
+    } else if (tracing_policy_.test_on_contact) {
       RequestTest(request_time);
     }
   }
@@ -190,7 +234,6 @@ class LearningRiskScore : public RiskScore {
         result.time_received <= timestep.end_time() &&
         result.time_requested + tracing_policy_.contact_retention_duration >=
             timestep.start_time();
-
     return {.report_recursively = false, .send_report = should_report};
   }
 
@@ -200,15 +243,11 @@ class LearningRiskScore : public RiskScore {
 
   // Gets the current risk score of the associated agent.
   float GetRiskScore() const override {
-    float total_risk = 0;
-    int counter = 0;
-    for (auto result = risk_score_per_timestep_.rbegin();
-         result != risk_score_per_timestep_.rend() &&
-         counter < risk_score_policy_.exposure_notification_window_days;
-         ++result, ++counter) {
-      total_risk += *result;
-    }
-    return total_risk;
+    // NB: Because the risk score is garbage collected over the relevant
+    // window of time every time UpdateLatestTimestep is called, we sum
+    // over the contents of the risk buffer.
+    return std::accumulate(risk_score_per_timestep_.begin(),
+                           risk_score_per_timestep_.end(), 0.0f);
   }
 
  private:
@@ -280,33 +319,44 @@ class LearningRiskScore : public RiskScore {
     return 1 - exp(-risk_score_policy_.risk_scale_factor * GetRiskScore());
   }
 
-  // Appends a risk score value to the historical record.
-  void AppendRiskScoreForExposure(float risk_score, const Exposure& exposure) {
-    if (latest_timestep_.has_value()) {
-      if (exposure.start_time >= latest_timestep_.value().end_time() ||
-          exposure.start_time < latest_timestep_.value().start_time()) {
-        // TODO: We need to better mechanism for propagating errors
-        // to output or we should use DCHECK to ensure this implementation is
-        // not used incorrectly. If we use DCHECK we will need to change a lot
-        // of test cases in risk_score_test.cc.
-        LOG(ERROR) << "Risk score buffer is corrupted! Could not append risk "
-                      "score to history buffer. Received: "
-                   << exposure
-                   << " but latest timestep is: " << *latest_timestep_
-                   << ". Exposure processed out of order.";
-        return;
-      }
-    } else {
-      LOG(WARNING)
-          << "No value found for latest timestep. Expecting it to be set.";
-    }
+  float& GetRiskScorePerTimestepById(const size_t id) {
+    const size_t idx =
+        (head_ + id - head_id_) % risk_score_per_timestep_.size();
+    return risk_score_per_timestep_[idx];
+  }
 
+  size_t size() const {
+    if (tail_ >= head_) return tail_ - head_;
+    return risk_score_per_timestep_.size() - head_ + tail_;
+  }
+
+  // Appends a risk score value to the historical record.
+  absl::Status AppendRiskScoreForExposure(const float risk_score,
+                                          const Exposure& exposure) {
     if (risk_score_per_timestep_.empty()) {
-      LOG(ERROR)
-          << "Expecting historical record of risk scores to be non-empty.";
-      return;
+      return absl::OutOfRangeError(
+          "Expecting historical record of risk scores to be non-empty.");
     }
-    risk_score_per_timestep_.back() += risk_score;
+    auto lb = std::lower_bound(
+        timestep_to_id_.begin(), timestep_to_id_.end(), exposure.start_time,
+        [](const std::pair<Timestep, size_t>& timestep_id,
+           const absl::Time start_time) {
+          return timestep_id.first.end_time() < start_time;
+        });
+    if (lb == timestep_to_id_.end()) {
+      std::ostringstream o;
+      o << "Exposure " << exposure << " is out of range. Latest timestep: "
+        << timestep_to_id_.rbegin()->first;
+      return absl::OutOfRangeError(o.str());
+    } else if (lb->first.start_time() > exposure.start_time) {
+      std::ostringstream o;
+      o << "Exposure " << exposure << " is out of range. Earliest timestep: "
+        << timestep_to_id_.begin()->first;
+      return absl::OutOfRangeError(o.str());
+    } else {
+      GetRiskScorePerTimestepById(lb->second) += risk_score;
+    }
+    return absl::OkStatus();
   }
 
   const TracingPolicy tracing_policy_;
@@ -317,8 +367,14 @@ class LearningRiskScore : public RiskScore {
   std::vector<TestResult> test_results_;
   absl::Time latest_symptom_time_;
   absl::Time latest_contact_time_;
-  // TODO: Implement circular buffer to save space.
   std::vector<float> risk_score_per_timestep_;
+  size_t head_ = 0;
+  size_t tail_ = 0;
+  size_t head_id_ = 1;
+  // A mapping of observed timesteps to the indices of risk_score_per_timestep_.
+  // Used for garbage collection and accounting with (potentially
+  // variable-length) timesteps.
+  std::map<Timestep, size_t, TimestepComparator> timestep_to_id_;
   absl::optional<Timestep> latest_timestep_;
 };
 
@@ -472,6 +528,7 @@ absl::StatusOr<TracingPolicy> FromProto(
       tracing_policy_proto.test_risk_score_threshold();
   tracing_policy.test_all_per_timestep =
       tracing_policy_proto.test_all_per_timestep();
+  tracing_policy.test_on_contact = tracing_policy_proto.test_on_contact();
   PANDEMIC_RETURN_IF_ERROR(
       DurationFromProto(tracing_policy_proto.contact_retention_duration(),
                         &tracing_policy.contact_retention_duration));
@@ -575,9 +632,14 @@ float LearningRiskScoreModel::ComputeInfectionRiskScore(
       }
     }
   }
-
-  LOG(WARNING) << "No valid infectiousness bucket found for "
-                  "days_since_symptom_onset. Setting infection score to 0.";
+  // TODO: Handle asymptomatics by using test date (and some bucket
+  // assignment).
+  VLOG(1) << "No valid infectiousness bucket found for "
+          << "days_since_symptom_onset: "
+          << (days_since_symptom_onset.has_value()
+                  ? days_since_symptom_onset.value()
+                  : -1LL)
+          << ". Setting infection score to 0.";
   return 0;
 }
 

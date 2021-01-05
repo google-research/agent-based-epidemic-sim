@@ -58,6 +58,7 @@ std::vector<float> FrequencyAdjustments(RiskScore& risk_score,
   std::vector<float> adjustments;
   for (const int day : {1, 3, 5, 10, 15, 20, 25}) {
     Timestep timestep(TimeFromDay(day), absl::Hours(24));
+    risk_score.UpdateLatestTimestep(timestep);
     while (exposure != exposures.end() &&
            timestep.end_time() > exposure->start_time) {
       risk_score.AddExposureNotification(
@@ -239,6 +240,7 @@ TEST_F(RiskScoreTest, GetTestResult) {
   }
 
   Timestep timestep(TimeFromDay(1), absl::Hours(24));
+  risk_score_->UpdateLatestTimestep(timestep);
   risk_score_->AddExposureNotification({.start_time = TimeFromDay(1)},
                                        {.test_result = {
                                             .time_requested = TimeFromDay(1),
@@ -328,6 +330,7 @@ TEST_F(RiskScoreTest, GetsContactTracingPolicy) {
 
   risk_score_->AddHealthStateTransistion(
       {.time = TimeFromDay(2), .health_state = HealthState::EXPOSED});
+  risk_score_->UpdateLatestTimestep(Timestep(TimeFromDay(3), absl::Hours(24)));
   risk_score_->AddExposureNotification({},
                                        {.test_result = {
                                             .time_requested = TimeFromDay(3),
@@ -468,23 +471,25 @@ TEST_F(RiskScoreTest, GetRiskScoreCountsCorrectly) {
     EXPECT_THAT(risk_score_->GetRiskScore(), Eq(7));
   }
 
-  timestep = Timestep(TimeFromDay(4), absl::Hours(24));
   // risk_score->GetRiskScore returns the sum of risk scores not including
   // those outside of exposure_notification_window_days.
   {
     EXPECT_CALL(*risk_score_model, ComputeRiskScore).WillOnce(Return(5));
 
     // Always call UpdateLatestTimestep to initialize the risk score buffer.
-    risk_score_->UpdateLatestTimestep(timestep);
+    for (int i = 4; i < 19; ++i) {
+      timestep = Timestep(TimeFromDay(i), absl::Hours(24));
+      risk_score_->UpdateLatestTimestep(timestep);
+    }
     risk_score_->AddExposureNotification(
         {
-            .start_time = TimeFromDayAndHour(4, 1),
+            .start_time = TimeFromDayAndHour(15, 1),
         },
         {
             .test_result = {.outcome = TestOutcome::POSITIVE},
         });
 
-    EXPECT_THAT(risk_score_->GetRiskScore(), Eq(10));
+    EXPECT_THAT(risk_score_->GetRiskScore(), Eq(5));
   }
 }
 
