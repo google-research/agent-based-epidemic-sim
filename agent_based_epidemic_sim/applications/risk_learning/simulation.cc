@@ -43,7 +43,9 @@
 #include "agent_based_epidemic_sim/applications/risk_learning/triple_exposure_generator_builder.h"
 #include "agent_based_epidemic_sim/core/agent.h"
 #include "agent_based_epidemic_sim/core/duration_specified_visit_generator.h"
+#include "agent_based_epidemic_sim/core/enum_indexed_array.h"
 #include "agent_based_epidemic_sim/core/event.h"
+#include "agent_based_epidemic_sim/core/exposure_generator.h"
 #include "agent_based_epidemic_sim/core/graph_location.h"
 #include "agent_based_epidemic_sim/core/micro_exposure_generator.h"
 #include "agent_based_epidemic_sim/core/parameter_distribution.pb.h"
@@ -154,6 +156,35 @@ const VisitGenerator& GetVisitGenerator(
   return *value;
 }
 
+const ProximityConfigProto* DefaultProximityConfig(
+    const RiskLearningSimulationConfig& config) {
+  // Returns a pointer on the proximity config proto to be used as default.
+  // Returns a nullptr if no default is provided.
+  if (config.has_specific_proximity_config()) {
+    const auto& pc_map = config.specific_proximity_config().proximity_config();
+    const auto& iter = pc_map.find(LocationReference::UNKNOWN);
+    if (iter != pc_map.end()) {
+      return &iter->second;
+    }
+  }
+  if (config.has_proximity_config()) {
+    return &config.proximity_config();
+  }
+  return nullptr;
+}
+
+bool ValidSpecificProximityConfig(const RiskLearningSimulationConfig& config) {
+  // Returns false if an invalid specific proximity config is provided.
+  if (!config.has_specific_proximity_config()) return true;
+  // Checking validity of map keys.
+  for (const auto& kv : config.specific_proximity_config().proximity_config()) {
+    if (!LocationReference::Type_IsValid(kv.first)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 }  // namespace
 
 class RiskLearningSimulation : public Simulation {
@@ -251,8 +282,41 @@ class RiskLearningSimulation : public Simulation {
     };
     std::function<float()> non_work_drop_prob = []() -> float { return 0.0f; };
 
-    TripleExposureGeneratorBuilder seg_builder(config.proximity_config());
-    result->exposure_generator_ = seg_builder.Build();
+    // Setting up result->exposure_generators_ based on proximity configs.
+    if (!ValidSpecificProximityConfig(config)) {
+      return absl::InvalidArgumentError(
+          "Invalid key in map "
+          "config.specific_proximity_config.proximity_config .");
+    }
+    const ProximityConfigProto* default_pc = DefaultProximityConfig(config);
+    for (int iloc = 0; iloc < LocationReference::Type_ARRAYSIZE; ++iloc) {
+      if (!LocationReference::Type_IsValid(iloc) ||
+          LocationReference::Type_Name(iloc) == "UNKNOWN")
+        continue;
+      if (config.has_specific_proximity_config()) {
+        const auto& pc_map =
+            config.specific_proximity_config().proximity_config();
+        const auto iter = pc_map.find(iloc);
+        if (iter != pc_map.end()) {
+          TripleExposureGeneratorBuilder seg_builder(iter->second);
+          result->exposure_generators_[LocationReference::Type(iloc)] =
+              seg_builder.Build();
+          continue;
+        }
+      }
+      // No specific proximity config has been provided for location iloc.
+      // Use the default if any or else an empty proximity config.
+      if (default_pc != nullptr) {
+        TripleExposureGeneratorBuilder seg_builder(*default_pc);
+        result->exposure_generators_[LocationReference::Type(iloc)] =
+            seg_builder.Build();
+      } else {
+        TripleExposureGeneratorBuilder seg_builder(
+            ProximityConfigProto::default_instance());
+        result->exposure_generators_[LocationReference::Type(iloc)] =
+            seg_builder.Build();
+      }
+    }
 
     auto executor = NewExecutor(absl::GetFlag(FLAGS_num_reader_threads));
     auto exec = executor->NewExecution();
@@ -302,18 +366,22 @@ class RiskLearningSimulation : public Simulation {
                                          proto.graph().type())
                       : non_work_drop_prob;
               {
+                const int64 uuid = proto.reference().uuid();
                 absl::MutexLock l(&location_mu);
                 locations.push_back(NewGraphLocation(
-                    proto.reference().uuid(), transmissibility, drop_prob,
-                    std::move(edges), *result->exposure_generator_));
+                    uuid, transmissibility, drop_prob, std::move(edges),
+                    *result->exposure_generators_[result->get_location_type_(
+                        uuid)]));
               }
               break;
             }
             case LocationProto::kRandom: {
+              const int64 uuid = proto.reference().uuid();
               absl::MutexLock l(&location_mu);
               locations.push_back(NewRandomGraphLocation(
-                  proto.reference().uuid(), transmissibility,
-                  random_interaction_multiplier, *result->exposure_generator_));
+                  uuid, transmissibility, random_interaction_multiplier,
+                  *result->exposure_generators_[result->get_location_type_(
+                      uuid)]));
             } break;
             default: {
               absl::MutexLock l(&status_mu);
@@ -548,7 +616,9 @@ class RiskLearningSimulation : public Simulation {
 
   const RiskLearningSimulationConfig config_;
   const std::vector<StepwiseParams> stepwise_params_;
-  std::unique_ptr<ExposureGenerator> exposure_generator_;
+  EnumIndexedArray<std::unique_ptr<ExposureGenerator>, LocationReference::Type,
+                   LocationReference::Type_ARRAYSIZE>
+      exposure_generators_;
   std::unique_ptr<HazardTransmissionModel> transmission_model_;
   std::unique_ptr<RiskLearningInfectivityModel> infectivity_model_;
   std::unique_ptr<RiskScoreModel> risk_score_model_;

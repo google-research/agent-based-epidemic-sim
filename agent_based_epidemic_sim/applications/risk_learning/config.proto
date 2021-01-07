@@ -171,6 +171,13 @@ message ProximityConfigProto {
   BleParamsProto ble_params = 3;
 }
 
+message SpecificProximityConfigProto {
+  // The int32 key must in LocationReference::Type.
+  // A proximity config entry of key 0 (UNKNOWN) is used as default for
+  // unspecified locations.
+  map<int32, ProximityConfigProto> proximity_config = 1;
+}
+
 // Defines the current lockdown state.
 message LockdownStateProto {
   enum Status {
@@ -231,7 +238,13 @@ message RiskLearningSimulationConfig {
   string learning_filename = 13;
   string hazard_histogram_filename = 23;
 
-  ProximityConfigProto proximity_config = 14;
+  // Keeping proximity_config as a global proximity config for backward
+  // compatibility. If both are provided, specific_proximity_config overrides
+  // proximity_config for any defined location.
+  // DEPRECATED: Please use specific_proximity_config with a map entry of key 0
+  // instead.
+  ProximityConfigProto proximity_config = 14 [deprecated = true];
+  SpecificProximityConfigProto specific_proximity_config = 24;
 
   // Parameters defined per step (see num_steps above).
   repeated StepwiseParams stepwise_params = 15;
@@ -253,6 +266,6 @@ message RiskLearningSimulationConfig {
   // sets for learning.
   bool append_hazard_to_test_results = 22;
 
-  // Next id: 24
+  // Next id: 25
   reserved 8;  // Deprecated fields.
 }
