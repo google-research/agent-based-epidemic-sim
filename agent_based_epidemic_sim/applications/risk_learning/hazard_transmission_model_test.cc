@@ -105,5 +105,22 @@ TEST(HazardTransmissionModelTest,
                                   .health_state = HealthState::SUSCEPTIBLE}));
 }
 
+TEST(HazardTransmissionModelTest, GetsHazard) {
+  Hazard hazard;
+  std::vector<Exposure> exposures{{.start_time = absl::UnixEpoch(),
+                                   .duration = kLongDuration,
+                                   .distance = kCloseDistance,
+                                   .infectivity = 1,
+                                   .symptom_factor = 1}};
+  EXPECT_EQ(0.0,
+            hazard.GetHazard(Timestep(absl::UnixEpoch(), absl::Hours(24))));
+  hazard.GetTransmissionModel()->GetInfectionOutcome(MakePointers(exposures));
+  EXPECT_GT(hazard.GetHazard(
+                Timestep(absl::UnixEpoch() + absl::Hours(24), absl::Hours(24))),
+            0);
+  EXPECT_EQ(0.0, hazard.GetHazard(Timestep(absl::UnixEpoch() + absl::Hours(26),
+                                           absl::Hours(24))));
+}
+
 }  // namespace
 }  // namespace abesim

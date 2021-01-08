@@ -57,8 +57,7 @@ HealthTransition HazardTransmissionModel::GetInfectionOutcome(
     }
   }
   const float prob_infection = 1 - std::exp(-lambda_ * sum_dose);
-  // FIXME: This needs to be reset per timestep.
-  hazard_callback_(prob_infection);
+  hazard_callback_(prob_infection, latest_exposure_time);
   HealthTransition health_transition;
   health_transition.time = latest_exposure_time;
   health_transition.health_state = absl::Bernoulli(GetBitGen(), prob_infection)

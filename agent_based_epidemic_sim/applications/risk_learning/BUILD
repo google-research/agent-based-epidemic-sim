@@ -78,6 +78,7 @@ cc_library(
         "//agent_based_epidemic_sim/core:event",
         "//agent_based_epidemic_sim/core:integral_types",
         "//agent_based_epidemic_sim/core:random",
+        "//agent_based_epidemic_sim/core:timestep",
         "//agent_based_epidemic_sim/core:transmission_model",
         "//agent_based_epidemic_sim/port:logging",
         "@com_google_absl//absl/memory",

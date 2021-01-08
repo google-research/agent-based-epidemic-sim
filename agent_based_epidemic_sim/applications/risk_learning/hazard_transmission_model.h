@@ -24,6 +24,7 @@
 #include "absl/memory/memory.h"
 #include "agent_based_epidemic_sim/core/constants.h"
 #include "agent_based_epidemic_sim/core/event.h"
+#include "agent_based_epidemic_sim/core/timestep.h"
 #include "agent_based_epidemic_sim/core/transmission_model.h"
 
 namespace abesim {
@@ -53,8 +54,8 @@ class HazardTransmissionModel : public TransmissionModel {
  public:
   HazardTransmissionModel(
       HazardTransmissionOptions options = HazardTransmissionOptions(),
-      std::function<void(const float)> hazard_callback =
-          [](const float) { return; })
+      std::function<void(const float, const absl::Time)> hazard_callback =
+          [](const float, const absl::Time) { return; })
       : lambda_(options.lambda),
         hazard_callback_(std::move(hazard_callback)),
         risk_at_distance_function_(
@@ -77,7 +78,7 @@ class HazardTransmissionModel : public TransmissionModel {
   //  (https://www.medrxiv.org/content/10.1101/2020.07.17.20156539v1): 2.2x10e-3
   //  Mark Briers paper (https://arxiv.org/abs/2005.11057): 0.6 / 15
   float lambda_;
-  std::function<void(float)> hazard_callback_;
+  std::function<void(float, absl::Time)> hazard_callback_;
   // Generates a risk dosage for a given distance.
   std::function<float(float)> risk_at_distance_function_;
 };
@@ -86,8 +87,10 @@ class Hazard {
  public:
   explicit Hazard(
       HazardTransmissionOptions options = HazardTransmissionOptions()) {
-    auto hazard_callback = [this](const float prob_infection) {
+    auto hazard_callback = [this](const float prob_infection,
+                                  const absl::Time time) {
       hazard_ = prob_infection;
+      time_ = time;
     };
     transmission_model_ = absl::make_unique<HazardTransmissionModel>(
         options, std::move(hazard_callback));
@@ -96,15 +99,18 @@ class Hazard {
   TransmissionModel* GetTransmissionModel() {
     return transmission_model_.get();
   }
-  // Should be called exactly once per-timestep.
-  float ConsumeHazard() {
-    float hazard = hazard_;
-    hazard_ = 0;
-    return hazard;
+
+  float GetHazard(const Timestep& timestep) const {
+    if (timestep.start_time() - timestep.duration() > time_) {
+      // Hazard is stale.
+      return 0.0f;
+    }
+    return hazard_;
   }
 
  private:
   float hazard_ = 0;
+  absl::Time time_ = absl::InfinitePast();
   std::unique_ptr<TransmissionModel> transmission_model_;
 };
 
