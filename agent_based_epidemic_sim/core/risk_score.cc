@@ -50,6 +50,8 @@ class NullRiskScore : public RiskScore {
   }
 
   float GetRiskScore() const override { return 0; }
+
+  void RequestTest(absl::Time time) override {}
 };
 
 }  // namespace

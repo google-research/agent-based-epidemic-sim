@@ -74,13 +74,7 @@ class TracingRiskScore : public RiskScore {
     // a test, we ignore that exposure.
     if (HasActiveTest(request_time)) return;
 
-    test_results_.push_back({
-        .time_requested = notification.test_result.time_received,
-        .time_received = request_time + tracing_policy_.test_latency,
-        .outcome = request_time >= infection_onset_time_
-                       ? TestOutcome::POSITIVE
-                       : TestOutcome::NEGATIVE,
-    });
+    RequestTest(request_time);
   }
 
   VisitAdjustment GetVisitAdjustment(const Timestep& timestep,
@@ -120,6 +114,15 @@ class TracingRiskScore : public RiskScore {
   }
 
   float GetRiskScore() const override { return 0; }
+
+  void RequestTest(const absl::Time time) override {
+    test_results_.push_back({
+        .time_requested = time,
+        .time_received = time + tracing_policy_.test_latency,
+        .outcome = time >= infection_onset_time_ ? TestOutcome::POSITIVE
+                                                 : TestOutcome::NEGATIVE,
+    });
+  }
 
  private:
   bool HasActiveTest(absl::Time request_time) const {

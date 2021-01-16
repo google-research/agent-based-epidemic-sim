@@ -17,6 +17,7 @@
 #include "absl/time/time.h"
 #include "agent_based_epidemic_sim/core/event.h"
 #include "agent_based_epidemic_sim/core/visit.h"
+#include "agent_based_epidemic_sim/util/test_util.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -29,15 +30,6 @@ const absl::Duration kShortDuration = absl::Minutes(1);
 
 const float kCloseDistance = 1;
 const float kFarDistance = 10;
-
-std::vector<const Exposure*> MakePointers(const std::vector<Exposure>& v) {
-  std::vector<const Exposure*> result;
-  result.reserve(v.size());
-  for (const Exposure& e : v) {
-    result.push_back(&e);
-  }
-  return result;
-}
 
 TEST(HazardTransmissionModelTest, GetsInfectionOutcomes) {
   HazardTransmissionModel transmission_model(

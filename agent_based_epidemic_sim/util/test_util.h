@@ -19,6 +19,15 @@
 
 namespace abesim {
 
+std::vector<const Exposure*> MakePointers(const std::vector<Exposure>& v) {
+  std::vector<const Exposure*> result;
+  result.reserve(v.size());
+  for (const Exposure& e : v) {
+    result.push_back(&e);
+  }
+  return result;
+}
+
 class MockTransitionModel : public TransitionModel {
  public:
   explicit MockTransitionModel() = default;
@@ -67,6 +76,7 @@ class MockRiskScore : public RiskScore {
               (const Timestep& timestep), (const, override));
   MOCK_METHOD(absl::Duration, ContactRetentionDuration, (), (const, override));
   MOCK_METHOD(float, GetRiskScore, (), (const, override));
+  MOCK_METHOD(void, RequestTest, (absl::Time time), (override));
 };
 
 class MockRiskScoreModel : public RiskScoreModel {

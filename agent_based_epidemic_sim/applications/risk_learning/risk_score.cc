@@ -20,6 +20,8 @@
 #include <cstddef>
 #include <memory>
 
+#include "absl/flags/declare.h"
+#include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
 #include "absl/random/distributions.h"
 #include "absl/status/status.h"
@@ -39,6 +41,10 @@
 #include "agent_based_epidemic_sim/port/deps/status_macros.h"
 #include "agent_based_epidemic_sim/port/time_proto_util.h"
 #include "agent_based_epidemic_sim/util/time_utils.h"
+
+ABSL_FLAG(bool, request_test_using_hazard, false,
+          "If true, with probability hazard request a test.");
+ABSL_DECLARE_FLAG(bool, request_test_using_hazard);
 
 namespace abesim {
 
@@ -194,7 +200,8 @@ class LearningRiskScore : public RiskScore {
     // a test, we ignore that exposure.
     if (HasActiveTest(request_time)) return;
 
-    if (GetRiskScore() >= tracing_policy_.test_risk_score_threshold) {
+    if (GetProbabilisticRiskScore() >=
+        tracing_policy_.test_risk_score_threshold) {
       RequestTest(request_time);
     } else if (tracing_policy_.test_on_contact) {
       RequestTest(request_time);
@@ -250,6 +257,14 @@ class LearningRiskScore : public RiskScore {
                            risk_score_per_timestep_.end(), 0.0f);
   }
 
+  void RequestTest(const absl::Time request_time) {
+    test_results_.push_back({
+        .time_requested = request_time,
+        .time_received = request_time + tracing_policy_.test_latency,
+        .outcome = GetOutcome(request_time),
+    });
+  }
+
  private:
   bool HasActiveTest(absl::Time request_time) const {
     return HasTestResults() &&
@@ -277,7 +292,8 @@ class LearningRiskScore : public RiskScore {
   }
 
   bool ShouldQuarantineFromRiskScore() const {
-    return GetRiskScore() > tracing_policy_.quarantine_risk_score_threshold;
+    return GetProbabilisticRiskScore() >
+           tracing_policy_.quarantine_risk_score_threshold;
   }
 
   bool ShouldQuarantineFromSymptoms(const Timestep& timestep) const {
@@ -292,7 +308,8 @@ class LearningRiskScore : public RiskScore {
   }
 
   bool ShouldQuarantineFromPositive(const Timestep& timestep) const {
-    if (!HasTestResults() || !HasPositiveTest(timestep.start_time())) {
+    if (!HasTestResults() || !HasPositiveTest(timestep.start_time()) ||
+        tracing_policy_.quarantine_duration_positive == absl::ZeroDuration()) {
       return false;
     }
     absl::Time earliest_quarantine_time = std::min(
@@ -303,14 +320,6 @@ class LearningRiskScore : public RiskScore {
         tracing_policy_.quarantine_duration_positive;
     return (timestep.start_time() < latest_quarantine_time) &&
            (timestep.end_time() > earliest_quarantine_time);
-  }
-
-  void RequestTest(const absl::Time request_time) {
-    test_results_.push_back({
-        .time_requested = request_time,
-        .time_received = request_time + tracing_policy_.test_latency,
-        .outcome = GetOutcome(request_time),
-    });
   }
 
   // TODO: Move this to the interface if we need it for actuation.
@@ -414,6 +423,9 @@ class AppEnabledRiskScore : public RiskScore {
     return risk_score_->ContactRetentionDuration();
   }
   float GetRiskScore() const override { return risk_score_->GetRiskScore(); }
+  void RequestTest(const absl::Time time) override {
+    risk_score_->RequestTest(time);
+  }
 
  private:
   const bool is_app_enabled_;
@@ -441,8 +453,17 @@ class HazardQueryingRiskScore : public RiskScore {
     return risk_score_->GetVisitAdjustment(timestep, location_uuid);
   }
   TestResult GetTestResult(const Timestep& timestep) const override {
+    const float hazard = hazard_->GetHazard(timestep);
+    // Get a test depending on the current hazard. Not realistic
+    // but useful for understanding learning dynamics.
+    if (absl::GetFlag(FLAGS_request_test_using_hazard) &&
+        risk_score_->GetTestResult(timestep).time_requested ==
+            absl::InfiniteFuture() &&
+        absl::Bernoulli(GetBitGen(), hazard)) {
+      risk_score_->RequestTest(timestep.start_time());
+    }
     TestResult result = risk_score_->GetTestResult(timestep);
-    result.hazard = hazard_->GetHazard(timestep);
+    result.hazard = hazard;
     return result;
   }
   ContactTracingPolicy GetContactTracingPolicy(
@@ -453,6 +474,9 @@ class HazardQueryingRiskScore : public RiskScore {
     return risk_score_->ContactRetentionDuration();
   }
   float GetRiskScore() const override { return risk_score_->GetRiskScore(); }
+  void RequestTest(const absl::Time time) override {
+    risk_score_->RequestTest(time);
+  }
 
  private:
   std::unique_ptr<Hazard> hazard_;

@@ -73,6 +73,8 @@ class TogglingRiskScore : public RiskScore {
 
   float GetRiskScore() const override { return 0; }
 
+  void RequestTest(absl::Time time) override {}
+
  private:
   bool SkipVisit(const Timestep& timestep, const int64 location_uuid) const {
     if (location_type_(location_uuid) != LocationReference::BUSINESS) {

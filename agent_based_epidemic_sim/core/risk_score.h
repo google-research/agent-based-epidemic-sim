@@ -98,6 +98,9 @@ class RiskScore {
   // Gets the current risk score for the agent.
   virtual float GetRiskScore() const = 0;
 
+  // Request a test.
+  virtual void RequestTest(absl::Time time) = 0;
+
   virtual ~RiskScore() = default;
 };
 

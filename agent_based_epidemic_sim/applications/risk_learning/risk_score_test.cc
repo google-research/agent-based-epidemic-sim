@@ -18,11 +18,14 @@
 #include <utility>
 #include <vector>
 
+#include "absl/flags/declare.h"
+#include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "absl/time/time.h"
 #include "agent_based_epidemic_sim/applications/risk_learning/config.pb.h"
+#include "agent_based_epidemic_sim/applications/risk_learning/hazard_transmission_model.h"
 #include "agent_based_epidemic_sim/core/location_type.h"
 #include "agent_based_epidemic_sim/core/pandemic.pb.h"
 #include "agent_based_epidemic_sim/core/parse_text_proto.h"
@@ -34,6 +37,8 @@
 #include "agent_based_epidemic_sim/util/test_util.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+
+ABSL_DECLARE_FLAG(bool, request_test_using_hazard);
 
 namespace abesim {
 namespace {
@@ -392,6 +397,34 @@ TEST_F(RiskScoreTest, AppEnabledRiskScoreTogglesBehaviorOff) {
                   Timestep(TimeFromDay(21), absl::Hours(24))),
               Eq(RiskScore::ContactTracingPolicy{.report_recursively = false,
                                                  .send_report = false}));
+}
+
+TEST_F(RiskScoreTest, HazardQueryingRiskScoreAppendsHazard) {
+  absl::SetFlag(&FLAGS_request_test_using_hazard, true);
+  auto risk_score = absl::make_unique<MockRiskScore>();
+  auto mock_risk_score = risk_score.get();
+  auto request_time = absl::UnixEpoch() + absl::Hours(24);
+  Timestep timestep(request_time, absl::Hours(24));
+  auto hazard = absl::make_unique<Hazard>();
+  std::vector<Exposure> exposures{{.start_time = absl::UnixEpoch(),
+                                   .duration = absl::Hours(48),
+                                   .distance = 0,
+                                   .infectivity = 1,
+                                   .symptom_factor = 1}};
+  hazard->GetTransmissionModel()->GetInfectionOutcome(MakePointers(exposures));
+  auto hazard_risk_score =
+      CreateHazardQueryingRiskScore(std::move(hazard), std::move(risk_score));
+  {
+    testing::InSequence seq;
+    EXPECT_CALL(*mock_risk_score, GetTestResult(Eq(timestep)))
+        .WillOnce(Return(TestResult{.time_requested = absl::InfiniteFuture()}));
+    EXPECT_CALL(*mock_risk_score, RequestTest(Eq(request_time)));
+    EXPECT_CALL(*mock_risk_score, GetTestResult(Eq(timestep)))
+        .WillOnce(Return(TestResult{.time_requested = request_time}));
+  }
+  auto result = hazard_risk_score->GetTestResult(timestep);
+  EXPECT_GT(result.hazard, 0);
+  EXPECT_EQ(request_time, result.time_requested);
 }
 
 TEST_F(RiskScoreTest, GetRiskScoreCountsCorrectly) {
