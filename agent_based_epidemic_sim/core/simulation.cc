@@ -101,8 +101,8 @@ class BaseSimulation : public Simulation {
   void Step(const int steps, absl::Duration step_duration) final {
     Timestep timestep(time_, step_duration);
     for (int step = 0; step < steps; ++step) {
-      VLOG(1) << "Running step (" << timestep.start_time() << ", "
-              << timestep.end_time() << ")";
+      LOG(INFO) << "Running step (" << timestep.start_time() << ", "
+                << timestep.end_time() << ")";
       auto agent_start = absl::Now();
       RunAgentPhase(
           timestep,
@@ -130,7 +130,7 @@ class BaseSimulation : public Simulation {
             DCHECK(outcomes.empty()) << "Unprocessed InfectionOutcomes";
             DCHECK(reports.empty()) << "Unprocessed ContactReports";
           });
-      VLOG(1) << "Agent phase took " << absl::Now() - agent_start;
+      LOG(INFO) << "Agent phase took " << absl::Now() - agent_start;
       auto location_start = absl::Now();
       RunLocationPhase(
           timestep,
@@ -146,13 +146,14 @@ class BaseSimulation : public Simulation {
               observer->Observe(*location, location_visits);
             }
           });
-      VLOG(1) << "Location phase took " << absl::Now() - location_start;
+      LOG(INFO) << "Location phase took " << absl::Now() - location_start;
       auto observer_start = absl::Now();
       observer_manager_.AggregateForTimestep(timestep);
-      VLOG(1) << "Observer phase took " << absl::Now() - observer_start;
+      LOG(INFO) << "Observer phase took " << absl::Now() - observer_start;
       timestep.Advance();
     }
     time_ = timestep.start_time();
+    LOG(INFO) << "Finished simulating up to time: " << time_;
   }
 
   using AgentPhaseFn = std::function<void(
