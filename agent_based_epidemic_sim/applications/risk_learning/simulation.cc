@@ -66,6 +66,7 @@ ABSL_FLAG(int, num_reader_threads, 16,
           "Number of agent and location reader threads to use.");
 ABSL_FLAG(bool, disable_learning_observer, false,
           "If true, disable writing learning outputs.");
+ABSL_FLAG(int, max_population, -1, "If nonnegative, the max number of agents.");
 
 namespace abesim {
 namespace {
@@ -453,9 +454,10 @@ class RiskLearningSimulation : public Simulation {
     // Read in agents.
     absl::Mutex agent_mu;
     std::vector<std::unique_ptr<Agent>> agents;
+    const int max_population = absl::GetFlag(FLAGS_max_population);
     for (const std::string& agent_file : config.agent_file()) {
       exec->Add([&agent_file, &config, &result, &profile_data, &agents,
-                 &agent_mu, &status_mu, &statuses]() {
+                 &agent_mu, &status_mu, &statuses, &max_population]() {
         auto reader = MakeRecordReader(agent_file);
         AgentProto proto;
         while (reader.ReadRecord(proto)) {
@@ -493,6 +495,9 @@ class RiskLearningSimulation : public Simulation {
           }
           {
             absl::MutexLock l(&agent_mu);
+            if (max_population > 0 && agents.size() == max_population) {
+              break;
+            }
             // TODO: It is wasteful that we are making a new transition
             // model for each agent.  To fix this we need to make
             // GetNextHealthTransition thread safe.  This is complicated by the
