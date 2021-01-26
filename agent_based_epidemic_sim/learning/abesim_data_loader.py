@@ -8,6 +8,7 @@ import datetime
 import io
 import riegeli
 from agent_based_epidemic_sim.applications.risk_learning import exposures_per_test_result_pb2
+from agent_based_epidemic_sim.core import pandemic_pb2
 
 
 class AbesimExposureDataLoader(object):
@@ -136,7 +137,13 @@ class AbesimExposureDataLoader(object):
                proximity_trace_temporal_resolution_minute))
 
           exposure_count += 1
-      batch_label_list.append(record.outcome)
+      if record.outcome == pandemic_pb2.TestOutcome.Outcome.POSITIVE:
+        label = 1
+      elif record.outcome == pandemic_pb2.TestOutcome.Outcome.NEGATIVE:
+        label = 0
+      else:
+        raise ValueError('Invalid label: %s' % record.outcome)
+      batch_label_list.append(label)
       grouping_list.append(exposure_count)
 
     return batch_exposure_list, batch_label_list, grouping_list

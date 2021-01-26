@@ -21,6 +21,7 @@ def _get_exposures_without_proximity_traces():
       text_format.Parse(
           """
             test_administered_time { seconds: 86400 }
+            outcome: POSITIVE
             exposures {
               exposure_time { seconds: 43200 }
               duration_since_symptom_onset { }
@@ -40,6 +41,7 @@ def _get_exposures_missing_required_data():
       text_format.Parse(
           """
             test_administered_time { seconds: 86400 }
+            outcome: NEGATIVE
             exposures {
               exposure_time { seconds: 43200 }
               duration_since_symptom_onset { }
@@ -66,7 +68,7 @@ class AbesimDataLoaderTest(absltest.TestCase):
     data_loader = abesim_data_loader.AbesimExposureDataLoader(
         _get_test_data_path(), unconfirmed_exposures=True)
     _, labels, grouping = data_loader.get_next_batch(batch_size=5)
-    expect_labels = [1, 2, 0, 1, 2]
+    expect_labels = [0, 1, 0, 0, 1]
     expect_grouping = [0, 0, 0, 0, 0]
     self.assertCountEqual(labels, expect_labels)
     self.assertCountEqual(grouping, expect_grouping)
@@ -75,7 +77,7 @@ class AbesimDataLoaderTest(absltest.TestCase):
     data_loader = abesim_data_loader.AbesimExposureDataLoader(
         _get_test_data_path(), unconfirmed_exposures=False)
     _, labels, grouping = data_loader.get_next_batch(batch_size=5)
-    expect_labels = [1, 2, 0, 1, 2]
+    expect_labels = [0, 1, 0, 0, 1]
     expect_grouping = [0, 0, 0, 0, 0]
     self.assertCountEqual(labels, expect_labels)
     self.assertCountEqual(grouping, expect_grouping)
@@ -102,7 +104,7 @@ class AbesimDataLoaderTest(absltest.TestCase):
         filename, unconfirmed_exposures=False)
     exposures, labels, grouping = data_loader.get_next_batch(batch_size=1)
     self.assertCountEqual(exposures, [([1.0], 0, 30)])
-    self.assertCountEqual(labels, [0])
+    self.assertCountEqual(labels, [1])
     self.assertCountEqual(grouping, [1])
 
   def test_reads_without_traces_or_triple_raises(self):

@@ -57,6 +57,7 @@ py_library(
     srcs_version = "PY3",
     deps = [
         "//agent_based_epidemic_sim/applications/risk_learning:exposures_per_test_result_py_pb2",
+        "//agent_based_epidemic_sim/core:pandemic_py_pb2",
         "@com_google_riegeli//python/riegeli",
     ],
 )
