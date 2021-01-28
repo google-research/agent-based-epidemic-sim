@@ -218,6 +218,7 @@ class RiskLearningSimulation : public Simulation {
         VLOG(1) << "Type " << GraphLocation::Type_Name(i) << ": "
                 << current_lockdown_multipliers_[GraphLocation::Type(i)];
       }
+      UpdateCurrentRiskScoreModel(init_time_ + step_duration * current_step_);
       sim_->Step(/*steps=*/1, step_duration);
       current_step_++;
     }
@@ -427,20 +428,45 @@ class RiskLearningSimulation : public Simulation {
               std::negative_binomial_distribution<int>(k, p)};
     }
 
+    auto time_or = DecodeGoogleApiProto(config.init_time());
+    if (!time_or.ok()) return time_or.status();
+    result->init_time_ = time_or.value();
+
     if (!config.has_risk_score_config()) {
       return absl::InvalidArgumentError("No risk score config found.");
     }
 
-    if (!config.risk_score_config().has_model_proto()) {
+    if (!config.risk_score_config().has_model_proto() &&
+        config.risk_score_config().timestamped_model().empty()) {
       return absl::InvalidArgumentError(
           "No risk score model config found in risk score config.");
     }
 
     // Read in risk score model config.
-    auto risk_score_model_or =
-        CreateLearningRiskScoreModel(config.risk_score_config().model_proto());
-    if (!risk_score_model_or.ok()) return risk_score_model_or.status();
-    result->risk_score_model_ = std::move(*risk_score_model_or);
+    if (!config.risk_score_config().timestamped_model().empty()) {
+      for (const auto& timestamped_model :
+           config.risk_score_config().timestamped_model()) {
+        auto time_or = DecodeGoogleApiProto(timestamped_model.start_time());
+        if (!time_or.ok()) return time_or.status();
+        const auto start_time = *time_or;
+        auto risk_score_model_or =
+            CreateLearningRiskScoreModel(timestamped_model.model_proto());
+        if (!risk_score_model_or.ok()) return risk_score_model_or.status();
+        result->risk_score_models_.push_back(
+            {start_time, std::move(*risk_score_model_or)});
+      }
+    } else {
+      auto risk_score_model_or = CreateLearningRiskScoreModel(
+          config.risk_score_config().model_proto());
+      if (!risk_score_model_or.ok()) return risk_score_model_or.status();
+      result->risk_score_models_.push_back(
+          {result->init_time_, std::move(*risk_score_model_or)});
+    }
+
+    std::function<const RiskScoreModel* const()> get_model_fn =
+        [sim = result.get()]() -> RiskScoreModel* {
+      return sim->current_risk_score_model_;
+    };
 
     // Read in risk score policy config if set. Otherwise fallback to default
     // values set in struct.
@@ -474,7 +500,8 @@ class RiskLearningSimulation : public Simulation {
           // create a TracingPolicy every time.
           auto risk_score_or = CreateLearningRiskScore(
               config.tracing_policy(), result->risk_score_policy_,
-              result->risk_score_model_.get(), result->get_location_type_);
+              result->risk_score_models_.begin()->second.get(),
+              result->get_location_type_);
           if (!risk_score_or.ok()) {
             absl::MutexLock l(&status_mu);
             statuses.push_back(risk_score_or.status());
@@ -526,9 +553,6 @@ class RiskLearningSimulation : public Simulation {
       // Arbitrarily return the first status.
       return statuses[0];
     }
-    auto time_or = DecodeGoogleApiProto(config.init_time());
-    if (!time_or.ok()) return time_or.status();
-    const auto init_time = time_or.value();
 
     // Sample initial infections.
     if (config.n_seed_infections() > agents.size()) {
@@ -545,14 +569,15 @@ class RiskLearningSimulation : public Simulation {
         continue;
       }
       infected++;
-      agent->SeedInfection(init_time);
+      agent->SeedInfection(result->init_time_);
     }
 
-    result->sim_ = num_workers > 1
-                       ? ParallelSimulation(init_time, std::move(agents),
-                                            std::move(locations), num_workers)
-                       : SerialSimulation(init_time, std::move(agents),
-                                          std::move(locations));
+    result->sim_ =
+        num_workers > 1
+            ? ParallelSimulation(result->init_time_, std::move(agents),
+                                 std::move(locations), num_workers)
+            : SerialSimulation(result->init_time_, std::move(agents),
+                               std::move(locations));
     result->sim_->AddObserverFactory(result->summary_observer_.get());
     if (ABSL_PREDICT_TRUE(absl::GetFlag(FLAGS_disable_learning_observer))) {
       LOG(WARNING) << "Learning outputs disabled.";
@@ -619,6 +644,16 @@ class RiskLearningSimulation : public Simulation {
     }
   }
 
+  void UpdateCurrentRiskScoreModel(const absl::Time current_time) {
+    auto iter = std::upper_bound(
+        risk_score_models_.begin(), risk_score_models_.end(), current_time,
+        [](const absl::Time time,
+           const std::pair<absl::Time, std::unique_ptr<RiskScoreModel>>&
+               key_val) { return time < key_val.first; });
+    CHECK(iter != risk_score_models_.begin());
+    current_risk_score_model_ = (iter - 1)->second.get();
+  }
+
   const RiskLearningSimulationConfig config_;
   const std::vector<StepwiseParams> stepwise_params_;
   EnumIndexedArray<std::unique_ptr<ExposureGenerator>, LocationReference::Type,
@@ -627,6 +662,8 @@ class RiskLearningSimulation : public Simulation {
   std::unique_ptr<HazardTransmissionModel> transmission_model_;
   std::unique_ptr<RiskLearningInfectivityModel> infectivity_model_;
   std::unique_ptr<RiskScoreModel> risk_score_model_;
+  std::vector<std::pair<absl::Time, std::unique_ptr<RiskScoreModel>>>
+      risk_score_models_;
   LearningRiskScorePolicy risk_score_policy_;
   absl::flat_hash_map<int64, LocationReference::Type> location_types_;
   const LocationTypeFn get_location_type_;
@@ -640,9 +677,12 @@ class RiskLearningSimulation : public Simulation {
   std::unique_ptr<ObserverFactoryBase> learning_observer_;
   std::unique_ptr<ObserverFactoryBase> hazard_histogram_observer_;
   std::unique_ptr<Simulation> sim_;
+  absl::Time init_time_;
   int current_step_ = 0;
   float current_changepoint_ = 1.0f;
   float current_mobility_glm_scale_factor_ = 1.0f;
+  // Owned by risk_score_models_.
+  RiskScoreModel* current_risk_score_model_;
   EnumIndexedArray<float, GraphLocation::Type, GraphLocation::Type_ARRAYSIZE>
       current_lockdown_multipliers_;
 };

@@ -143,6 +143,14 @@ message LearningRiskScoreConfig {
   // Policy factors effecting the decision to take action on risk score e.g.
   // quarantine and test.
   LearningRiskScorePolicyProto policy_proto = 2;
+
+  message TimestampedModel {
+    google.protobuf.Timestamp start_time = 1;
+    LearningRiskScoreModelProto model_proto = 2;
+  }
+  // If present, model_proto will be ignored. Used to impose time-dependent
+  // risk score configs.
+  repeated TimestampedModel timestamped_model = 3;
 }
 
 // Coefficients used when converting from distance to attenutation value.

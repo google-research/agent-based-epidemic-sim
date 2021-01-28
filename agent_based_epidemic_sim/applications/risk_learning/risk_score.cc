@@ -600,6 +600,23 @@ class LearningRiskScoreModel : public RiskScoreModel {
   std::vector<InfectiousnessBucket> infectiousness_buckets_;
 };
 
+class TimeVaryingRiskScoreModel : public RiskScoreModel {
+ public:
+  explicit TimeVaryingRiskScoreModel(
+      std::function<const RiskScoreModel*()> get_model_fn)
+      : get_model_fn_(get_model_fn) {}
+
+  float ComputeRiskScore(
+      const Exposure& exposure,
+      absl::optional<absl::Time> initial_symptom_onset_time) const override {
+    return get_model_fn_()->ComputeRiskScore(exposure,
+                                             initial_symptom_onset_time);
+  }
+
+ private:
+  std::function<const RiskScoreModel* const()> get_model_fn_;
+};
+
 }  // namespace
 
 float LearningRiskScoreModel::ComputeRiskScore(
