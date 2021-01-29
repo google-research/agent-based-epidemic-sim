@@ -51,6 +51,9 @@ struct LearningRiskScorePolicy {
 absl::StatusOr<std::unique_ptr<RiskScoreModel>> CreateLearningRiskScoreModel(
     const LearningRiskScoreModelProto& proto);
 
+std::unique_ptr<RiskScoreModel> CreateTimeVaryingRiskScoreModel(
+    std::function<const RiskScoreModel*()> get_model_fn);
+
 absl::StatusOr<const LearningRiskScorePolicy> CreateLearningRiskScorePolicy(
     const LearningRiskScorePolicyProto& proto);
 

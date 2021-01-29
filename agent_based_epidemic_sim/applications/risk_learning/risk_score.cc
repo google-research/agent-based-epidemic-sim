@@ -767,6 +767,11 @@ absl::StatusOr<std::unique_ptr<RiskScoreModel>> CreateLearningRiskScoreModel(
                                                    infectiousness_buckets);
 }
 
+std::unique_ptr<RiskScoreModel> CreateTimeVaryingRiskScoreModel(
+    std::function<const RiskScoreModel*()> get_model_fn) {
+  return absl::make_unique<TimeVaryingRiskScoreModel>(std::move(get_model_fn));
+}
+
 absl::StatusOr<std::unique_ptr<RiskScore>> CreateLearningRiskScore(
     const TracingPolicyProto& tracing_policy_proto,
     const LearningRiskScorePolicy& risk_score_policy,

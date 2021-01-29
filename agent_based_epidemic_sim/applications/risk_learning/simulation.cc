@@ -468,6 +468,8 @@ class RiskLearningSimulation : public Simulation {
       return sim->current_risk_score_model_;
     };
 
+    result->risk_score_model_ =
+        CreateTimeVaryingRiskScoreModel(std::move(get_model_fn));
     // Read in risk score policy config if set. Otherwise fallback to default
     // values set in struct.
     if (config.risk_score_config().has_policy_proto()) {
@@ -500,8 +502,7 @@ class RiskLearningSimulation : public Simulation {
           // create a TracingPolicy every time.
           auto risk_score_or = CreateLearningRiskScore(
               config.tracing_policy(), result->risk_score_policy_,
-              result->risk_score_models_.begin()->second.get(),
-              result->get_location_type_);
+              result->risk_score_model_.get(), result->get_location_type_);
           if (!risk_score_or.ok()) {
             absl::MutexLock l(&status_mu);
             statuses.push_back(risk_score_or.status());
