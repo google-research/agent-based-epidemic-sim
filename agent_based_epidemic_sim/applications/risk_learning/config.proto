@@ -277,3 +277,13 @@ message RiskLearningSimulationConfig {
   // Next id: 25
   reserved 8;  // Deprecated fields.
 }
+
+// Defines a risk learning simulation template configuration.
+message RiskLearningSimulationMetaConfig {
+  // The template for configuring a given simulation instance.
+  RiskLearningSimulationConfig config_template = 1;
+  // Number of worker threads per instance.
+  int32 num_threads = 2;
+  // Number of realizations to sample.
+  int32 num_realizations = 3;
+}
