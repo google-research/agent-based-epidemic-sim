@@ -51,7 +51,7 @@ class AbesimExposureDataLoader(object):
         self.file_io(self.file_path, mode='rb'))
 
   def _seconds_to_mins(self, timedelta):
-    return timedelta.seconds // 60
+    return timedelta.seconds / 60
 
   def print_all_data(self):
     # Util function to print out all data in the riegeli file.
@@ -107,7 +107,15 @@ class AbesimExposureDataLoader(object):
         # record.infection_onset_time is None.
         continue
 
+      if record.outcome == pandemic_pb2.TestOutcome.Outcome.POSITIVE:
+        label = 1
+      elif record.outcome == pandemic_pb2.TestOutcome.Outcome.NEGATIVE:
+        label = 0
+      else:
+        raise ValueError('Invalid label: %s' % record.outcome)
       exposure_count = 0
+      if not record.exposures:
+        continue
       for exposure in record.exposures:
         if (is_confirmed(exposure) or
             is_valid_unconfirmed(exposure)) and (is_contained_in_window(
@@ -122,10 +130,10 @@ class AbesimExposureDataLoader(object):
           # TripleExposureGenerator is used to sample exposures), we add one
           # entry to the proximity_trace returned in batch_exposure_list.
           if not exposure.proximity_trace:
-            if not exposure.distance:
-              raise ValueError('Proximity trace or distance must be present. '
-                               'Encountered: %s' % exposure)
-            proximity_trace = [exposure.distance]
+            if not exposure.attenuation:
+              raise ValueError('Proximity trace or attenuation must be '
+                               'present. Encountered: %s' % exposure)
+            proximity_trace = [exposure.attenuation]
             proximity_trace_temporal_resolution_minute = self._seconds_to_mins(
                 exposure.duration.ToTimedelta())
           else:
@@ -137,12 +145,6 @@ class AbesimExposureDataLoader(object):
                proximity_trace_temporal_resolution_minute))
 
           exposure_count += 1
-      if record.outcome == pandemic_pb2.TestOutcome.Outcome.POSITIVE:
-        label = 1
-      elif record.outcome == pandemic_pb2.TestOutcome.Outcome.NEGATIVE:
-        label = 0
-      else:
-        raise ValueError('Invalid label: %s' % record.outcome)
       batch_label_list.append(label)
       grouping_list.append(exposure_count)
 
