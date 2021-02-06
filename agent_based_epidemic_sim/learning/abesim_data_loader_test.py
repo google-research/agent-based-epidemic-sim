@@ -66,7 +66,8 @@ class AbesimDataLoaderTest(absltest.TestCase):
 
   def test_reads_with_traces_unconfirmed_exposures(self):
     data_loader = abesim_data_loader.AbesimExposureDataLoader(
-        _get_test_data_path(), unconfirmed_exposures=True)
+        _get_test_data_path(), unconfirmed_exposures=True,
+        include_instances_with_no_exposures=True)
     _, labels, grouping = data_loader.get_next_batch(batch_size=5)
     expect_labels = [0, 1, 0, 0, 1]
     expect_grouping = [0, 0, 0, 0, 0]
@@ -75,7 +76,8 @@ class AbesimDataLoaderTest(absltest.TestCase):
 
   def test_reads_with_traces_no_unconfirmed_exposures(self):
     data_loader = abesim_data_loader.AbesimExposureDataLoader(
-        _get_test_data_path(), unconfirmed_exposures=False)
+        _get_test_data_path(), unconfirmed_exposures=False,
+        include_instances_with_no_exposures=True)
     _, labels, grouping = data_loader.get_next_batch(batch_size=5)
     expect_labels = [0, 1, 0, 0, 1]
     expect_grouping = [0, 0, 0, 0, 0]
@@ -84,7 +86,8 @@ class AbesimDataLoaderTest(absltest.TestCase):
 
   def test_reads_with_traces_batch_size_too_large(self):
     data_loader = abesim_data_loader.AbesimExposureDataLoader(
-        _get_test_data_path(), unconfirmed_exposures=False)
+        _get_test_data_path(), unconfirmed_exposures=False,
+        include_instances_with_no_exposures=True)
     _, labels, grouping = data_loader.get_next_batch(batch_size=16)
     self.assertLen(labels, 16)
     self.assertLen(grouping, 16)

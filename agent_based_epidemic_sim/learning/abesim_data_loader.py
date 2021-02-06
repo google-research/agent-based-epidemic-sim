@@ -20,6 +20,7 @@ class AbesimExposureDataLoader(object):
                window_around_infection_onset_time=False,
                selection_window_left=10,
                selection_window_right=0,
+               include_instances_with_no_exposures=False,
                file_io=io.FileIO):
     """Initialize the Abesim exposure data loder.
 
@@ -31,6 +32,8 @@ class AbesimExposureDataLoader(object):
         time (False).
       selection_window_left: Days from the left selection bound to the center.
       selection_window_right: Days from the right selection bound to the center.
+      include_instances_with_no_exposures: If true, instances will be returned
+        even for those recores that have no exposures.
       file_io: A method for constructing a file object for reading.
     """
     self.file_path = file_path
@@ -39,6 +42,9 @@ class AbesimExposureDataLoader(object):
     self.selection_window_left = selection_window_left
     self.selection_window_right = selection_window_right
     self.file_io = file_io
+    self._include_instances_with_no_exposures = (
+        include_instances_with_no_exposures
+    )
     self.index_reader = riegeli.RecordReader(self.file_io(file_path, mode='rb'))
 
   def __del__(self):
@@ -114,8 +120,6 @@ class AbesimExposureDataLoader(object):
       else:
         raise ValueError('Invalid label: %s' % record.outcome)
       exposure_count = 0
-      if not record.exposures:
-        continue
       for exposure in record.exposures:
         if (is_confirmed(exposure) or
             is_valid_unconfirmed(exposure)) and (is_contained_in_window(
@@ -145,6 +149,10 @@ class AbesimExposureDataLoader(object):
                proximity_trace_temporal_resolution_minute))
 
           exposure_count += 1
+      if (exposure_count == 0 and
+          not self._include_instances_with_no_exposures):
+        continue
+      # Only add instances with valid exposures.
       batch_label_list.append(label)
       grouping_list.append(exposure_count)
 
