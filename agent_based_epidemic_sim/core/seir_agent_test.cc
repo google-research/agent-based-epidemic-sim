@@ -846,7 +846,8 @@ TEST(SEIRAgentTest, SendContactReportsBeforeAndAfterSymptoms) {
     const std::vector<ContactReport> expected_contact_reports{
         {.from_agent_uuid = kUuid,
          .to_agent_uuid = 314LL,
-         .test_result = expected_test_result0}};
+         .test_result = expected_test_result0,
+         .initial_symptom_onset_time = TimeFromDayAndHour(0, 0)}};
     EXPECT_CALL(
         *contact_report_broker,
         Send(testing::UnorderedElementsAreArray(expected_contact_reports)))
