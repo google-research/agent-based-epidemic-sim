@@ -149,11 +149,8 @@ struct Exposure {
   float attenuation;
   float infectivity;
   float symptom_factor;
-
-  // TODO: Thread the appropriate values on the exposure. Disabling
-  // their effect by setting to 1 for now.
-  float susceptibility = kSusceptibility;
-  float location_transmissibility = kLocationTransmissibility;
+  float susceptibility;
+  float location_transmissibility;
 
   friend bool operator==(const Exposure& a, const Exposure& b) {
     return (a.start_time == b.start_time && a.duration == b.duration &&

@@ -9,10 +9,6 @@
 
 namespace abesim {
 
-// Default transmissibility of a location used when calculating transmission
-// likelihood between two hosts at a given location.
-inline constexpr float kLocationTransmissibility = 1;
-
 // TODO: Move into the visit message about the visiting agent.
 // Default susceptibility of a host used when calculating transmission
 // likelihood between two hosts. Usually a function of the host's age.

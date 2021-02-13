@@ -406,11 +406,15 @@ TEST_F(RiskScoreTest, HazardQueryingRiskScoreAppendsHazard) {
   auto request_time = absl::UnixEpoch() + absl::Hours(24);
   Timestep timestep(request_time, absl::Hours(24));
   auto hazard = absl::make_unique<Hazard>();
-  std::vector<Exposure> exposures{{.start_time = absl::UnixEpoch(),
-                                   .duration = absl::Hours(48),
-                                   .distance = 0,
-                                   .infectivity = 1,
-                                   .symptom_factor = 1}};
+  std::vector<Exposure> exposures{{
+      .start_time = absl::UnixEpoch(),
+      .duration = absl::Hours(48),
+      .distance = 0,
+      .infectivity = 1,
+      .symptom_factor = 1,
+      .susceptibility = 1,
+      .location_transmissibility = 1,
+  }};
   hazard->GetTransmissionModel()->GetInfectionOutcome(MakePointers(exposures));
   auto hazard_risk_score =
       CreateHazardQueryingRiskScore(std::move(hazard), std::move(risk_score));
