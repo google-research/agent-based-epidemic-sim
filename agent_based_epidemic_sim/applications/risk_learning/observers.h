@@ -72,22 +72,28 @@ class SummaryObserverFactory : public ObserverFactory<SummaryObserver> {
 
 class LearningObserver : public AgentInfectionObserver {
  public:
-  explicit LearningObserver(Timestep timestep);
+  LearningObserver(Timestep timestep, const absl::Duration& reporting_delay);
   void Observe(const Agent& agent,
                absl::Span<const InfectionOutcome> outcomes) override;
 
  private:
   friend class LearningObserverFactory;
   const Timestep timestep_;
+  const absl::Duration reporting_delay_;
   std::vector<ExposuresPerTestResult::ExposureResult> results_;
 };
 
 // LearningObserverFactory writes data for training risk score models.  It
 // writes one new file for every timestep, the names of the files are generated
 // by appending timestep information to the given base filename.
+// The reporting delay must be nonnegative, and corresponds to the duration
+// to which to wait before reporting test results. One may wish to delay
+// reports in order to aggregate more responsible ContactReports to identify
+// the exposure responsible for infection.
 class LearningObserverFactory : public ObserverFactory<LearningObserver> {
  public:
-  LearningObserverFactory(absl::string_view learning_filename, int num_workers);
+  LearningObserverFactory(absl::string_view learning_filename, int num_workers,
+                          const absl::Duration& reporting_delay);
   ~LearningObserverFactory();
 
   std::unique_ptr<LearningObserver> MakeObserver(
@@ -99,6 +105,7 @@ class LearningObserverFactory : public ObserverFactory<LearningObserver> {
 
  private:
   riegeli::RecordWriter<RiegeliBytesSink> writer_;
+  const absl::Duration reporting_delay_;
 };
 
 class HazardHistogramObserver : public AgentInfectionObserver {

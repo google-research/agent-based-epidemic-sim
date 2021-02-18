@@ -90,8 +90,10 @@ class LearningObserverTest : public testing::Test {
  protected:
   LearningObserverTest()
       : filename_(absl::StrCat(getenv("TEST_TMPDIR"), "/", "learning")),
-        factory_(absl::make_unique<LearningObserverFactory>(filename_,
-                                                            /*parallelism=*/1)),
+        factory_(absl::make_unique<LearningObserverFactory>(
+            filename_,
+            /*parallelism=*/1,
+            /*reporting_delay=*/absl::ZeroDuration())),
         timestep_(TestTime(3, 0), absl::Hours(24)) {}
 
   LearningObserver& Observer() {

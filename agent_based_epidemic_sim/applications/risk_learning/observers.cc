@@ -100,7 +100,9 @@ void SummaryObserverFactory::Aggregate(
   if (!status.ok()) LOG(ERROR) << status;
 }
 
-LearningObserver::LearningObserver(Timestep timestep) : timestep_(timestep) {}
+LearningObserver::LearningObserver(Timestep timestep,
+                                   const absl::Duration& reporting_delay)
+    : timestep_(timestep), reporting_delay_(reporting_delay) {}
 
 template <typename T, typename P>
 absl::Status ToProto(T src, P* result) {
@@ -117,7 +119,8 @@ absl::StatusOr<ExposuresPerTestResult::Exposure> AddExposure(
   e.set_source_uuid(uuid);
   PANDEMIC_RETURN_IF_ERROR(ToProto(exposure.duration, e.mutable_duration()));
   e.set_distance(exposure.distance);
-
+  e.set_attenuation(exposure.attenuation);
+  e.set_infectivity(exposure.infectivity);
   if (report != nullptr && report->initial_symptom_onset_time.has_value()) {
     PANDEMIC_RETURN_IF_ERROR(
         ToProto(exposure.start_time - *report->initial_symptom_onset_time,
@@ -154,6 +157,10 @@ absl::StatusOr<ExposuresPerTestResult::ExposureResult> AgentToExposureResult(
                                     const ContactReport* report) {
         auto exposure_or = AddExposure(uuid, exposure, report);
         if (!exposure_or.ok()) {
+          if (IsNotFound(exposure_or.status())) {
+            // No ContactReport, so exposure should not be reported.
+            return;
+          }
           LOG(ERROR) << exposure_or.status();
           encoded_exposures = false;
           return;
@@ -169,10 +176,12 @@ absl::StatusOr<ExposuresPerTestResult::ExposureResult> AgentToExposureResult(
 void LearningObserver::Observe(const Agent& agent,
                                absl::Span<const InfectionOutcome>) {
   TestResult test = agent.CurrentTestResult(timestep_);
-  // We report results on the day test results become available.
+  // We report results according to the desired delay. A delay greater than
+  // zero helps ensure that any culprit exposure will have been identified
+  // with a ContactReport.
   if (test.time_received == absl::InfiniteFuture() ||
-      test.time_received < timestep_.start_time() ||
-      test.time_received >= timestep_.end_time())
+      test.time_received + reporting_delay_ < timestep_.start_time() ||
+      test.time_received + reporting_delay_ >= timestep_.end_time())
     return;
   auto exposure_result_or = AgentToExposureResult(agent, test);
   if (!exposure_result_or.ok()) {
@@ -185,8 +194,10 @@ void LearningObserver::Observe(const Agent& agent,
 // Note: num_workers is reduced by 1 since 1 means no parallelism in the
 // risk_learning application, while 0 means no parallelism for the RecordWriter.
 LearningObserverFactory::LearningObserverFactory(
-    absl::string_view learning_filename, const int num_workers)
-    : writer_(MakeRecordWriter(learning_filename, num_workers - 1)) {}
+    absl::string_view learning_filename, const int num_workers,
+    const absl::Duration& reporting_delay)
+    : writer_(MakeRecordWriter(learning_filename, num_workers - 1)),
+      reporting_delay_(reporting_delay) {}
 
 LearningObserverFactory::~LearningObserverFactory() {
   if (!writer_.Close()) LOG(ERROR) << writer_.status();
@@ -194,7 +205,7 @@ LearningObserverFactory::~LearningObserverFactory() {
 
 std::unique_ptr<LearningObserver> LearningObserverFactory::MakeObserver(
     const Timestep& timestep) const {
-  return absl::make_unique<LearningObserver>(timestep);
+  return absl::make_unique<LearningObserver>(timestep, reporting_delay_);
 }
 
 void LearningObserverFactory::Aggregate(

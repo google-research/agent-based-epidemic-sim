@@ -53,6 +53,8 @@ message ExposuresPerTestResult {
     google.protobuf.Duration duration = 7;
     float distance = 8;
     float attenuation = 9;
+    // For debugging.
+    float infectivity = 10;
   }
   message ExposureResult {
     int64 agent_uuid = 1;

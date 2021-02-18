@@ -274,7 +274,11 @@ message RiskLearningSimulationConfig {
   // sets for learning.
   bool append_hazard_to_test_results = 22;
 
-  // Next id: 25
+  // The duration to which to withhold reporting [TestOutcome, [Exposures]]
+  // instances for learning, for example, to guarantee that culprit exposures
+  // are captured.
+  google.protobuf.Duration reporting_delay = 25;
+  // Next id: 26
   reserved 8;  // Deprecated fields.
 }
 
