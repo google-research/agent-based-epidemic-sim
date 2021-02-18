@@ -91,15 +91,18 @@ class AbesimExposureDataLoader(object):
           exposures_per_test_result_pb2.ExposuresPerTestResult.ExposureResult)
       if not record:
         continue
-      if not self.window_around_infection_onset_time:
+      if (not self.window_around_infection_onset_time or
+          not record.infection_onset_time):
         # Set window around test_administered_date when
         # window_around_infection_onset_time is False.
+        # Also use this window when the record does not have an infection onset
+        # (corresponds to a true negative).
         test_administered_date = record.test_administered_time.ToDatetime()
         date_window_left = test_administered_date + datetime.timedelta(
             days=-self.selection_window_left)
         date_window_right = test_administered_date + datetime.timedelta(
             days=self.selection_window_right)
-      elif record.infection_onset_time:
+      else:
         # Set window around infection_onset_time when
         # window_around_infection_onset_time is True and
         # record.infection_onset_time is not None.
@@ -108,10 +111,6 @@ class AbesimExposureDataLoader(object):
             days=-self.selection_window_left)
         date_window_right = infection_date + datetime.timedelta(
             days=self.selection_window_right)
-      else:
-        # Remove this record if window_around_infection_onset_time is True and
-        # record.infection_onset_time is None.
-        continue
 
       if record.outcome == pandemic_pb2.TestOutcome.Outcome.POSITIVE:
         label = 1
