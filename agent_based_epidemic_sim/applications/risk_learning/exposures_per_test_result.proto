@@ -55,6 +55,7 @@ message ExposuresPerTestResult {
     float attenuation = 9;
     // For debugging.
     float infectivity = 10;
+    float dose = 11;
   }
   message ExposureResult {
     int64 agent_uuid = 1;

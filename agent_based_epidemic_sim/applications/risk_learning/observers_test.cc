@@ -5,6 +5,7 @@
 
 #include "absl/time/time.h"
 #include "agent_based_epidemic_sim/applications/risk_learning/exposures_per_test_result.pb.h"
+#include "agent_based_epidemic_sim/applications/risk_learning/hazard_transmission_model.h"
 #include "agent_based_epidemic_sim/core/exposure_store.h"
 #include "agent_based_epidemic_sim/core/pandemic.pb.h"
 #include "agent_based_epidemic_sim/core/parse_text_proto.h"
@@ -90,10 +91,13 @@ class LearningObserverTest : public testing::Test {
  protected:
   LearningObserverTest()
       : filename_(absl::StrCat(getenv("TEST_TMPDIR"), "/", "learning")),
+        hazard_transmission_model_(
+            absl::make_unique<HazardTransmissionModel>()),
         factory_(absl::make_unique<LearningObserverFactory>(
             filename_,
             /*parallelism=*/1,
-            /*reporting_delay=*/absl::ZeroDuration())),
+            /*reporting_delay=*/absl::ZeroDuration(),
+            hazard_transmission_model_.get())),
         timestep_(TestTime(3, 0), absl::Hours(24)) {}
 
   LearningObserver& Observer() {
@@ -116,6 +120,7 @@ class LearningObserverTest : public testing::Test {
   }
 
   const std::string filename_;
+  std::unique_ptr<HazardTransmissionModel> hazard_transmission_model_;
   std::unique_ptr<LearningObserverFactory> factory_;
   Timestep timestep_;
   std::vector<std::unique_ptr<LearningObserver>> observers_;
@@ -170,6 +175,7 @@ TEST_F(LearningObserverTest, RecordsAllFields) {
                       timestep_.start_time() - absl::Hours(24 * 2 + 8),
                   .duration = absl::Seconds(900),
                   .distance = 2,
+                  .infectivity = 0,
               },
           .source_uuid = 789,
       },
@@ -180,6 +186,10 @@ TEST_F(LearningObserverTest, RecordsAllFields) {
                       timestep_.start_time() - absl::Hours(24 * 2 - 8),
                   .duration = absl::Seconds(900),
                   .distance = 6,
+                  .infectivity = 1,
+                  .symptom_factor = 1,
+                  .susceptibility = 1,
+                  .location_transmissibility = 1,
               },
           .source_uuid = 654,
       },
@@ -210,6 +220,8 @@ TEST_F(LearningObserverTest, RecordsAllFields) {
           distance: 6
           exposure_type: CONFIRMED
           source_uuid: 654
+          infectivity: 1
+          dose: 1.2475902
         }
         exposures {
           exposure_time { seconds: 57600 }

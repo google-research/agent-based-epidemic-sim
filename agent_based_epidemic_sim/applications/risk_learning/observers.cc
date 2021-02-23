@@ -100,17 +100,20 @@ void SummaryObserverFactory::Aggregate(
   if (!status.ok()) LOG(ERROR) << status;
 }
 
-LearningObserver::LearningObserver(Timestep timestep,
-                                   const absl::Duration& reporting_delay)
-    : timestep_(timestep), reporting_delay_(reporting_delay) {}
+LearningObserver::LearningObserver(
+    Timestep timestep, const absl::Duration& reporting_delay,
+    const HazardTransmissionModel* hazard_transmission_model)
+    : timestep_(timestep),
+      reporting_delay_(reporting_delay),
+      hazard_transmission_model_(hazard_transmission_model) {}
 
 template <typename T, typename P>
 absl::Status ToProto(T src, P* result) {
   return EncodeGoogleApiProto(src, result);
 }
 
-absl::StatusOr<ExposuresPerTestResult::Exposure> AddExposure(
-    int64 uuid, const Exposure& exposure, const ContactReport* report) {
+absl::StatusOr<ExposuresPerTestResult::Exposure> LearningObserver::AddExposure(
+    int64 uuid, const Exposure& exposure, const ContactReport* report) const {
   ExposuresPerTestResult::Exposure e;
   PANDEMIC_RETURN_IF_ERROR(
       ToProto(exposure.start_time, e.mutable_exposure_time()));
@@ -121,6 +124,10 @@ absl::StatusOr<ExposuresPerTestResult::Exposure> AddExposure(
   e.set_distance(exposure.distance);
   e.set_attenuation(exposure.attenuation);
   e.set_infectivity(exposure.infectivity);
+  LOG(INFO) << hazard_transmission_model_->ComputeDose(
+      exposure.distance, exposure.duration, &exposure);
+  e.set_dose(hazard_transmission_model_->ComputeDose(
+      exposure.distance, exposure.duration, &exposure));
   if (report != nullptr && report->initial_symptom_onset_time.has_value()) {
     PANDEMIC_RETURN_IF_ERROR(
         ToProto(exposure.start_time - *report->initial_symptom_onset_time,
@@ -129,8 +136,9 @@ absl::StatusOr<ExposuresPerTestResult::Exposure> AddExposure(
   return e;
 }
 
-absl::StatusOr<ExposuresPerTestResult::ExposureResult> AgentToExposureResult(
-    const Agent& agent, const TestResult& test) {
+absl::StatusOr<ExposuresPerTestResult::ExposureResult>
+LearningObserver::AgentToExposureResult(const Agent& agent,
+                                        const TestResult& test) const {
   ExposuresPerTestResult::ExposureResult result;
   result.set_agent_uuid(agent.uuid());
   result.set_outcome(test.outcome);
@@ -153,8 +161,8 @@ absl::StatusOr<ExposuresPerTestResult::ExposureResult> AgentToExposureResult(
   bool encoded_exposures = true;
   exposures->PerExposure(
       absl::InfinitePast(),
-      [&result, &encoded_exposures](int64 uuid, const Exposure& exposure,
-                                    const ContactReport* report) {
+      [&result, &encoded_exposures, this](int64 uuid, const Exposure& exposure,
+                                          const ContactReport* report) {
         auto exposure_or = AddExposure(uuid, exposure, report);
         if (!exposure_or.ok()) {
           if (IsNotFound(exposure_or.status())) {
@@ -195,9 +203,11 @@ void LearningObserver::Observe(const Agent& agent,
 // risk_learning application, while 0 means no parallelism for the RecordWriter.
 LearningObserverFactory::LearningObserverFactory(
     absl::string_view learning_filename, const int num_workers,
-    const absl::Duration& reporting_delay)
+    const absl::Duration& reporting_delay,
+    const HazardTransmissionModel* hazard_transmission_model)
     : writer_(MakeRecordWriter(learning_filename, num_workers - 1)),
-      reporting_delay_(reporting_delay) {}
+      reporting_delay_(reporting_delay),
+      hazard_transmission_model_(hazard_transmission_model) {}
 
 LearningObserverFactory::~LearningObserverFactory() {
   if (!writer_.Close()) LOG(ERROR) << writer_.status();
@@ -205,7 +215,8 @@ LearningObserverFactory::~LearningObserverFactory() {
 
 std::unique_ptr<LearningObserver> LearningObserverFactory::MakeObserver(
     const Timestep& timestep) const {
-  return absl::make_unique<LearningObserver>(timestep, reporting_delay_);
+  return absl::make_unique<LearningObserver>(timestep, reporting_delay_,
+                                             hazard_transmission_model_);
 }
 
 void LearningObserverFactory::Aggregate(

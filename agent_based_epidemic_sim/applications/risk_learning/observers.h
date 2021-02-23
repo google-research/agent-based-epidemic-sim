@@ -3,9 +3,11 @@
 
 #include <memory>
 
+#include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "agent_based_epidemic_sim/applications/risk_learning/exposures_per_test_result.pb.h"
+#include "agent_based_epidemic_sim/applications/risk_learning/hazard_transmission_model.h"
 #include "agent_based_epidemic_sim/core/agent.h"
 #include "agent_based_epidemic_sim/core/enum_indexed_array.h"
 #include "agent_based_epidemic_sim/core/observer.h"
@@ -72,14 +74,21 @@ class SummaryObserverFactory : public ObserverFactory<SummaryObserver> {
 
 class LearningObserver : public AgentInfectionObserver {
  public:
-  LearningObserver(Timestep timestep, const absl::Duration& reporting_delay);
+  LearningObserver(Timestep timestep, const absl::Duration& reporting_delay,
+                   const HazardTransmissionModel* hazard_transmission_model);
   void Observe(const Agent& agent,
                absl::Span<const InfectionOutcome> outcomes) override;
 
  private:
+  absl::StatusOr<ExposuresPerTestResult::ExposureResult> AgentToExposureResult(
+      const Agent& agent, const TestResult& test) const;
+  absl::StatusOr<ExposuresPerTestResult::Exposure> AddExposure(
+      int64 uuid, const Exposure& exposure, const ContactReport* report) const;
+
   friend class LearningObserverFactory;
   const Timestep timestep_;
   const absl::Duration reporting_delay_;
+  const HazardTransmissionModel* hazard_transmission_model_;
   std::vector<ExposuresPerTestResult::ExposureResult> results_;
 };
 
@@ -92,8 +101,10 @@ class LearningObserver : public AgentInfectionObserver {
 // the exposure responsible for infection.
 class LearningObserverFactory : public ObserverFactory<LearningObserver> {
  public:
-  LearningObserverFactory(absl::string_view learning_filename, int num_workers,
-                          const absl::Duration& reporting_delay);
+  LearningObserverFactory(
+      absl::string_view learning_filename, int num_workers,
+      const absl::Duration& reporting_delay,
+      const HazardTransmissionModel* hazard_transmission_model);
   ~LearningObserverFactory();
 
   std::unique_ptr<LearningObserver> MakeObserver(
@@ -106,6 +117,7 @@ class LearningObserverFactory : public ObserverFactory<LearningObserver> {
  private:
   riegeli::RecordWriter<RiegeliBytesSink> writer_;
   const absl::Duration reporting_delay_;
+  const HazardTransmissionModel* hazard_transmission_model_;
 };
 
 class HazardHistogramObserver : public AgentInfectionObserver {

@@ -247,10 +247,8 @@ class RiskLearningSimulation : public Simulation {
     stepwise_params.insert(stepwise_params.end(),
                            config.stepwise_params().begin(),
                            config.stepwise_params().end());
-    auto reporting_delay = DecodeGoogleApiProto(config.reporting_delay());
-    CHECK(reporting_delay.ok()) << reporting_delay.status();
-    auto result = absl::WrapUnique(new RiskLearningSimulation(
-        config, stepwise_params, *reporting_delay, num_workers));
+    auto result = absl::WrapUnique(
+        new RiskLearningSimulation(config, stepwise_params, num_workers));
 
     // Home transmissibility is impacted by current lockdown multiplier.
     std::function<float()> home_transmissibility = [sim = result.get(),
@@ -416,6 +414,19 @@ class RiskLearningSimulation : public Simulation {
     result->infectivity_model_ =
         absl::make_unique<RiskLearningInfectivityModel>(
             config.global_profile());
+
+    auto reporting_delay = DecodeGoogleApiProto(config.reporting_delay());
+    CHECK(reporting_delay.ok()) << reporting_delay.status();
+    if (!config.learning_filename().empty()) {
+      result->learning_observer_ = absl::make_unique<LearningObserverFactory>(
+          config.learning_filename(), num_workers, *reporting_delay,
+          result->transmission_model_.get());
+    }
+    if (!config.hazard_histogram_filename().empty()) {
+      result->hazard_histogram_observer_ =
+          absl::make_unique<HazardHistogramObserverFactory>(
+              config.hazard_histogram_filename());
+    }
 
     // Read in population profiles.
     absl::flat_hash_map<int, PopulationProfileData> profile_data;
@@ -602,7 +613,6 @@ class RiskLearningSimulation : public Simulation {
  private:
   RiskLearningSimulation(const RiskLearningSimulationConfig& config,
                          const std::vector<StepwiseParams>& stepwise_params,
-                         const absl::Duration& reporting_delay,
                          const int num_workers)
       : config_(config),
         stepwise_params_(stepwise_params),
@@ -610,15 +620,6 @@ class RiskLearningSimulation : public Simulation {
             [this](int64 uuid) { return location_types_[uuid]; }),
         summary_observer_(absl::make_unique<SummaryObserverFactory>(
             config.summary_filename())) {
-    if (!config.learning_filename().empty()) {
-      learning_observer_ = absl::make_unique<LearningObserverFactory>(
-          config.learning_filename(), num_workers, reporting_delay);
-    }
-    if (!config.hazard_histogram_filename().empty()) {
-      hazard_histogram_observer_ =
-          absl::make_unique<HazardHistogramObserverFactory>(
-              config.hazard_histogram_filename());
-    }
     current_lockdown_multipliers_.fill(1.0f);
   }
 

@@ -6,6 +6,7 @@ https://docs.google.com/document/d/1Ra8HrKQY-1ZigeZd8Pr4IpvOCrA2doGhypahiE6qIjw/
 
 import datetime
 import io
+import math
 import riegeli
 from agent_based_epidemic_sim.applications.risk_learning import exposures_per_test_result_pb2
 from agent_based_epidemic_sim.core import pandemic_pb2
@@ -21,6 +22,7 @@ class AbesimExposureDataLoader(object):
                selection_window_left=10,
                selection_window_right=0,
                include_instances_with_no_exposures=False,
+               compute_hazard_for_exposures=False,
                file_io=io.FileIO):
     """Initialize the Abesim exposure data loder.
 
@@ -34,6 +36,12 @@ class AbesimExposureDataLoader(object):
       selection_window_right: Days from the right selection bound to the center.
       include_instances_with_no_exposures: If true, instances will be returned
         even for those recores that have no exposures.
+      compute_hazard_for_exposures: Compute the probability of infection from
+        the recorded doses of the windowed exposures. Note that this label is
+        not available in a realistic setting, but this can be used to bound the
+        performance of learning (specifically, lower bound the loss) by using
+        the true label from the data generation process rather than the sampled
+        realization of the label.
       file_io: A method for constructing a file object for reading.
     """
     self.file_path = file_path
@@ -41,10 +49,11 @@ class AbesimExposureDataLoader(object):
     self.window_around_infection_onset_time = window_around_infection_onset_time
     self.selection_window_left = selection_window_left
     self.selection_window_right = selection_window_right
-    self.file_io = file_io
     self._include_instances_with_no_exposures = (
         include_instances_with_no_exposures
     )
+    self._compute_hazard_for_exposures = compute_hazard_for_exposures
+    self.file_io = file_io
     self.index_reader = riegeli.RecordReader(self.file_io(file_path, mode='rb'))
 
   def __del__(self):
@@ -119,6 +128,7 @@ class AbesimExposureDataLoader(object):
       else:
         raise ValueError('Invalid label: %s' % record.outcome)
       exposure_count = 0
+      sum_dose = 0
       for exposure in record.exposures:
         if (is_confirmed(exposure) or
             is_valid_unconfirmed(exposure)) and (is_contained_in_window(
@@ -148,10 +158,14 @@ class AbesimExposureDataLoader(object):
                proximity_trace_temporal_resolution_minute))
 
           exposure_count += 1
+          sum_dose += exposure.dose
       if (exposure_count == 0 and
           not self._include_instances_with_no_exposures):
         continue
       # Only add instances with valid exposures.
+      if self._compute_hazard_for_exposures:
+        scale_factor = -1
+        label = 1 - math.exp(scale_factor * sum_dose)
       batch_label_list.append(label)
       grouping_list.append(exposure_count)
 

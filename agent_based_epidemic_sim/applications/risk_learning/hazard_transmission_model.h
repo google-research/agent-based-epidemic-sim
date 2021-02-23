@@ -65,12 +65,12 @@ class HazardTransmissionModel : public TransmissionModel {
   HealthTransition GetInfectionOutcome(
       absl::Span<const Exposure* const> exposures) override;
 
- private:
   // Computes a "viral dose" which is used directly in computing the probability
   // of infection for a given Exposure.
   float ComputeDose(float distance, absl::Duration duration,
-                    const Exposure* exposure);
+                    const Exposure* exposure) const;
 
+ private:
   // TODO: Link out to actual papers or some other authoritative
   // source.
   // Typical values of lambda_ come from:

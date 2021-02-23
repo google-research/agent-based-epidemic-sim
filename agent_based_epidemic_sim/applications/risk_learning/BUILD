@@ -178,6 +178,7 @@ cc_library(
     hdrs = ["observers.h"],
     deps = [
         ":exposures_per_test_result_cc_proto",
+        ":hazard_transmission_model",
         "//agent_based_epidemic_sim/core:agent",
         "//agent_based_epidemic_sim/core:enum_indexed_array",
         "//agent_based_epidemic_sim/core:observer",
@@ -189,6 +190,7 @@ cc_library(
         "//agent_based_epidemic_sim/util:records",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/time",
@@ -201,6 +203,7 @@ cc_test(
     srcs = ["observers_test.cc"],
     deps = [
         ":exposures_per_test_result_cc_proto",
+        ":hazard_transmission_model",
         ":observers",
         "//agent_based_epidemic_sim/core:exposure_store",
         "//agent_based_epidemic_sim/core:pandemic_cc_proto",

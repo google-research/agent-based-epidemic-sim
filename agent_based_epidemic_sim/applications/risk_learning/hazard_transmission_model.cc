@@ -19,7 +19,7 @@ namespace abesim {
 // easiest to simply mirror the python implementation until it is stable.
 float HazardTransmissionModel::ComputeDose(const float distance,
                                            absl::Duration duration,
-                                           const Exposure* exposure) {
+                                           const Exposure* exposure) const {
   const float t = absl::ToDoubleMinutes(duration);
   const float fd = risk_at_distance_function_(distance);
 
