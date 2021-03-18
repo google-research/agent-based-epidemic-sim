@@ -37,6 +37,10 @@ class FileWriter {
 // Opens a file for writing. Crashes if the file already exists.
 std::unique_ptr<FileWriter> OpenOrDie(absl::string_view file_name);
 
+// Opens a file for writing.
+std::unique_ptr<FileWriter> OpenOrDie(absl::string_view file_name,
+                                      const bool fail_if_file_exists);
+
 // Gets the contents of a file.
 absl::Status GetContents(absl::string_view file_name, std::string* output);
 
