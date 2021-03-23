@@ -7,13 +7,12 @@ constexpr int kWriteFlag = O_CREAT | O_WRONLY;
 
 riegeli::RecordReader<RiegeliBytesSource> MakeRecordReader(
     absl::string_view filename) {
-  return riegeli::RecordReader<RiegeliBytesSource>(
-      std::forward_as_tuple(filename, kReadFlag));
+  return riegeli::RecordReader(RiegeliBytesSource(filename, kReadFlag));
 }
 riegeli::RecordWriter<RiegeliBytesSink> MakeRecordWriter(
     absl::string_view filename, const int parallelism) {
-  return riegeli::RecordWriter<RiegeliBytesSink>(
-      std::forward_as_tuple(filename, kWriteFlag),
+  return riegeli::RecordWriter(
+      RiegeliBytesSink(filename, kWriteFlag),
       riegeli::RecordWriterBase::Options().set_parallelism(parallelism));
 }
 
