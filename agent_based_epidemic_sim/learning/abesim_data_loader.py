@@ -94,6 +94,7 @@ class AbesimExposureDataLoader(object):
     batch_exposure_list = []
     batch_label_list = []
     grouping_list = []
+    batch_hazard_list = []
     while (len(batch_label_list) < batch_size and
            self.index_reader.pos.numeric != self.index_reader.size()):
       record = self.index_reader.read_message(
@@ -165,8 +166,12 @@ class AbesimExposureDataLoader(object):
       # Only add instances with valid exposures.
       if self._compute_hazard_for_exposures:
         scale_factor = -1
-        label = 1 - math.exp(scale_factor * sum_dose)
+        prob_infection = 1 - math.exp(scale_factor * sum_dose)
+        batch_hazard_list.append(prob_infection)
       batch_label_list.append(label)
       grouping_list.append(exposure_count)
 
-    return batch_exposure_list, batch_label_list, grouping_list
+    return_val = batch_exposure_list, batch_label_list, grouping_list
+    if self._compute_hazard_for_exposures:
+      return_val += (batch_hazard_list,)
+    return return_val

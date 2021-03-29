@@ -94,10 +94,10 @@ class RiskScoreTest : public testing::Test {
   }
 
   LearningRiskScorePolicyProto GetLearningRiskScorePolicyProto() {
-    return ParseTextProtoOrDie<LearningRiskScorePolicyProto>(R"(
+    return ParseTextProtoOrDie<LearningRiskScorePolicyProto>(R"pb(
       risk_scale_factor: 1
       exposure_notification_window_days: 3
-    )");
+    )pb");
   }
 
   TracingPolicyProto GetTracingPolicyProto(
@@ -122,7 +122,7 @@ class RiskScoreTest : public testing::Test {
   }
 
   LearningRiskScoreModelProto GetLearningRiskScoreModelProto() {
-    return ParseTextProtoOrDie<LearningRiskScoreModelProto>(R"(
+    return ParseTextProtoOrDie<LearningRiskScoreModelProto>(R"pb(
       ble_buckets: { weight: 0.1 }
       ble_buckets: { weight: 0.2 max_attenuation: 1 }
       infectiousness_buckets: {
@@ -143,7 +143,7 @@ class RiskScoreTest : public testing::Test {
         days_since_symptom_onset_min: -999
         days_since_symptom_onset_max: 999
       }
-    )");
+    )pb");
   }
 
   std::unique_ptr<RiskScore> risk_score_;

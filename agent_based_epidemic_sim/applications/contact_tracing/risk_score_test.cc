@@ -71,12 +71,12 @@ class RiskScoreTest : public testing::Test {
 
  private:
   TracingPolicyProto GetTracingPolicyProto() {
-    return ParseTextProtoOrDie<TracingPolicyProto>(R"(
+    return ParseTextProtoOrDie<TracingPolicyProto>(R"pb(
       test_validity_duration { seconds: 604800 }
       contact_retention_duration { seconds: 1209600 }
       quarantine_duration { seconds: 1209600 }
       test_latency { seconds: 86400 }
-    )");
+    )pb");
   }
 };
 

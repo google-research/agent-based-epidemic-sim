@@ -208,7 +208,7 @@ TEST_F(LearningObserverTest, RecordsAllFields) {
   PANDEMIC_ASSERT_OK(results);
   EXPECT_EQ(results.value().size(), 1);
   auto expected =
-      ParseTextProtoOrDie<ExposuresPerTestResult::ExposureResult>(R"(
+      ParseTextProtoOrDie<ExposuresPerTestResult::ExposureResult>(R"pb(
         agent_uuid: 12345
         outcome: POSITIVE
         test_administered_time { seconds: 201600 }
@@ -232,7 +232,7 @@ TEST_F(LearningObserverTest, RecordsAllFields) {
         }
         infection_onset_time { seconds: 86400 }
         hazard: 1.0
-      )");
+      )pb");
   EXPECT_EQ(results.value()[0].DebugString(), expected.DebugString());
 }  // namespace
 
