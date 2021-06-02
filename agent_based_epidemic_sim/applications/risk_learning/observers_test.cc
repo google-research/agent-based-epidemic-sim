@@ -37,6 +37,53 @@ std::unique_ptr<Agent> MakeAgentInState(HealthState::State state,
   return agent;
 }
 
+TEST(SummaryObserverTest, CreationOfSummaryObserverFactoryCanOverwriteFiles) {
+  std::string summary_filename =
+      absl::StrCat(getenv("TEST_TMPDIR"), "/", "summary");
+  { SummaryObserverFactory old_factory(summary_filename); }
+  {
+    SummaryObserverFactory factory(summary_filename);
+    Timestep timestep(absl::UnixEpoch(), absl::Hours(24));
+    std::vector<std::unique_ptr<SummaryObserver>> observers;
+    observers.push_back(factory.MakeObserver(timestep));
+    observers.push_back(factory.MakeObserver(timestep));
+    auto add_agents = [&observers](HealthState::State state, int n,
+                                   const Timestep& timestep) {
+      auto agent = MakeAgentInState(state, timestep);
+      for (int i = 0; i < n; ++i) {
+        observers[i % 2]->Observe(*agent, {});
+      }
+    };
+    for (int i = 0; i < SummaryObserverFactory::kOutputStates.size(); ++i) {
+      add_agents(SummaryObserverFactory::kOutputStates[i],
+                 SummaryObserverFactory::kOutputStates.size() - i, timestep);
+    }
+    factory.Aggregate(timestep, observers);
+
+    auto first_timestep = timestep;
+    timestep.Advance();
+    observers.clear();
+    observers.push_back(factory.MakeObserver(timestep));
+    observers.push_back(factory.MakeObserver(timestep));
+    for (int i = 0; i < SummaryObserverFactory::kOutputStates.size(); ++i) {
+      add_agents(SummaryObserverFactory::kOutputStates[i], i + 1,
+                 i % 2 ? first_timestep : timestep);
+    }
+    factory.Aggregate(timestep, observers);
+  }
+  std::string output;
+  PANDEMIC_ASSERT_OK(file::GetContents(summary_filename, &output));
+  EXPECT_EQ(output,
+            "DATE, SUSCEPTIBLE, ASYMPTOMATIC, PRE_SYMPTOMATIC_MILD, "
+            "PRE_SYMPTOMATIC_SEVERE, SYMPTOMATIC_MILD, SYMPTOMATIC_SEVERE, "
+            "SYMPTOMATIC_HOSPITALIZED, SYMPTOMATIC_CRITICAL, "
+            "SYMPTOMATIC_HOSPITALIZED_RECOVERING, RECOVERED, REMOVED, "
+            "NEWLY_SYMPTOMATIC_MILD, NEWLY_SYMPTOMATIC_SEVERE, "
+            "NEWLY_TEST_POSITIVE\n"
+            "1970-01-01, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 7, 6, 25\n"
+            "1970-01-02, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 5, 0, 21\n");
+}
+
 TEST(SummaryObserverTest, RecordsOutputSuccessfully) {
   std::string summary_filename =
       absl::StrCat(getenv("TEST_TMPDIR"), "/", "summary");

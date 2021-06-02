@@ -51,8 +51,15 @@ class FileWriterImpl : public FileWriter {
 }  // namespace
 
 std::unique_ptr<FileWriter> OpenOrDie(absl::string_view file_name) {
-  CHECK(!std::filesystem::exists(file_name))
-      << "File already exists: " << file_name;
+  return OpenOrDie(file_name, /*fail_if_file_exists=*/true);
+}
+
+std::unique_ptr<FileWriter> OpenOrDie(absl::string_view file_name,
+                                      const bool fail_if_file_exists) {
+  if (fail_if_file_exists) {
+    CHECK(!std::filesystem::exists(file_name))
+        << "File already exists: " << file_name;
+  }
   std::ofstream ofstream((std::string(file_name)));
   return absl::make_unique<FileWriterImpl>(std::move(ofstream));
 }

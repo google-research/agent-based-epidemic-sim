@@ -56,7 +56,8 @@ void SummaryObserver::Observe(const Agent& agent,
 
 SummaryObserverFactory::SummaryObserverFactory(
     absl::string_view summary_filename)
-    : writer_(file::OpenOrDie(summary_filename)), header_(BuildHeader()) {
+    : writer_(file::OpenOrDie(summary_filename, /*fail_if_file_exists=*/false)),
+      header_(BuildHeader()) {
   absl::Status status = writer_->WriteString(header_);
   if (!status.ok()) LOG(ERROR) << status;
 }
