@@ -106,6 +106,14 @@ cd agent_based_epidemic_sim/configuration_generator
 python3 -m unittest
 ```
 
+## Risk Score Learning
+Jupyter Notebooks for learning risk score models on data sampled from a
+discrete grid on \[Infectiousness x Distance x Duration\] are available under
+`agent_based_epidemic_sim/learning`. Notebook to reproduce the experiments
+in [Murphy et al, Risk score learning for COVID-19 contact tracing apps,
+2021][5] is available at
+`agent_based_epidemic_sim/learning/MLHC_paper_experiments.ipynb`.
+
 ## Acknowledgements
 
 The computational model used by the simulator is inspired in part by the
@@ -126,3 +134,4 @@ and can be reached at [marathe@virginia.edu][4].
 [2]: https://github.com/BDI-pathogens/OpenABM-Covid19
 [3]: https://github.com/GoogleCloudPlatform/covid-19-open-data
 [4]: mailto:marathe@virginia.edu
+[5]: https://arxiv.org/abs/2104.08415
