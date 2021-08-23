@@ -15,6 +15,8 @@
 
 namespace abesim {
 
+// NO OP.
+
 // TODO: Fix variable naming in this implementation. For now it is
 // easiest to simply mirror the python implementation until it is stable.
 float HazardTransmissionModel::ComputeDose(const float distance,

@@ -1,6 +1,6 @@
 absl-py
 jax
-jaxlib==0.1
+jaxlib @ https://storage.googleapis.com/jax-releases/cuda110/jaxlib-0.1.70+cuda110-cp37-none-manylinux2010_x86_64.whl
 numpy
 pandas
 scipy
