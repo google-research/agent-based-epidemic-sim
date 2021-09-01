@@ -3,25 +3,18 @@ workspace(name = "agent_based_epidemic_sim")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 http_archive(
     name = "rules_python",
-    url = "https://github.com/bazelbuild/rules_python/releases/download/0.0.2/rules_python-0.0.2.tar.gz",
-    strip_prefix = "rules_python-0.0.2",
-    sha256 = "b5668cde8bb6e3515057ef465a35ad712214962f0b3a314e551204266c7be90c",
+    url = "https://github.com/bazelbuild/rules_python/releases/download/0.3.0/rules_python-0.3.0.tar.gz",
+    sha256 = "934c9ceb552e84577b0faf1e5a2f0450314985b4d8712b2b70717dc679fdc01b",
 )
 
-load("@rules_python//python:pip.bzl", "pip_repositories", "pip3_import")
-pip_repositories()
+load("@rules_python//python:pip.bzl", "pip_install")
 
 # Create a central repo that knows about the dependencies needed for
 # requirements.txt.
-pip3_import(
+pip_install(
     name = "pip",
     requirements = "//agent_based_epidemic_sim/learning:requirements.txt",
 )
-
-# Load the central repo's install function from its `//:requirements.bzl` file,
-# and call it.
-load("@pip//:requirements.bzl", "pip_install")
-pip_install()
 
 skylib_version = "0.9.0"
 http_archive(
@@ -91,19 +84,14 @@ http_archive(
 )
 http_archive(
     name = "org_brotli",
-    sha256 = "6e69be238ff61cef589a3fa88da11b649c7ff7a5932cb12d1e6251c8c2e17a2f",
-    strip_prefix = "brotli-1.0.7",
+    sha256 = "fec5a1d26f3dd102c542548aaa704f655fecec3622a24ec6e97768dcb3c235ff",
+    strip_prefix = "brotli-68f1b90ad0d204907beb58304d0bd06391001a4d",
     urls = [
-        "https://mirror.bazel.build/github.com/google/brotli/archive/v1.0.7.zip",
-        "https://github.com/google/brotli/archive/v1.0.7.zip",  # 2018-10-23
-    ],
-    patches = [
-        "@//third_party:org_brotli_no_wconversion.diff"
-    ],
-    patch_args = [
-        "-p1",
+        "https://mirror.bazel.build/github.com/google/brotli/archive/68f1b90ad0d204907beb58304d0bd06391001a4d.zip",
+        "https://github.com/google/brotli/archive/68f1b90ad0d204907beb58304d0bd06391001a4d.zip",  # 2021-08-18
     ],
 )
+
 http_archive(
     name = "snappy",
     build_file = "//third_party:snappy.BUILD",
