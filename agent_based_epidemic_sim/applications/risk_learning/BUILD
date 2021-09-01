@@ -73,7 +73,6 @@ cc_library(
         "hazard_transmission_model.h",
     ],
     deps = [
-        "//agent_based_epidemic_sim/agent_synthesis:population_profile_cc_proto",
         "//agent_based_epidemic_sim/core:constants",
         "//agent_based_epidemic_sim/core:event",
         "//agent_based_epidemic_sim/core:integral_types",
@@ -82,9 +81,10 @@ cc_library(
         "//agent_based_epidemic_sim/core:transmission_model",
         "//agent_based_epidemic_sim/port:logging",
         "@com_google_absl//absl/memory",
-        "@com_google_absl//absl/random",
+        "@com_google_absl//absl/random:bit_gen_ref",
         "@com_google_absl//absl/random:distributions",
         "@com_google_absl//absl/time",
+        "@com_google_absl//absl/types:optional",
         "@com_google_absl//absl/types:span",
     ],
 )
@@ -97,9 +97,10 @@ cc_test(
     deps = [
         ":hazard_transmission_model",
         "//agent_based_epidemic_sim/core:event",
-        "//agent_based_epidemic_sim/core:random",
         "//agent_based_epidemic_sim/core:visit",
         "//agent_based_epidemic_sim/util:test_util",
+        "@com_google_absl//absl/random:mock_distributions",
+        "@com_google_absl//absl/random:mocking_bit_gen",
         "@com_google_absl//absl/time",
         "@com_google_googletest//:gtest_main",
     ],

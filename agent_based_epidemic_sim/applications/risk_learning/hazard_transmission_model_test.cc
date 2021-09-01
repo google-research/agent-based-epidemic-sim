@@ -14,6 +14,8 @@
 
 #include "agent_based_epidemic_sim/applications/risk_learning/hazard_transmission_model.h"
 
+#include "absl/random/mock_distributions.h"
+#include "absl/random/mocking_bit_gen.h"
 #include "absl/time/time.h"
 #include "agent_based_epidemic_sim/core/event.h"
 #include "agent_based_epidemic_sim/core/visit.h"
@@ -99,8 +101,7 @@ TEST(HazardTransmissionModelTest, GetsInfectionOutcomes) {
                                   .health_state = HealthState::SUSCEPTIBLE}));
 }
 
-TEST(HazardTransmissionModelTest,
-     GetsInfectionOutcomesWithDefaultRiskDistance) {
+TEST(HazardTransmissionModelTest, GetsInfectionOutcomesWithCloseDistance) {
   HazardTransmissionModel transmission_model;
 
   std::vector<Exposure> exposures{{
@@ -115,8 +116,15 @@ TEST(HazardTransmissionModelTest,
   EXPECT_THAT(transmission_model.GetInfectionOutcome(MakePointers(exposures)),
               Eq(HealthTransition{.time = absl::UnixEpoch() + kLongDuration,
                                   .health_state = HealthState::EXPOSED}));
+}
 
-  exposures = {{
+TEST(HazardTransmissionModelTest, GetsInfectionOutcomesWithFarDistance) {
+  absl::MockingBitGen mock_bitgen;
+  HazardTransmissionModel transmission_model(
+      HazardTransmissionOptions(),
+      [](const float, const absl::Time) { return; }, mock_bitgen);
+
+  std::vector<Exposure> exposures{{
       .duration = kLongDuration,
       .distance = kFarDistance,
       .infectivity = 1,
@@ -124,6 +132,10 @@ TEST(HazardTransmissionModelTest,
       .susceptibility = 1,
       .location_transmissibility = 1,
   }};
+
+  EXPECT_CALL(absl::MockBernoulli(), Call(mock_bitgen, testing::_))
+      .WillOnce(testing::Return(false));
+
   EXPECT_THAT(transmission_model.GetInfectionOutcome(MakePointers(exposures)),
               Eq(HealthTransition{.time = absl::UnixEpoch() + kLongDuration,
                                   .health_state = HealthState::SUSCEPTIBLE}));

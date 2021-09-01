@@ -22,6 +22,8 @@
 #include <type_traits>
 
 #include "absl/memory/memory.h"
+#include "absl/random/bit_gen_ref.h"
+#include "absl/types/optional.h"
 #include "agent_based_epidemic_sim/core/constants.h"
 #include "agent_based_epidemic_sim/core/event.h"
 #include "agent_based_epidemic_sim/core/timestep.h"
@@ -55,11 +57,13 @@ class HazardTransmissionModel : public TransmissionModel {
   HazardTransmissionModel(
       HazardTransmissionOptions options = HazardTransmissionOptions(),
       std::function<void(const float, const absl::Time)> hazard_callback =
-          [](const float, const absl::Time) { return; })
+          [](const float, const absl::Time) { return; },
+      absl::optional<absl::BitGenRef> bitgen = absl::nullopt)
       : lambda_(options.lambda),
         hazard_callback_(std::move(hazard_callback)),
         risk_at_distance_function_(
-            std::move(options.risk_at_distance_function)) {}
+            std::move(options.risk_at_distance_function)),
+        bitgen_(bitgen) {}
 
   // Computes the infection outcome given exposures.
   HealthTransition GetInfectionOutcome(
@@ -81,6 +85,7 @@ class HazardTransmissionModel : public TransmissionModel {
   std::function<void(float, absl::Time)> hazard_callback_;
   // Generates a risk dosage for a given distance.
   std::function<float(float)> risk_at_distance_function_;
+  absl::optional<absl::BitGenRef> bitgen_;
 };
 
 class Hazard {

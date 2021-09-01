@@ -56,13 +56,16 @@ HealthTransition HazardTransmissionModel::GetInfectionOutcome(
       }
     }
   }
+
   const float prob_infection = 1 - std::exp(-lambda_ * sum_dose);
   hazard_callback_(prob_infection, latest_exposure_time);
   HealthTransition health_transition;
   health_transition.time = latest_exposure_time;
-  health_transition.health_state = absl::Bernoulli(GetBitGen(), prob_infection)
-                                       ? HealthState::EXPOSED
-                                       : HealthState::SUSCEPTIBLE;
+  health_transition.health_state =
+      absl::Bernoulli(bitgen_.has_value() ? bitgen_.value() : GetBitGen(),
+                      prob_infection)
+          ? HealthState::EXPOSED
+          : HealthState::SUSCEPTIBLE;
   return health_transition;
 }
 }  // namespace abesim
