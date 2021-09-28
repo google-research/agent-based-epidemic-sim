@@ -125,8 +125,6 @@ absl::StatusOr<ExposuresPerTestResult::Exposure> LearningObserver::AddExposure(
   e.set_distance(exposure.distance);
   e.set_attenuation(exposure.attenuation);
   e.set_infectivity(exposure.infectivity);
-  LOG(INFO) << hazard_transmission_model_->ComputeDose(
-      exposure.distance, exposure.duration, &exposure);
   e.set_dose(hazard_transmission_model_->ComputeDose(
       exposure.distance, exposure.duration, &exposure));
   if (report != nullptr && report->initial_symptom_onset_time.has_value()) {
