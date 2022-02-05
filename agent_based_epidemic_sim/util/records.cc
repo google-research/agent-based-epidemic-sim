@@ -1,5 +1,7 @@
 #include "agent_based_epidemic_sim/util/records.h"
 
+#include <fcntl.h>
+
 namespace abesim {
 
 constexpr int kReadFlag = O_RDONLY;
