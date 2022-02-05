@@ -180,7 +180,7 @@ class RepeatedEnumView {
  public:
   class Iterator : public std::iterator<std::input_iterator_tag, E> {
    public:
-    explicit Iterator(const int* ptr) : ptr_(ptr) {}
+    explicit Iterator(RepeatedField<int>::const_iterator ptr) : ptr_(ptr) {}
     bool operator==(const Iterator& it) const { return ptr_ == it.ptr_; }
     bool operator!=(const Iterator& it) const { return ptr_ != it.ptr_; }
     Iterator& operator++() {
@@ -190,7 +190,7 @@ class RepeatedEnumView {
     E operator*() const { return static_cast<E>(*ptr_); }
 
    private:
-    const int* ptr_;
+    RepeatedField<int>::const_iterator ptr_;
   };
 
   explicit RepeatedEnumView(const RepeatedField<int>& repeated_field)
