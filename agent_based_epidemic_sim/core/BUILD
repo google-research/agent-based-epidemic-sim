@@ -329,6 +329,11 @@ cc_test(
     srcs = [
         "location_discrete_event_simulator_test.cc",
     ],
+    # copybara:comment_begin
+    tags = [
+        "optonly",
+    ],
+    # copybara:comment_end
     deps = [
         ":broker",
         ":event",
