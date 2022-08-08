@@ -26,24 +26,6 @@ http_archive(
 load("@bazel_skylib//lib:versions.bzl", "versions")
 versions.check(minimum_bazel_version = "2.0.0")
 
-
-# ABSL cpp library, the latest lts release is not new enough for riegeli, so
-# we use master.
-http_archive(
-    name = "com_google_absl",
-    urls = [
-        "https://github.com/abseil/abseil-cpp/archive/master.zip"
-    ],
-    # Remove after https://github.com/abseil/abseil-cpp/issues/326 is solved.
-    patches = [
-        "@//third_party:com_google_absl_f863b622fe13612433fdf43f76547d5edda0c93001.diff"
-    ],
-    patch_args = [
-        "-p1",
-    ],
-    strip_prefix = "abseil-cpp-master",
-)
-
 http_archive(
     name = "six_archive",
     build_file = "//third_party:six.BUILD",
@@ -124,16 +106,35 @@ http_archive(
 )
 
 http_archive(
-    name = "rules_cc",
-    strip_prefix = "rules_cc-main",
-    urls = ["https://github.com/bazelbuild/rules_cc/archive/main.zip"],
+    name = "com_google_absl",
+    urls = [
+        "https://github.com/abseil/abseil-cpp/archive/refs/tags/20210324.2.tar.gz",
+    ],
+    # Remove after https://github.com/abseil/abseil-cpp/issues/326 is solved.
+    patches = [
+        "@//third_party:com_google_absl_f863b622fe13612433fdf43f76547d5edda0c93001.diff"
+    ],
+    patch_args = [
+        "-p1",
+    ],
+    strip_prefix = "abseil-cpp-20210324.2",
+    sha256 = "59b862f50e710277f8ede96f083a5bb8d7c9595376146838b9580be90374ee1f"
 )
 
 # GoogleTest/GoogleMock framework. Used by most unit-tests.
+# Last updated 2021-07-02.
 http_archive(
-     name = "com_google_googletest",
-     urls = ["https://github.com/google/googletest/archive/master.zip"],
-     strip_prefix = "googletest-main",
+    name = "com_google_googletest",
+    urls = ["https://github.com/google/googletest/archive/4ec4cd23f486bf70efcc5d2caa40f24368f752e3.zip"],
+    strip_prefix = "googletest-4ec4cd23f486bf70efcc5d2caa40f24368f752e3",
+    sha256 = "de682ea824bfffba05b4e33b67431c247397d6175962534305136aa06f92e049",
+)
+
+http_archive(
+    name = "rules_cc",
+    strip_prefix = "rules_cc-2f8c04c04462ab83c545ab14c0da68c3b4c96191",
+    # The commit can be updated if the build passes. Last updated 6/23/22.
+    urls = ["https://github.com/bazelbuild/rules_cc/archive/2f8c04c04462ab83c545ab14c0da68c3b4c96191.zip"],
 )
 
 # gflags needed by glog
