@@ -1,5 +1,7 @@
 # Libraries for contact tracing simulation.
 
+package(default_applicable_licenses = ["//agent_based_epidemic_sim:license"])
+
 licenses(["notice"])
 
 proto_library(

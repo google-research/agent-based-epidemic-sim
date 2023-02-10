@@ -1,9 +1,12 @@
 # Packages for the simplified home-work simulation application.
 licenses(["notice"])
 
-package(default_visibility = [
-    "//agent_based_epidemic_sim:internal",
-])
+package(
+    default_applicable_licenses = ["//agent_based_epidemic_sim:license"],
+    default_visibility = [
+        "//agent_based_epidemic_sim:internal",
+    ],
+)
 
 proto_library(
     name = "config_proto",

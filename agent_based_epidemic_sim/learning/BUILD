@@ -14,6 +14,8 @@
 load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
 load("@pip//:requirements.bzl", "requirement")
 
+package(default_applicable_licenses = ["//agent_based_epidemic_sim:license"])
+
 licenses(["notice"])
 
 py_binary(

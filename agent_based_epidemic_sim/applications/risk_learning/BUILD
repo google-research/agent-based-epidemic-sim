@@ -16,9 +16,12 @@
 
 load("@com_google_protobuf//:protobuf.bzl", "py_proto_library")
 
-package(default_visibility = [
-    "//agent_based_epidemic_sim:internal",
-])
+package(
+    default_applicable_licenses = ["//agent_based_epidemic_sim:license"],
+    default_visibility = [
+        "//agent_based_epidemic_sim:internal",
+    ],
+)
 
 licenses(["notice"])
 

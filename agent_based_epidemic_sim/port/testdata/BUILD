@@ -2,7 +2,10 @@
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
+package(
+    default_applicable_licenses = ["//agent_based_epidemic_sim:license"],
+    default_visibility = ["//visibility:public"],
+)
 
 proto_library(
     name = "enum_enumeration_proto",
