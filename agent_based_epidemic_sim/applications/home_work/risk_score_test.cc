@@ -33,7 +33,7 @@ absl::Time TestDay(int day) {
 std::vector<float> FrequencyAdjustments(
     const ToggleRiskScoreGenerator* const gen, const float essentialness,
     const LocationReference::Type type, const std::vector<int>& days) {
-  int64 location_uuid = type == LocationReference::BUSINESS ? 0 : 1;
+  int64_t location_uuid = type == LocationReference::BUSINESS ? 0 : 1;
   auto risk_score = gen->GetRiskScore(essentialness);
 
   std::vector<float> adjustments;
@@ -75,7 +75,7 @@ TEST(PublicPolicyTest, AppropriateFrequencyAdjustments) {
   DistancingPolicy config =
       BuildPolicy({{10, .6}, {3, .2}, {20, 1.0}, {15, .2}});
   auto generator_or =
-      NewRiskScoreGenerator(config, [](const int64 location_uuid) {
+      NewRiskScoreGenerator(config, [](const int64_t location_uuid) {
         return location_uuid == 0 ? LocationReference::BUSINESS
                                   : LocationReference::HOUSEHOLD;
       });
@@ -112,7 +112,7 @@ TEST(PublicPolicyTest, AppropriateFrequencyAdjustments) {
 TEST(PublicPolicyTest, ZeroStagePolicy) {
   DistancingPolicy config;
   auto generator_or =
-      NewRiskScoreGenerator(config, [](const int64 location_uuid) {
+      NewRiskScoreGenerator(config, [](const int64_t location_uuid) {
         return location_uuid == 0 ? LocationReference::BUSINESS
                                   : LocationReference::HOUSEHOLD;
       });
