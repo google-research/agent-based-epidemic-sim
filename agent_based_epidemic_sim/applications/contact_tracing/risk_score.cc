@@ -77,8 +77,8 @@ class TracingRiskScore : public RiskScore {
     RequestTest(request_time);
   }
 
-  VisitAdjustment GetVisitAdjustment(const Timestep& timestep,
-                                     const int64 location_uuid) const override {
+  VisitAdjustment GetVisitAdjustment(
+      const Timestep& timestep, const int64_t location_uuid) const override {
     const bool skip_visit =
         location_type_(location_uuid) != LocationReference::HOUSEHOLD &&
         (ShouldQuarantineFromContacts(timestep));

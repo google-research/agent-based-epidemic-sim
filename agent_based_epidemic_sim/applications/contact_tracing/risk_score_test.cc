@@ -40,7 +40,7 @@ absl::Time TimeFromDay(const int day) { return TimeFromDayAndHour(day, 0); }
 std::vector<float> FrequencyAdjustments(RiskScore& risk_score,
                                         absl::Span<const Exposure> exposures,
                                         const LocationReference::Type type) {
-  int64 location_uuid = type == LocationReference::BUSINESS ? 0 : 1;
+  int64_t location_uuid = type == LocationReference::BUSINESS ? 0 : 1;
 
   auto exposure = exposures.begin();
   std::vector<float> adjustments;
@@ -62,7 +62,7 @@ class RiskScoreTest : public testing::Test {
  protected:
   std::unique_ptr<RiskScore> GetRiskScore() {
     auto risk_score_or = CreateTracingRiskScore(
-        GetTracingPolicyProto(), [](const int64 location_uuid) {
+        GetTracingPolicyProto(), [](const int64_t location_uuid) {
           return location_uuid == 0 ? LocationReference::BUSINESS
                                     : LocationReference::HOUSEHOLD;
         });
