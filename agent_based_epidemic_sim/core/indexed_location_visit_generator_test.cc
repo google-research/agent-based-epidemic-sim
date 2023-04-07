@@ -27,7 +27,7 @@ absl::Duration VisitDuration(const Visit& visit) {
 }
 
 TEST(IndexedLocationVisitGeneratorTest, GeneratesVisits) {
-  std::vector<int64> location_uuids{0LL, 1LL, 2LL};
+  std::vector<int64_t> location_uuids{0LL, 1LL, 2LL};
   IndexedLocationVisitGenerator visit_generator(location_uuids);
   auto risk_score = NewNullRiskScore();
 

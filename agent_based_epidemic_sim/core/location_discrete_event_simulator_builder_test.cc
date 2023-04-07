@@ -23,7 +23,7 @@ namespace {
 
 class MockUuidGenerator : public UuidGenerator {
  public:
-  MOCK_METHOD(int64, GenerateUuid, (), (const, override));
+  MOCK_METHOD(int64_t, GenerateUuid, (), (const, override));
 };
 
 TEST(LocationDiscreteEventSimulatorBuilderTest, BuildsAgents) {

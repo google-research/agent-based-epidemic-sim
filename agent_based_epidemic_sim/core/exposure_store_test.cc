@@ -17,11 +17,11 @@ absl::Time TestHour(int day, int hour) {
   return TestDay(day) + absl::Hours(hour);
 }
 
-std::vector<InfectionOutcome> Outcomes(int day, std::vector<int64> uuids) {
+std::vector<InfectionOutcome> Outcomes(int day, std::vector<int64_t> uuids) {
   std::vector<InfectionOutcome> outcomes;
   const absl::Duration duration = absl::Hours(1);
   absl::Time start = TestDay(day);
-  for (int64 uuid : uuids) {
+  for (int64_t uuid : uuids) {
     outcomes.push_back({.exposure = {.start_time = start, .duration = duration},
                         .source_uuid = uuid});
     start += duration;
@@ -32,7 +32,7 @@ std::vector<InfectionOutcome> Outcomes(int day, std::vector<int64> uuids) {
 TEST(ExposureStoreTest, AddsAndRemovesExposures) {
   ExposureStore store;
 
-  auto get_notification_exposures = [&store](int64 uuid) {
+  auto get_notification_exposures = [&store](int64_t uuid) {
     ContactReport report = {.from_agent_uuid = uuid};
     std::vector<absl::Time> times;
     store.ProcessNotification(report, [&times](const Exposure& exposure) {
@@ -55,8 +55,8 @@ TEST(ExposureStoreTest, AddsAndRemovesExposures) {
   EXPECT_EQ(store.size(), 9);
 
   auto get_agents = [&store](absl::Time since) {
-    std::vector<int64> agents;
-    store.PerAgent(since, [&agents](int64 uuid) { agents.push_back(uuid); });
+    std::vector<int64_t> agents;
+    store.PerAgent(since, [&agents](int64_t uuid) { agents.push_back(uuid); });
     return agents;
   };
   EXPECT_THAT(get_agents(TestDay(2)),
@@ -66,16 +66,17 @@ TEST(ExposureStoreTest, AddsAndRemovesExposures) {
   EXPECT_THAT(get_agents(TestDay(4)), testing::UnorderedElementsAre(11, 12));
 
   auto get_exposures = [&store](absl::Time since) {
-    std::vector<std::tuple<int64, absl::Time, int64>> exposures;
-    store.PerExposure(since, [&exposures](int64 uuid, const Exposure& exposure,
-                                          const ContactReport* report) {
-      int64 from = report != nullptr ? report->from_agent_uuid : -1;
-      exposures.push_back({uuid, exposure.start_time, from});
-    });
+    std::vector<std::tuple<int64_t, absl::Time, int64_t>> exposures;
+    store.PerExposure(
+        since, [&exposures](int64_t uuid, const Exposure& exposure,
+                            const ContactReport* report) {
+          int64_t from = report != nullptr ? report->from_agent_uuid : -1;
+          exposures.push_back({uuid, exposure.start_time, from});
+        });
     return exposures;
   };
   {
-    std::vector<std::tuple<int64, absl::Time, int64>> expected = {
+    std::vector<std::tuple<int64_t, absl::Time, int64_t>> expected = {
         {10, TestHour(2, 0), -1},  //
         {13, TestHour(2, 1), -1},  //
         {11, TestHour(2, 2), 11},  //
@@ -90,7 +91,7 @@ TEST(ExposureStoreTest, AddsAndRemovesExposures) {
                 testing::UnorderedElementsAreArray(expected));
   }
   {
-    std::vector<std::tuple<int64, absl::Time, int64>> expected = {
+    std::vector<std::tuple<int64_t, absl::Time, int64_t>> expected = {
         {10, TestHour(3, 1), -1},  //
         {11, TestHour(4, 0), 11},  //
         {12, TestHour(4, 1), -1},  //

@@ -43,7 +43,7 @@ const ProximityTrace kFarProximityTrace({kFarProximity});
 using testing::UnorderedElementsAreArray;
 
 std::vector<InfectionOutcome> InfectionOutcomesFromContacts(
-    const absl::Span<const Contact> contacts, const int64 uuid) {
+    const absl::Span<const Contact> contacts, const int64_t uuid) {
   std::vector<InfectionOutcome> infection_outcomes;
   for (const Contact& contact : contacts) {
     infection_outcomes.push_back(
@@ -56,7 +56,7 @@ std::vector<InfectionOutcome> InfectionOutcomesFromContacts(
 }
 
 TEST(LocationDiscreteEventSimulatorTest, ContactTracing) {
-  const int64 kUuid = 42LL;
+  const int64_t kUuid = 42LL;
   std::vector<Visit> visits{Visit{.location_uuid = 42LL,
                                   .agent_uuid = 0LL,
                                   .start_time = absl::FromUnixSeconds(0LL),
@@ -180,7 +180,7 @@ TEST(LocationDiscreteEventSimulatorTest, ContactTracing) {
 
 TEST(LocationDiscreteEventSimulatorTest, ProcessVisitsRejectsWrongUuid) {
   auto infection_broker = absl::make_unique<MockBroker<InfectionOutcome>>();
-  const int64 kUuid = 42LL;
+  const int64_t kUuid = 42LL;
   std::vector<Visit> visits{Visit{.location_uuid = 314LL,
                                   .agent_uuid = 0LL,
                                   .start_time = absl::FromUnixSeconds(0LL),
@@ -195,7 +195,7 @@ TEST(LocationDiscreteEventSimulatorTest, ProcessVisitsRejectsWrongUuid) {
 TEST(LocationDiscreteEventSimulatorTest,
      ProcessVisitsRejectsStartTimeNotBeforeEndTime) {
   auto infection_broker = absl::make_unique<MockBroker<InfectionOutcome>>();
-  const int64 kUuid = 42LL;
+  const int64_t kUuid = 42LL;
   std::vector<Visit> visits{Visit{.location_uuid = kUuid,
                                   .agent_uuid = 0LL,
                                   .start_time = absl::FromUnixSeconds(0LL),
