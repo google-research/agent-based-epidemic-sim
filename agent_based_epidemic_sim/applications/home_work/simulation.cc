@@ -54,15 +54,15 @@ constexpr char kHouseholdSizeProbability[] = "household_size_probability";
 constexpr char kDistancingStageStart[] = "distancing_stage_start";
 constexpr char kDistancingStageFraction[] =
     "distancing_stage_essential_workers";
-constexpr int64 kPopulationProfileId = 0;
+constexpr int64_t kPopulationProfileId = 0;
 constexpr char kTopBusiness[] = "top_business_size";
 constexpr int kNumTopBusinesses = 5;
 }  // namespace
 
 namespace {
 
-int64 GetLocationUuidForTypeOrDie(const AgentProto& agent,
-                                  const LocationReference::Type type) {
+int64_t GetLocationUuidForTypeOrDie(const AgentProto& agent,
+                                    const LocationReference::Type type) {
   for (const auto& location : agent.locations()) {
     if (location.type() == type) {
       return location.uuid();
@@ -175,7 +175,7 @@ SimulationContext GetSimulationContext(const HomeWorkSimulationConfig& config) {
   LOG(INFO) << "Building agents and locations from config: "
             << config.DebugString();
   // Samples the locations and agents.
-  const int64 kUuidShard = 0LL;
+  const int64_t kUuidShard = 0LL;
   SimulationContext context;
   std::vector<LocationProto>& locations = context.locations;
   auto uuid_generator =
@@ -217,7 +217,7 @@ SimulationContext GetSimulationContext(const HomeWorkSimulationConfig& config) {
   for (int i = 0; i < config.population_size(); ++i) {
     context.agents.push_back(sampler.Next());
   }
-  absl::flat_hash_set<int64> business_uuids;
+  absl::flat_hash_set<int64_t> business_uuids;
   std::for_each(
       context.locations.begin(), context.locations.end(),
       [&business_uuids](const auto& location) {
@@ -226,7 +226,7 @@ SimulationContext GetSimulationContext(const HomeWorkSimulationConfig& config) {
         }
       });
   context.location_type = [business_uuids =
-                               std::move(business_uuids)](int64 uuid) {
+                               std::move(business_uuids)](int64_t uuid) {
     return business_uuids.contains(uuid) ? LocationReference::BUSINESS
                                          : LocationReference::HOUSEHOLD;
   };

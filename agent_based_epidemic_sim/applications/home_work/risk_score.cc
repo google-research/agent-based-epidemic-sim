@@ -45,8 +45,8 @@ class TogglingRiskScore : public RiskScore {
   void AddExposureNotification(const Exposure& exposure,
                                const ContactReport& notification) override {}
 
-  VisitAdjustment GetVisitAdjustment(const Timestep& timestep,
-                                     const int64 location_uuid) const override {
+  VisitAdjustment GetVisitAdjustment(
+      const Timestep& timestep, const int64_t location_uuid) const override {
     return {
         .frequency_adjustment =
             SkipVisit(timestep, location_uuid) ? 0.0f : 1.0f,
@@ -76,7 +76,7 @@ class TogglingRiskScore : public RiskScore {
   void RequestTest(absl::Time time) override {}
 
  private:
-  bool SkipVisit(const Timestep& timestep, const int64 location_uuid) const {
+  bool SkipVisit(const Timestep& timestep, const int64_t location_uuid) const {
     if (location_type_(location_uuid) != LocationReference::BUSINESS) {
       return false;
     }
