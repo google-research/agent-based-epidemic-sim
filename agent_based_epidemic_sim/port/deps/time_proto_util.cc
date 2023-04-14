@@ -66,8 +66,8 @@ absl::Status Validate(const google::protobuf::Timestamp& t) {
 absl::Status EncodeGoogleApiProto(absl::Duration d,
                                   google::protobuf::Duration* proto) {
   // s and n may both be negative, per the Duration proto spec.
-  const int64 s = absl::IDivDuration(d, absl::Seconds(1), &d);
-  const int64 n = absl::IDivDuration(d, absl::Nanoseconds(1), &d);
+  const int64_t s = absl::IDivDuration(d, absl::Seconds(1), &d);
+  const int64_t n = absl::IDivDuration(d, absl::Nanoseconds(1), &d);
   proto->set_seconds(s);
   proto->set_nanos(n);
   return Validate(*proto);
@@ -75,7 +75,7 @@ absl::Status EncodeGoogleApiProto(absl::Duration d,
 
 absl::Status EncodeGoogleApiProto(absl::Time t,
                                   google::protobuf::Timestamp* proto) {
-  const int64 s = absl::ToUnixSeconds(t);
+  const int64_t s = absl::ToUnixSeconds(t);
   proto->set_seconds(s);
   proto->set_nanos((t - absl::FromUnixSeconds(s)) / absl::Nanoseconds(1));
   return Validate(*proto);
