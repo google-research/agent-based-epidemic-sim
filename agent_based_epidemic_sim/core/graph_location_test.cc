@@ -50,7 +50,7 @@ class FakeExposureGenerator : public ExposureGenerator {
 
 static constexpr int kLocationUUID = 1;
 
-Visit GenerateVisit(int64 agent, HealthState::State health_state,
+Visit GenerateVisit(int64_t agent, HealthState::State health_state,
                     int random_location_edges = 1) {
   return {
       .location_uuid = kLocationUUID,
@@ -62,8 +62,8 @@ Visit GenerateVisit(int64 agent, HealthState::State health_state,
           .random_location_edges = random_location_edges,
       }};
 }
-InfectionOutcome ExpectedOutcome(int64 agent, int64 source, float infectivity,
-                                 float transmissibility) {
+InfectionOutcome ExpectedOutcome(int64_t agent, int64_t source,
+                                 float infectivity, float transmissibility) {
   return {
       .agent_uuid = agent,
       .exposure =
@@ -124,7 +124,7 @@ TEST(GraphLocationTest, AllSamplesDropped) {
 }
 
 TEST(AgentUuidsFromRandomLocationVisits, Basic) {
-  std::vector<int64> agent_uuids;
+  std::vector<int64_t> agent_uuids;
   internal::AgentUuidsFromRandomLocationVisits(
       {
           GenerateVisit(0, HealthState::SUSCEPTIBLE, 2),
@@ -142,7 +142,7 @@ TEST(AgentUuidsFromRandomLocationVisits, Basic) {
 
 TEST(AgentUuidsFromRandomLocationVisits, ClearsOutputArg) {
   // Tests that pre-existing values are removed from agent_uuids.
-  std::vector<int64> agent_uuids = {1, 2, 3};
+  std::vector<int64_t> agent_uuids = {1, 2, 3};
   internal::AgentUuidsFromRandomLocationVisits(
       {
           GenerateVisit(0, HealthState::SUSCEPTIBLE, 2),
@@ -158,7 +158,7 @@ TEST(AgentUuidsFromRandomLocationVisits, ClearsOutputArg) {
 }
 
 TEST(ConnectAdjacentNodes, Basic) {
-  std::vector<std::pair<int64, int64>> graph;
+  std::vector<std::pair<int64_t, int64_t>> graph;
   internal::ConnectAdjacentNodes({1, 2, 3, 4, 5, 6, 7}, graph);
   EXPECT_THAT(graph, testing::ElementsAreArray({
                          testing::Pair(1, 2),
@@ -169,7 +169,7 @@ TEST(ConnectAdjacentNodes, Basic) {
 
 TEST(ConnectAdjacentNodes, EdgesAreSortedAndDistinct) {
   // Tests that the graph's edges are sorted and distinct.
-  std::vector<std::pair<int64, int64>> graph;
+  std::vector<std::pair<int64_t, int64_t>> graph;
   internal::ConnectAdjacentNodes({2, 1, 3, 1, 3, 4, 1, 2}, graph);
   EXPECT_THAT(graph, testing::ElementsAreArray({
                          testing::Pair(1, 2),
@@ -180,7 +180,7 @@ TEST(ConnectAdjacentNodes, EdgesAreSortedAndDistinct) {
 
 TEST(ConnectAdjacentNodes, NoSelfEdges) {
   // Tests that the graph does not include self-edges.
-  std::vector<std::pair<int64, int64>> graph;
+  std::vector<std::pair<int64_t, int64_t>> graph;
   internal::ConnectAdjacentNodes({1, 1, 2, 3, 3, 4}, graph);
   EXPECT_THAT(graph, testing::ElementsAreArray({
                          testing::Pair(1, 2),

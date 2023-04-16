@@ -42,7 +42,7 @@ const int kVisitsPerAgent = 7;
 const int kReportsPerAgent = 3;
 const int kNumSteps = 5;
 
-std::array<int, kVisitsPerAgent> VisitLocations(int64 agent_id) {
+std::array<int, kVisitsPerAgent> VisitLocations(int64_t agent_id) {
   std::array<int, kVisitsPerAgent> ret;
   for (int i = 0; i < kVisitsPerAgent; i++) {
     ret[i] = (agent_id + 7 * i) % kNumLocations;
@@ -50,7 +50,7 @@ std::array<int, kVisitsPerAgent> VisitLocations(int64 agent_id) {
   return ret;
 }
 
-std::array<int, kReportsPerAgent> ReportRecipients(int64 agent_id) {
+std::array<int, kReportsPerAgent> ReportRecipients(int64_t agent_id) {
   std::array<int, kReportsPerAgent> ret;
   for (int i = 0; i < kReportsPerAgent; i++) {
     ret[i] = (agent_id + 5 * i) % kNumAgents;
@@ -58,7 +58,7 @@ std::array<int, kReportsPerAgent> ReportRecipients(int64 agent_id) {
   return ret;
 }
 
-std::unique_ptr<Agent> MakeAgent(int64 uuid, OutcomeMap* outcome_counts,
+std::unique_ptr<Agent> MakeAgent(int64_t uuid, OutcomeMap* outcome_counts,
                                  ReportMap* report_counts) {
   auto agent = absl::make_unique<testing::NiceMock<MockAgent>>();
   auto last_timestep = std::make_shared<absl::optional<Timestep>>();
@@ -118,7 +118,7 @@ std::unique_ptr<Agent> MakeAgent(int64 uuid, OutcomeMap* outcome_counts,
   return agent;
 }
 
-std::unique_ptr<Location> MakeLocation(int64 uuid, VisitMap* visit_counts) {
+std::unique_ptr<Location> MakeLocation(int64_t uuid, VisitMap* visit_counts) {
   auto location = absl::make_unique<testing::NiceMock<MockLocation>>();
   ON_CALL(*location, uuid()).WillByDefault([uuid]() { return uuid; });
   ON_CALL(*location, ProcessVisits(testing::_, testing::_))
@@ -163,8 +163,8 @@ class FakeObserver : public AgentInfectionObserver,
  private:
   friend class FakeObserverFactory;
 
-  absl::flat_hash_map<int64, PerAgent> agent_stats_;
-  absl::flat_hash_map<int64, PerLocation> location_stats_;
+  absl::flat_hash_map<int64_t, PerAgent> agent_stats_;
+  absl::flat_hash_map<int64_t, PerLocation> location_stats_;
 };
 
 class FakeObserverFactory : public ObserverFactory<FakeObserver> {
@@ -201,8 +201,8 @@ class FakeObserverFactory : public ObserverFactory<FakeObserver> {
   }
 
  private:
-  absl::flat_hash_map<int64, PerAgent> agent_stats_;
-  absl::flat_hash_map<int64, PerLocation> location_stats_;
+  absl::flat_hash_map<int64_t, PerAgent> agent_stats_;
+  absl::flat_hash_map<int64_t, PerLocation> location_stats_;
 };
 
 using SimBuilder = std::function<std::unique_ptr<Simulation>(

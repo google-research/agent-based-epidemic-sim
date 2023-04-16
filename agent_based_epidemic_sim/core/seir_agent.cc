@@ -76,7 +76,7 @@ class DefaultInfectivityModel : public InfectivityModel {
 
 /* static */
 std::unique_ptr<SEIRAgent> SEIRAgent::CreateSusceptible(
-    const int64 uuid, TransmissionModel* transmission_model,
+    const int64_t uuid, TransmissionModel* transmission_model,
     const InfectivityModel* infectivity_model,
     std::unique_ptr<TransitionModel> transition_model,
     const VisitGenerator& visit_generator,
@@ -91,7 +91,7 @@ std::unique_ptr<SEIRAgent> SEIRAgent::CreateSusceptible(
 
 /* static */
 std::unique_ptr<SEIRAgent> SEIRAgent::Create(
-    const int64 uuid, const HealthTransition& health_transition,
+    const int64_t uuid, const HealthTransition& health_transition,
     TransmissionModel* transmission_model,
     const InfectivityModel* infectivity_model,
     std::unique_ptr<TransitionModel> transition_model,
@@ -224,18 +224,18 @@ void SEIRAgent::SendContactReports(const Timestep& timestep,
   }
 
   std::vector<ContactReport> contact_reports;
-  exposures_.PerAgent(contact_report_send_cutoff_,
-                      [this, &test_result, &contact_reports](const int64 uuid) {
-                        contact_reports.push_back({
-                            .from_agent_uuid = this->uuid(),
-                            .to_agent_uuid = uuid,
-                            .test_result = test_result,
-                            .initial_symptom_onset_time =
-                                initial_symptom_onset_time_.has_value()
-                                    ? initial_symptom_onset_time_
-                                    : test_result.time_requested,
-                        });
-                      });
+  exposures_.PerAgent(contact_report_send_cutoff_, [this, &test_result,
+                                                    &contact_reports](
+                                                       const int64_t uuid) {
+    contact_reports.push_back({
+        .from_agent_uuid = this->uuid(),
+        .to_agent_uuid = uuid,
+        .test_result = test_result,
+        .initial_symptom_onset_time = initial_symptom_onset_time_.has_value()
+                                          ? initial_symptom_onset_time_
+                                          : test_result.time_requested,
+    });
+  });
   contact_report_send_cutoff_ = timestep.start_time();
   broker->Send(contact_reports);
 }
