@@ -114,7 +114,7 @@ absl::Status ToProto(T src, P* result) {
 }
 
 absl::StatusOr<ExposuresPerTestResult::Exposure> LearningObserver::AddExposure(
-    int64 uuid, const Exposure& exposure, const ContactReport* report) const {
+    int64_t uuid, const Exposure& exposure, const ContactReport* report) const {
   ExposuresPerTestResult::Exposure e;
   PANDEMIC_RETURN_IF_ERROR(
       ToProto(exposure.start_time, e.mutable_exposure_time()));
@@ -160,8 +160,8 @@ LearningObserver::AgentToExposureResult(const Agent& agent,
   bool encoded_exposures = true;
   exposures->PerExposure(
       absl::InfinitePast(),
-      [&result, &encoded_exposures, this](int64 uuid, const Exposure& exposure,
-                                          const ContactReport* report) {
+      [&result, &encoded_exposures, this](
+          int64_t uuid, const Exposure& exposure, const ContactReport* report) {
         auto exposure_or = AddExposure(uuid, exposure, report);
         if (!exposure_or.ok()) {
           if (IsNotFound(exposure_or.status())) {

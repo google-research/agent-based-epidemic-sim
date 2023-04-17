@@ -118,8 +118,8 @@ class RiskLearningVisitGenerator : public VisitGenerator {
     return durations;
   }
 
-  static int64 GetLocationUuidForTypeOrDie(const AgentProto& agent,
-                                           const LocationReference::Type type) {
+  static int64_t GetLocationUuidForTypeOrDie(
+      const AgentProto& agent, const LocationReference::Type type) {
     for (const auto& location : agent.locations()) {
       if (location.type() == type) {
         return location.uuid();
@@ -357,7 +357,7 @@ class RiskLearningSimulation : public Simulation {
           }
           switch (proto.location_case()) {
             case LocationProto::kGraph: {
-              std::vector<std::pair<int64, int64>> edges;
+              std::vector<std::pair<int64_t, int64_t>> edges;
               edges.reserve(proto.graph().edges_size());
               for (const GraphLocation::Edge& edge : proto.graph().edges()) {
                 edges.push_back({edge.uuid_a(), edge.uuid_b()});
@@ -368,7 +368,7 @@ class RiskLearningSimulation : public Simulation {
                                          proto.graph().type())
                       : non_work_drop_prob;
               {
-                const int64 uuid = proto.reference().uuid();
+                const int64_t uuid = proto.reference().uuid();
                 absl::MutexLock l(&location_mu);
                 locations.push_back(NewGraphLocation(
                     uuid, transmissibility, drop_prob, std::move(edges),
@@ -378,7 +378,7 @@ class RiskLearningSimulation : public Simulation {
               break;
             }
             case LocationProto::kRandom: {
-              const int64 uuid = proto.reference().uuid();
+              const int64_t uuid = proto.reference().uuid();
               absl::MutexLock l(&location_mu);
               locations.push_back(NewRandomGraphLocation(
                   uuid, transmissibility, random_interaction_multiplier,
@@ -617,7 +617,7 @@ class RiskLearningSimulation : public Simulation {
       : config_(config),
         stepwise_params_(stepwise_params),
         get_location_type_(
-            [this](int64 uuid) { return location_types_[uuid]; }),
+            [this](int64_t uuid) { return location_types_[uuid]; }),
         summary_observer_(absl::make_unique<SummaryObserverFactory>(
             config.summary_filename())) {
     current_lockdown_multipliers_.fill(1.0f);
@@ -670,7 +670,7 @@ class RiskLearningSimulation : public Simulation {
   std::vector<std::pair<absl::Time, std::unique_ptr<RiskScoreModel>>>
       risk_score_models_;
   LearningRiskScorePolicy risk_score_policy_;
-  absl::flat_hash_map<int64, LocationReference::Type> location_types_;
+  absl::flat_hash_map<int64_t, LocationReference::Type> location_types_;
   const LocationTypeFn get_location_type_;
   // location_types is filled during location loading in the constructor and is
   // const after that.
