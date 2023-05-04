@@ -16,15 +16,18 @@ pip_install(
     requirements = "//agent_based_epidemic_sim/learning:requirements.txt",
 )
 
-skylib_version = "0.9.0"
 http_archive(
     name = "bazel_skylib",
-    type = "tar.gz",
-    url = "https://github.com/bazelbuild/bazel-skylib/releases/download/{}/bazel_skylib-{}.tar.gz".format(skylib_version, skylib_version),
-    sha256 = "1dde365491125a3db70731e25658dfdd3bc5dbdfd11b840b3e987ecf043c7ca0",
+    sha256 = "74d544d96f4a5bb630d465ca8bbcfe231e3594e5aae57e1edbf17a6eb3ca2506",
+    urls = [
+        "https://storage.googleapis.com/mirror.tensorflow.org/github.com/bazelbuild/bazel-skylib/releases/download/1.3.0/bazel-skylib-1.3.0.tar.gz",
+        "https://github.com/bazelbuild/bazel-skylib/releases/download/1.3.0/bazel-skylib-1.3.0.tar.gz",
+    ],
 )
+load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
+bazel_skylib_workspace()
 load("@bazel_skylib//lib:versions.bzl", "versions")
-versions.check(minimum_bazel_version = "2.0.0")
+versions.check(minimum_bazel_version = "3.7.2")
 
 http_archive(
     name = "six_archive",
@@ -107,18 +110,11 @@ http_archive(
 
 http_archive(
     name = "com_google_absl",
+    sha256 = "3ea49a7d97421b88a8c48a0de16c16048e17725c7ec0f1d3ea2683a2a75adc21",  # SHARED_ABSL_SHA
+    strip_prefix = "abseil-cpp-20230125.0",
     urls = [
-        "https://github.com/abseil/abseil-cpp/archive/refs/tags/20210324.2.tar.gz",
+        "https://github.com/abseil/abseil-cpp/archive/refs/tags/20230125.0.tar.gz",
     ],
-    # Remove after https://github.com/abseil/abseil-cpp/issues/326 is solved.
-    patches = [
-        "@//third_party:com_google_absl_f863b622fe13612433fdf43f76547d5edda0c93001.diff"
-    ],
-    patch_args = [
-        "-p1",
-    ],
-    strip_prefix = "abseil-cpp-20210324.2",
-    sha256 = "59b862f50e710277f8ede96f083a5bb8d7c9595376146838b9580be90374ee1f"
 )
 
 # GoogleTest/GoogleMock framework. Used by most unit-tests.

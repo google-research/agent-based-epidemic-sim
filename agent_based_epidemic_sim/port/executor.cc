@@ -37,8 +37,8 @@ class StdThreadExecutor : public Executor {
   void Add(std::function<void()> fn) ABSL_LOCKS_EXCLUDED(mu_);
   bool Ready() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mu_);
   std::vector<std::thread> threads_;
-  bool done_ GUARDED_BY(mu_) = false;
-  std::vector<std::function<void()> > work_ GUARDED_BY(mu_);
+  bool done_ ABSL_GUARDED_BY(mu_) = false;
+  std::vector<std::function<void()>> work_ ABSL_GUARDED_BY(mu_);
 };
 
 class StdThreadExecution : public Execution {

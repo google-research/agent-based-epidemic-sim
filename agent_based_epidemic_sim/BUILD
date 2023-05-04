@@ -12,18 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("//tools/build_defs/license:license.bzl", "license")
-
 package(
-    default_applicable_licenses = ["//agent_based_epidemic_sim:license"],
     default_visibility = [
         ":internal",
     ],
-)
-
-license(
-    name = "license",
-    package_name = "agent_based_epidemic_sim",
 )
 
 licenses(["notice"])
