@@ -257,7 +257,7 @@ class LearningRiskScore : public RiskScore {
                            risk_score_per_timestep_.end(), 0.0f);
   }
 
-  void RequestTest(const absl::Time request_time) {
+  void RequestTest(const absl::Time request_time) override {
     test_results_.push_back({
         .time_requested = request_time,
         .time_received = request_time + tracing_policy_.test_latency,
