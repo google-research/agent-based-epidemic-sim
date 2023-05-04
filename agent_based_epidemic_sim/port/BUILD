@@ -73,6 +73,7 @@ cc_library(
     name = "executor",
     srcs = ["executor.cc"],
     hdrs = ["executor.h"],
+    visibility = ["//visibility:public"],
     deps = [
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/synchronization",
