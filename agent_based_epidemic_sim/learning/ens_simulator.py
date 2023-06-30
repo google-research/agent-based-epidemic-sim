@@ -18,7 +18,7 @@ on the epidemiology of COVID, and on empirical bluetooth attenuation data.
 For a Colab demonstrating this code, go to (broken link).
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import numpy as np
 import scipy.stats
 
@@ -232,7 +232,9 @@ def dist_to_atten_sample(distances: np.ndarray,
 class ModelParams:
   """Defines all parameters required to define the distributions of distance, dose and infectiousness.
   """
-  ble_params: BleParams = BleParams()  # may want to change sigma
+  ble_params: BleParams = field(
+      default_factory=BleParams
+  )  # may want to change sigma
   distance_fun: str = 'sigmoid'  # quadratic or sigmoid
   distance_dmin: float = 1.0
   distance_slope: float = 1.5
