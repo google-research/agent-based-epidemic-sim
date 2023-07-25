@@ -1,5 +1,7 @@
 # Libraries for synthesizing agents.
 
+load("//third_party/bazel_rules/rules_python/python:proto.bzl", "py_proto_library")
+
 licenses(["notice"])
 
 package(default_visibility = [

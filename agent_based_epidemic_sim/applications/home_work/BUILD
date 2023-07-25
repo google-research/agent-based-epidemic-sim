@@ -1,3 +1,5 @@
+load("//third_party/bazel_rules/rules_python/python:proto.bzl", "py_proto_library")
+
 # Packages for the simplified home-work simulation application.
 licenses(["notice"])
 
