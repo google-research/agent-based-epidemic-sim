@@ -1,4 +1,5 @@
 # Packages for the simplified home-work simulation application.
+
 licenses(["notice"])
 
 package(default_visibility = [
