@@ -15,7 +15,7 @@ cc_library(
         "file_utils.h",
     ],
     deps = [
-        "//agent_based_epidemic_sim/port:logging",
+        ":logging",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
