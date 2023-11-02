@@ -57,10 +57,10 @@ struct VisitLocationDynamics {
   int random_location_edges = 0;
 };
 
-// A visit to a given location in time of an agent.
+// A visit to a given location in time of an agent. Default UUIDs are set to -1.
 struct Visit {
-  int64 location_uuid;
-  int64 agent_uuid;
+  int64 location_uuid = -1;
+  int64 agent_uuid = -1;
   absl::Time start_time;
   absl::Time end_time;
   HealthState::State health_state;
