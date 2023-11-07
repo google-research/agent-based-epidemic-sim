@@ -48,6 +48,7 @@ py_test(
     deps = [
         ":ens_simulator",
         requirement("absl-py"),
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added (broken link)
         requirement("six"),
     ],
 )
@@ -76,6 +77,7 @@ py_test(
         "//agent_based_epidemic_sim/applications/risk_learning:exposures_per_test_result_py_pb2",
         "@com_google_protobuf//:protobuf_python",
         requirement("absl-py"),
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added (broken link)
         "@com_google_riegeli//python/riegeli",
     ],
 )
