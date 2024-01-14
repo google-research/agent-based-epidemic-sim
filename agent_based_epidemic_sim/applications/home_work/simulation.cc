@@ -172,8 +172,7 @@ void AddVisitDurationDistribution(const VisitDurationDistribution& distribution,
 // Also:
 // 7. Distributed initialization.
 SimulationContext GetSimulationContext(const HomeWorkSimulationConfig& config) {
-  LOG(INFO) << "Building agents and locations from config: "
-            << config.DebugString();
+  LOG(INFO) << "Building agents and locations from config: " << config;
   // Samples the locations and agents.
   const int64 kUuidShard = 0LL;
   SimulationContext context;
