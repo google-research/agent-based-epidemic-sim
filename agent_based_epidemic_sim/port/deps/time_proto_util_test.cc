@@ -251,7 +251,7 @@ TEST(ProtoUtilGoogleApi, DecodeTimeError) {
 
   for (const auto& d : kTestCases) {
     const auto sor = DecodeGoogleApiProto(d);
-    EXPECT_FALSE(sor.ok()) << "d=" << d.DebugString();
+    EXPECT_FALSE(sor.ok()) << "d=" << d;
   }
 }
 

@@ -3,6 +3,7 @@
 #include <initializer_list>
 #include <memory>
 
+#include "absl/strings/str_cat.h"
 #include "absl/time/time.h"
 #include "agent_based_epidemic_sim/applications/risk_learning/exposures_per_test_result.pb.h"
 #include "agent_based_epidemic_sim/applications/risk_learning/hazard_transmission_model.h"
@@ -280,7 +281,7 @@ TEST_F(LearningObserverTest, RecordsAllFields) {
         infection_onset_time { seconds: 86400 }
         hazard: 1.0
       )pb");
-  EXPECT_EQ(results.value()[0].DebugString(), expected.DebugString());
+  EXPECT_EQ(absl::StrCat(results.value()[0]), absl::StrCat(expected));
 }  // namespace
 
 }  // namespace

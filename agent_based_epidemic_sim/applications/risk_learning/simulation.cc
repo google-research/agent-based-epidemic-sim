@@ -351,8 +351,8 @@ class RiskLearningSimulation : public Simulation {
             transmissibility = random_transmissibility;
           } else {
             absl::MutexLock l(&status_mu);
-            statuses.push_back(absl::InvalidArgumentError(absl::StrCat(
-                "Invalid type ", i, ": ", proto.reference().DebugString())));
+            statuses.push_back(absl::InvalidArgumentError(
+                absl::StrCat("Invalid type ", i, ": ", proto.reference())));
             return;
           }
           switch (proto.location_case()) {
@@ -387,8 +387,8 @@ class RiskLearningSimulation : public Simulation {
             } break;
             default: {
               absl::MutexLock l(&status_mu);
-              statuses.push_back(absl::InvalidArgumentError(absl::StrCat(
-                  "Invalid location ", i, ": ", proto.DebugString())));
+              statuses.push_back(absl::InvalidArgumentError(
+                  absl::StrCat("Invalid location ", i, ": ", proto)));
             }
               return;
           }
@@ -505,9 +505,8 @@ class RiskLearningSimulation : public Simulation {
           auto profile_iter = profile_data.find(proto.population_profile_id());
           if (profile_iter == profile_data.end()) {
             absl::MutexLock l(&status_mu);
-            statuses.push_back(absl::InvalidArgumentError(
-                absl::StrCat("Invalid population profile id for agent: ",
-                             proto.DebugString())));
+            statuses.push_back(absl::InvalidArgumentError(absl::StrCat(
+                "Invalid population profile id for agent: ", proto)));
             return;
           }
           PopulationProfileData& agent_profile = profile_iter->second;

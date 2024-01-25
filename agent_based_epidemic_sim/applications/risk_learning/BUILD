@@ -214,6 +214,7 @@ cc_test(
         "//agent_based_epidemic_sim/port:time_proto_util",
         "//agent_based_epidemic_sim/util:records",
         "//agent_based_epidemic_sim/util:test_util",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
         "@com_google_googletest//:gtest_main",
     ],
