@@ -13,6 +13,7 @@
 # limitations under the License.
 
 load("@com_google_protobuf//:protobuf.bzl", "py_proto_library")
+load("//third_party/protobuf/bazel:proto_library.bzl", "proto_library")
 
 licenses(["notice"])
 

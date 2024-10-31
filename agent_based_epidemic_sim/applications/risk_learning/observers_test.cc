@@ -40,7 +40,9 @@ std::unique_ptr<Agent> MakeAgentInState(HealthState::State state,
 TEST(SummaryObserverTest, CreationOfSummaryObserverFactoryCanOverwriteFiles) {
   std::string summary_filename =
       absl::StrCat(getenv("TEST_TMPDIR"), "/", "summary");
-  { SummaryObserverFactory old_factory(summary_filename); }
+  {
+    SummaryObserverFactory old_factory(summary_filename);
+  }
   {
     SummaryObserverFactory factory(summary_filename);
     Timestep timestep(absl::UnixEpoch(), absl::Hours(24));
