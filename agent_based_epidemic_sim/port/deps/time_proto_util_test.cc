@@ -26,7 +26,7 @@
 
 namespace abesim {
 
-google::protobuf::Duration MakeGoogleApiDuration(int64 s, int32 ns) {
+google::protobuf::Duration MakeGoogleApiDuration(int64_t s, int32_t ns) {
   google::protobuf::Duration proto;
   proto.set_seconds(s);
   proto.set_nanos(ns);
@@ -77,7 +77,7 @@ inline absl::Time MakeGoogleApiTimeMin() {
   return absl::UnixEpoch() + absl::Seconds(-62135596800);
 }
 
-google::protobuf::Timestamp MakeGoogleApiTimestamp(int64 s, int32 ns) {
+google::protobuf::Timestamp MakeGoogleApiTimestamp(int64_t s, int32_t ns) {
   google::protobuf::Timestamp proto;
   proto.set_seconds(s);
   proto.set_nanos(ns);
@@ -90,7 +90,7 @@ google::protobuf::Timestamp MakeGoogleApiTimestamp(int64 s, int32 ns) {
 // argument may be either a absl::Duration or a absl::Time. The template P
 // represents a google::protobuf::Duration or google::protobuf::Timestamp.
 template <typename T, typename P>
-void RoundTripGoogleApi(T v, int64 expected_sec, int32 expected_nsec) {
+void RoundTripGoogleApi(T v, int64_t expected_sec, int32_t expected_nsec) {
   // auto status = EncodeGoogleApiProto(v,
   // const auto sor_proto = EncodeGoogleApiProto(v);
   // ASSERT_OK(sor_proto);
@@ -133,13 +133,13 @@ void RoundTripGoogleApi(T v, int64 expected_sec, int32 expected_nsec) {
 
 TEST(ProtoUtilGoogleApi, RoundTripDuration) {
   // Shorthand to make the test cases readable.
-  const auto& s = [](int64 n) { return absl::Seconds(n); };
-  const auto& ns = [](int64 n) { return absl::Nanoseconds(n); };
+  const auto& s = [](int64_t n) { return absl::Seconds(n); };
+  const auto& ns = [](int64_t n) { return absl::Nanoseconds(n); };
   const struct {
     absl::Duration d;
     struct {
-      int64 sec;
-      int32 nsec;
+      int64_t sec;
+      int32_t nsec;
     } expected;
   } kTestCases[] = {
       {s(0), {0, 0}},
@@ -161,13 +161,13 @@ TEST(ProtoUtilGoogleApi, RoundTripDuration) {
 TEST(ProtoUtilGoogleApi, RoundTripTime) {
   // Shorthand to make the test cases readable.
   const absl::Time epoch = absl::UnixEpoch();  // The protobuf epoch.
-  const auto& s = [](int64 n) { return absl::Seconds(n); };
-  const auto& ns = [](int64 n) { return absl::Nanoseconds(n); };
+  const auto& s = [](int64_t n) { return absl::Seconds(n); };
+  const auto& ns = [](int64_t n) { return absl::Nanoseconds(n); };
   const struct {
     absl::Time t;
     struct {
-      int64 sec;
-      int32 nsec;
+      int64_t sec;
+      int32_t nsec;
     } expected;
   } kTestCases[] = {
       {epoch, {0, 0}},
@@ -194,8 +194,8 @@ TEST(ProtoUtilGoogleApi, TimeTruncTowardInfPast) {
   const struct {
     absl::Time t;
     struct {
-      int64 sec;
-      int32 nsec;
+      int64_t sec;
+      int32_t nsec;
     } expected;
   } kTestCases[] = {
       {before_epoch + tick, {-1234567890, 0}},
@@ -235,14 +235,14 @@ TEST(ProtoUtilGoogleApi, DecodeTimeError) {
   const google::protobuf::Timestamp kTestCases[] = {
       MakeGoogleApiTimestamp(1, -1),             //
       MakeGoogleApiTimestamp(1, 999999999 + 1),  //
-      MakeGoogleApiTimestamp(std::numeric_limits<int64>::lowest(), 0),
-      MakeGoogleApiTimestamp(std::numeric_limits<int64>::max(), 0),
-      MakeGoogleApiTimestamp(0, std::numeric_limits<int32>::lowest()),
-      MakeGoogleApiTimestamp(0, std::numeric_limits<int32>::max()),
-      MakeGoogleApiTimestamp(std::numeric_limits<int64>::lowest(),
-                             std::numeric_limits<int32>::lowest()),
-      MakeGoogleApiTimestamp(std::numeric_limits<int64>::max(),
-                             std::numeric_limits<int32>::max()),
+      MakeGoogleApiTimestamp(std::numeric_limits<int64_t>::lowest(), 0),
+      MakeGoogleApiTimestamp(std::numeric_limits<int64_t>::max(), 0),
+      MakeGoogleApiTimestamp(0, std::numeric_limits<int32_t>::lowest()),
+      MakeGoogleApiTimestamp(0, std::numeric_limits<int32_t>::max()),
+      MakeGoogleApiTimestamp(std::numeric_limits<int64_t>::lowest(),
+                             std::numeric_limits<int32_t>::lowest()),
+      MakeGoogleApiTimestamp(std::numeric_limits<int64_t>::max(),
+                             std::numeric_limits<int32_t>::max()),
       MakeGoogleApiTimestamp(
           ToUnixSeconds(MakeGoogleApiTimeMin() - absl::Seconds(1)), 0),
       MakeGoogleApiTimestamp(
