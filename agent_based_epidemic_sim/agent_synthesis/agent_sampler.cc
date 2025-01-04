@@ -16,7 +16,7 @@
 
 namespace abesim {
 namespace {
-constexpr int64 kPopulationProfileId = 0;
+constexpr int64_t kPopulationProfileId = 0;
 }  // namespace
 
 AgentProto ShuffledLocationAgentSampler::Next() {
