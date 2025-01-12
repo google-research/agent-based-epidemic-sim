@@ -28,7 +28,7 @@ using ::testing::AnyOf;
 using ::testing::ElementsAre;
 
 TEST(DiscreteDistributionSamplerTest, CreatesSingleIntDistribution) {
-  auto sampler = DiscreteDistributionSampler<int64>::FromProto(
+  auto sampler = DiscreteDistributionSampler<int64_t>::FromProto(
       ParseTextProtoOrDie<DiscreteDistribution>(R"pb(
         buckets { count: 1 int_value: 1 }
         buckets { count: 2 int_value: 10 }

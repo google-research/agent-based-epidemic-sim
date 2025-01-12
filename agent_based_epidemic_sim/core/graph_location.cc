@@ -35,9 +35,9 @@ namespace {
 
 class GraphLocation : public Location {
  public:
-  GraphLocation(int64 uuid, std::function<float()> location_transmissibility,
+  GraphLocation(int64_t uuid, std::function<float()> location_transmissibility,
                 std::function<float()> drop_probability,
-                std::vector<std::pair<int64, int64>> graph,
+                std::vector<std::pair<int64_t, int64_t>> graph,
                 const ExposureGenerator& exposure_generator)
       : graph_(std::move(graph)),
         uuid_(uuid),
@@ -45,11 +45,11 @@ class GraphLocation : public Location {
         drop_probability_(drop_probability),
         exposure_generator_(exposure_generator) {}
 
-  int64 uuid() const override { return uuid_; }
+  int64_t uuid() const override { return uuid_; }
 
   void ProcessVisits(absl::Span<const Visit> visits,
                      Broker<InfectionOutcome>* infection_broker) override {
-    thread_local absl::flat_hash_map<int64, Visit> visit_map;
+    thread_local absl::flat_hash_map<int64_t, Visit> visit_map;
     visit_map.clear();
     for (const Visit& visit : visits) {
       visit_map[visit.agent_uuid] = visit;
@@ -59,7 +59,7 @@ class GraphLocation : public Location {
 
     absl::BitGenRef gen = GetBitGen();
 
-    for (const std::pair<int64, int64>& edge : graph_) {
+    for (const std::pair<int64_t, int64_t>& edge : graph_) {
       // Randomly drop some potential contacts.
       if (absl::Bernoulli(gen, drop_probability_())) {
         continue;
@@ -90,12 +90,12 @@ class GraphLocation : public Location {
   }
 
  protected:
-  std::vector<std::pair<int64, int64>> graph_;
+  std::vector<std::pair<int64_t, int64_t>> graph_;
 
  private:
   virtual void MaybeUpdateGraph(absl::Span<const Visit> visits) {}
 
-  const int64 uuid_;
+  const int64_t uuid_;
   const std::function<float()> location_transmissibility_;
   const std::function<float()> drop_probability_;
   const ExposureGenerator& exposure_generator_;
@@ -103,7 +103,7 @@ class GraphLocation : public Location {
 
 class RandomGraphLocation : public GraphLocation {
  public:
-  RandomGraphLocation(int64 uuid,
+  RandomGraphLocation(int64_t uuid,
                       std::function<float()> location_transmissibility,
                       std::function<float()> lockdown_multiplier,
                       const ExposureGenerator& exposure_generator)
@@ -117,7 +117,7 @@ class RandomGraphLocation : public GraphLocation {
   void MaybeUpdateGraph(absl::Span<const Visit> visits) override {
     // Construct list of agent UUIDs as potential endpoints for edges. An agent
     // is repeated once for each edge needed by it.
-    thread_local std::vector<int64> agent_uuids;
+    thread_local std::vector<int64_t> agent_uuids;
     internal::AgentUuidsFromRandomLocationVisits(visits, lockdown_multiplier_(),
                                                  agent_uuids);
     // Connect random pairs till none remain.
@@ -136,7 +136,7 @@ namespace internal {
 
 void AgentUuidsFromRandomLocationVisits(absl::Span<const Visit> visits,
                                         const float lockdown_multiplier,
-                                        std::vector<int64>& agent_uuids) {
+                                        std::vector<int64_t>& agent_uuids) {
   agent_uuids.clear();
   for (const Visit& visit : visits) {
     agent_uuids.resize(
@@ -146,12 +146,12 @@ void AgentUuidsFromRandomLocationVisits(absl::Span<const Visit> visits,
   }
 }
 
-void ConnectAdjacentNodes(absl::Span<const int64> agent_uuids,
-                          std::vector<std::pair<int64, int64>>& graph) {
+void ConnectAdjacentNodes(absl::Span<const int64_t> agent_uuids,
+                          std::vector<std::pair<int64_t, int64_t>>& graph) {
   graph.clear();
   while (agent_uuids.size() >= 2) {
-    int64 a = agent_uuids[0];
-    int64 b = agent_uuids[1];
+    int64_t a = agent_uuids[0];
+    int64_t b = agent_uuids[1];
     if (a == b) {
       // Self-edges are not allowed. Try next pair.
       agent_uuids.remove_prefix(1);
@@ -170,9 +170,9 @@ void ConnectAdjacentNodes(absl::Span<const int64> agent_uuids,
 }  // namespace internal
 
 std::unique_ptr<Location> NewGraphLocation(
-    int64 uuid, std::function<float()> location_transmissibility,
+    int64_t uuid, std::function<float()> location_transmissibility,
     std::function<float()> drop_probability,
-    std::vector<std::pair<int64, int64>> graph,
+    std::vector<std::pair<int64_t, int64_t>> graph,
     const ExposureGenerator& exposure_generator) {
   return absl::make_unique<GraphLocation>(
       uuid, std::move(location_transmissibility), std::move(drop_probability),
@@ -180,7 +180,7 @@ std::unique_ptr<Location> NewGraphLocation(
 }
 
 std::unique_ptr<Location> NewRandomGraphLocation(
-    int64 uuid, std::function<float()> location_transmissibility,
+    int64_t uuid, std::function<float()> location_transmissibility,
     std::function<float()> lockdown_multiplier,
     const ExposureGenerator& exposure_generator) {
   return absl::make_unique<RandomGraphLocation>(
