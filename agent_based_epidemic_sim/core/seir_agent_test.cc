@@ -45,7 +45,7 @@ absl::Time TimeFromDayAndHour(const int day, const int hour) {
 absl::Time TimeFromDay(const int day) { return TimeFromDayAndHour(day, 0); }
 
 std::vector<InfectionOutcome> OutcomesFromContacts(
-    const int64 agent_uuid, absl::Span<const Contact> contacts) {
+    const int64_t agent_uuid, absl::Span<const Contact> contacts) {
   std::vector<InfectionOutcome> outcomes;
   for (const Contact& contact : contacts) {
     outcomes.push_back({
@@ -75,7 +75,7 @@ TEST(SEIRAgentTest, ComputesVisits) {
                                      .time = absl::FromUnixSeconds(43200LL),
                                      .health_state = HealthState::INFECTIOUS})))
       .Times(1);
-  const int64 kUuid = 42LL;
+  const int64_t kUuid = 42LL;
   std::vector<Visit> visits{Visit{.location_uuid = 0LL,
                                   .start_time = absl::FromUnixSeconds(0LL),
                                   .end_time = absl::FromUnixSeconds(28800LL)},
@@ -141,7 +141,7 @@ TEST(SEIRAgentTest, InitializesSusceptibleState) {
   auto risk_score = NewNullRiskScore();
   const Timestep timestep(absl::UnixEpoch(), absl::Hours(24));
   EXPECT_CALL(*transition_model, GetNextHealthTransition).Times(0);
-  const int64 kUuid = 42LL;
+  const int64_t kUuid = 42LL;
   std::vector<Visit> visits{Visit{.location_uuid = 0LL,
                                   .start_time = absl::FromUnixSeconds(0LL),
                                   .end_time = absl::FromUnixSeconds(86400LL)}};
@@ -175,7 +175,7 @@ TEST(SEIRAgentTest, InitializesNonSusceptibleState) {
       .WillOnce(
           Return(HealthTransition{.time = absl::FromUnixSeconds(86400LL),
                                   .health_state = HealthState::INFECTIOUS}));
-  const int64 kUuid = 42LL;
+  const int64_t kUuid = 42LL;
   std::vector<Visit> visits{Visit{.location_uuid = 0LL,
                                   .start_time = absl::FromUnixSeconds(0LL),
                                   .end_time = absl::FromUnixSeconds(86400LL)}};
@@ -207,7 +207,7 @@ TEST(SEIRAgentTest, SetsInfectivityCorrectly) {
   MockTransmissionModel transmission_model;
   auto risk_score = NewNullRiskScore();
   const Timestep timestep(absl::UnixEpoch(), absl::Hours(24));
-  const int64 kUuid = 42LL;
+  const int64_t kUuid = 42LL;
   std::vector<Visit> visits{Visit{.location_uuid = 0LL,
                                   .start_time = absl::FromUnixSeconds(43202LL),
                                   .end_time = absl::FromUnixSeconds(43203LL)}};
@@ -261,7 +261,7 @@ TEST(SEIRAgentTest, RespectsTimestepBasedDwellTimeAndFiltersZeroIntervals) {
       .WillOnce(
           Return(HealthTransition{.time = absl::FromUnixSeconds(2LL * 86400LL),
                                   .health_state = HealthState::RECOVERED}));
-  const int64 kUuid = 42LL;
+  const int64_t kUuid = 42LL;
   std::vector<Visit> visits{Visit{.location_uuid = 0LL,
                                   .start_time = absl::FromUnixSeconds(0LL),
                                   .end_time = absl::FromUnixSeconds(86400LL)}};
@@ -308,7 +308,7 @@ TEST(SEIRAgentTest, ProcessesInfectionOutcomesIgnoresIfAlreadyExposed) {
       .WillOnce(Return(HealthTransition{.time = absl::FromUnixSeconds(-1LL),
                                         .health_state = HealthState::EXPOSED}));
   auto risk_score = NewNullRiskScore();
-  const int64 kUuid = 42LL;
+  const int64_t kUuid = 42LL;
 
   auto agent = SEIRAgent::CreateSusceptible(
       kUuid, &transmission_model, SEIRAgent::default_infectivity_model(),
@@ -347,7 +347,7 @@ TEST(SEIRAgentTest, ProcessesInfectionOutcomesRemainsSusceptible) {
   auto visit_generator = absl::make_unique<MockVisitGenerator>();
   MockTransmissionModel transmission_model;
   auto risk_score = NewNullRiskScore();
-  const int64 kUuid = 42LL;
+  const int64_t kUuid = 42LL;
 
   EXPECT_CALL(transmission_model, GetInfectionOutcome(_))
       .Times(1)
@@ -376,7 +376,7 @@ TEST(SEIRAgentTest, ProcessesInfectionOutcomesMultipleExposuresSameContact) {
   auto visit_generator = absl::make_unique<MockVisitGenerator>();
   MockTransmissionModel transmission_model;
   auto risk_score = NewNullRiskScore();
-  const int64 kUuid = 42LL;
+  const int64_t kUuid = 42LL;
 
   EXPECT_CALL(transmission_model, GetInfectionOutcome(_)).Times(1);
   auto agent = SEIRAgent::CreateSusceptible(
@@ -403,7 +403,7 @@ TEST(SEIRAgentTest, ProcessInfectionOutcomesRejectsWrongUuid) {
   auto visit_generator = absl::make_unique<MockVisitGenerator>();
   MockTransmissionModel transmission_model;
   auto risk_score = NewNullRiskScore();
-  const int64 kUuid = 42LL;
+  const int64_t kUuid = 42LL;
   std::vector<InfectionOutcome> infection_outcomes{InfectionOutcome{
       .agent_uuid = kUuid + 1,
   }};
@@ -421,7 +421,7 @@ TEST(SEIRAgentTest, ProcessInfectionOutcomesReturnsNoOpIfNonePresent) {
   MockTransmissionModel transmission_model;
   auto risk_score = NewNullRiskScore();
   EXPECT_CALL(*transition_model, GetNextHealthTransition).Times(0);
-  const int64 kUuid = 42LL;
+  const int64_t kUuid = 42LL;
   auto agent = SEIRAgent::CreateSusceptible(
       kUuid, &transmission_model, SEIRAgent::default_infectivity_model(),
       std::move(transition_model), *visit_generator, std::move(risk_score));
@@ -433,7 +433,7 @@ TEST(SEIRAgentTest, ProcessInfectionOutcomesReturnsNoOpIfNonePresent) {
 // contact reports.
 TEST(SEIRAgentTest,
      ProcessInfectionOutcomesAndUpdateContactReportsUpdateRiskScore) {
-  const int64 kUuid = 42LL;
+  const int64_t kUuid = 42LL;
   auto transition_model = absl::make_unique<MockTransitionModel>();
   auto visit_generator = absl::make_unique<MockVisitGenerator>();
   auto contact_report_broker = absl::make_unique<MockBroker<ContactReport>>();
@@ -518,7 +518,7 @@ TEST(SEIRAgentTest, PositiveTest) {
   };
   EXPECT_CALL(*risk_score, AddHealthStateTransistion(transition));
 
-  const int64 kUuid = 42LL;
+  const int64_t kUuid = 42LL;
   std::vector<Contact> contacts = {{
       .other_uuid = 314LL,
       .exposure = {.start_time = absl::FromUnixSeconds(0LL),
@@ -567,7 +567,7 @@ TEST(SEIRAgentTest, PositiveTest) {
 TEST(SEIRAgentTest, NegativeTestResult) {
   auto transition_model = absl::make_unique<MockTransitionModel>();
   auto visit_generator = absl::make_unique<MockVisitGenerator>();
-  const int64 kUuid = 42LL;
+  const int64_t kUuid = 42LL;
   auto risk_score = absl::make_unique<MockRiskScore>();
   EXPECT_CALL(*risk_score, ContactRetentionDuration())
       .WillRepeatedly(Return(absl::Hours(24 * 14)));
@@ -612,7 +612,7 @@ TEST(SEIRAgentTest, NegativeTestResult) {
 }
 
 TEST(SEIRAgentTest, SendContactReports) {
-  const int64 kUuid = 42LL;
+  const int64_t kUuid = 42LL;
   auto transition_model = absl::make_unique<MockTransitionModel>();
   EXPECT_CALL(*transition_model, GetNextHealthTransition(_))
       .WillRepeatedly(
@@ -803,7 +803,7 @@ TEST(SEIRAgentTest, SendContactReports) {
 }
 
 TEST(SEIRAgentTest, SendContactReportsBeforeAndAfterSymptoms) {
-  const int64 kUuid = 42LL;
+  const int64_t kUuid = 42LL;
   auto transition_model = absl::make_unique<MockTransitionModel>();
   EXPECT_CALL(*transition_model, GetNextHealthTransition(_))
       .WillRepeatedly(
@@ -899,7 +899,7 @@ TEST(SEIRAgentTest, UpdateContactReportsRejectsWrongUuid) {
   auto visit_generator = absl::make_unique<MockVisitGenerator>();
   MockTransmissionModel transmission_model;
   auto risk_score = NewNullRiskScore();
-  const int64 kUuid = 42LL;
+  const int64_t kUuid = 42LL;
   const std::vector<ContactReport> contact_reports{
       {.from_agent_uuid = kUuid, .to_agent_uuid = kUuid + 1}};
   auto agent = SEIRAgent::CreateSusceptible(
@@ -920,7 +920,7 @@ TEST(SEIRAgentTest, SeedsInfection) {
   auto visit_generator = absl::make_unique<MockVisitGenerator>();
   MockTransmissionModel transmission_model;
   auto risk_score = NewNullRiskScore();
-  const int64 kUuid = 42LL;
+  const int64_t kUuid = 42LL;
   auto agent = SEIRAgent::CreateSusceptible(
       kUuid, &transmission_model, SEIRAgent::default_infectivity_model(),
       std::move(transition_model), *visit_generator, std::move(risk_score));

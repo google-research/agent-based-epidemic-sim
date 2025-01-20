@@ -29,7 +29,7 @@ class NullRiskScore : public RiskScore {
                                const ContactReport& notification) override {}
 
   VisitAdjustment GetVisitAdjustment(const Timestep& timestep,
-                                     int64 location_uuid) const override {
+                                     int64_t location_uuid) const override {
     return {.frequency_adjustment = 1.0, .duration_adjustment = 1.0};
   }
   TestResult GetTestResult(const Timestep& timestep) const override {
