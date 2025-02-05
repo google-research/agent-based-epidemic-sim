@@ -208,8 +208,8 @@ class LearningRiskScore : public RiskScore {
     }
   }
 
-  VisitAdjustment GetVisitAdjustment(const Timestep& timestep,
-                                     const int64 location_uuid) const override {
+  VisitAdjustment GetVisitAdjustment(
+      const Timestep& timestep, const int64_t location_uuid) const override {
     const bool skip_visit =
         location_type_(location_uuid) != LocationReference::HOUSEHOLD &&
         (ShouldQuarantineFromContacts(timestep) ||
@@ -405,8 +405,8 @@ class AppEnabledRiskScore : public RiskScore {
       risk_score_->AddExposureNotification(exposure, notification);
     }
   }
-  VisitAdjustment GetVisitAdjustment(const Timestep& timestep,
-                                     const int64 location_uuid) const override {
+  VisitAdjustment GetVisitAdjustment(
+      const Timestep& timestep, const int64_t location_uuid) const override {
     return risk_score_->GetVisitAdjustment(timestep, location_uuid);
   }
   TestResult GetTestResult(const Timestep& timestep) const override {
@@ -448,8 +448,8 @@ class HazardQueryingRiskScore : public RiskScore {
                                const ContactReport& notification) override {
     risk_score_->AddExposureNotification(exposure, notification);
   }
-  VisitAdjustment GetVisitAdjustment(const Timestep& timestep,
-                                     const int64 location_uuid) const override {
+  VisitAdjustment GetVisitAdjustment(
+      const Timestep& timestep, const int64_t location_uuid) const override {
     return risk_score_->GetVisitAdjustment(timestep, location_uuid);
   }
   TestResult GetTestResult(const Timestep& timestep) const override {
@@ -590,7 +590,7 @@ class LearningRiskScoreModel : public RiskScoreModel {
   // Note: This method assumes infectiousness_buckets_ has a particular
   // ordering. Specifically the ordering is asc on days_since_symptom_onset_max.
   float ComputeInfectionRiskScore(
-      absl::optional<int64> days_since_symptom_onset) const;
+      absl::optional<int64_t> days_since_symptom_onset) const;
 
   // Buckets representing threshold and corresponding weight of ble attenuation
   // signals.
@@ -622,7 +622,7 @@ class TimeVaryingRiskScoreModel : public RiskScoreModel {
 float LearningRiskScoreModel::ComputeRiskScore(
     const Exposure& exposure,
     absl::optional<absl::Time> initial_symptom_onset_time) const {
-  absl::optional<int64> days_since_symptom_onset;
+  absl::optional<int64_t> days_since_symptom_onset;
   if (initial_symptom_onset_time.has_value()) {
     days_since_symptom_onset = ConvertDurationToDiscreteDays(
         exposure.start_time - initial_symptom_onset_time.value());
@@ -657,7 +657,7 @@ float LearningRiskScoreModel::ComputeDurationRiskScore(
 }
 
 float LearningRiskScoreModel::ComputeInfectionRiskScore(
-    absl::optional<int64> days_since_symptom_onset) const {
+    absl::optional<int64_t> days_since_symptom_onset) const {
   for (const InfectiousnessBucket& bucket : infectiousness_buckets_) {
     if (!days_since_symptom_onset.has_value()) {
       if (bucket.level() == InfectiousnessLevel::UNKNOWN) {
