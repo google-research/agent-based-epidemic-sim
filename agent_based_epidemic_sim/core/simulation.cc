@@ -43,9 +43,11 @@ auto CompareUuid = [](const auto& a, const auto& b) {
   return a->uuid() < b->uuid();
 };
 
-int64 GetDestId(const Visit& visit) { return visit.location_uuid; }
-int64 GetDestId(const InfectionOutcome& outcome) { return outcome.agent_uuid; }
-int64 GetDestId(const ContactReport& report) { return report.to_agent_uuid; }
+int64_t GetDestId(const Visit& visit) { return visit.location_uuid; }
+int64_t GetDestId(const InfectionOutcome& outcome) {
+  return outcome.agent_uuid;
+}
+int64_t GetDestId(const ContactReport& report) { return report.to_agent_uuid; }
 
 bool CompareDestId(const Visit& a, const Visit& b) {
   if (a.location_uuid != b.location_uuid) {
@@ -77,7 +79,7 @@ void SortByDest(absl::Span<Msg> msgs) {
 
 template <typename Msg>
 std::pair<absl::Span<const Msg>, absl::Span<Msg>> SplitMessages(
-    int64 uuid, absl::Span<Msg> messages) {
+    int64_t uuid, absl::Span<Msg> messages) {
   DCHECK(messages.empty() || GetDestId(messages[0]) >= uuid)
       << "Message found for non-local entity: " << GetDestId(messages[0])
       << " msg: " << messages[0];
@@ -272,7 +274,7 @@ class Chunker {
 
   template <typename Msg>
   int Chunk(const Msg& msg) const {
-    int64 dest = GetDestId(msg);
+    int64_t dest = GetDestId(msg);
     auto iter = chunk_map_.find(dest);
     DCHECK(iter != chunk_map_.end());
     return iter->second;
@@ -283,7 +285,7 @@ class Chunker {
 
  private:
   absl::FixedArray<absl::Span<const std::unique_ptr<Entity>>> chunks_;
-  absl::flat_hash_map<int64, int> chunk_map_;
+  absl::flat_hash_map<int64_t, int> chunk_map_;
 };
 
 // WorkQueueBroker is the thread-safe analog to ConsumableBroker.  It can
