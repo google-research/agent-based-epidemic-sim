@@ -24,10 +24,10 @@ constexpr float kEpsilon = 1e-5;
 }  // namespace
 
 IndexedLocationVisitGenerator::IndexedLocationVisitGenerator(
-    const std::vector<int64>& location_uuids) {
+    const std::vector<int64_t>& location_uuids) {
   std::vector<LocationDuration> location_durations;
   location_durations.reserve(location_uuids.size());
-  for (const int64 location_uuid : location_uuids) {
+  for (const int64_t location_uuid : location_uuids) {
     location_durations.push_back(
         {.location_uuid = location_uuid,
          .sample_duration = [](float adjustment) {
