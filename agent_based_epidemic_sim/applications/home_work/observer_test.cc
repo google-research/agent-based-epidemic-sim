@@ -54,7 +54,7 @@ const char* kExpectedHeaders =
     "work_16h,contact_1,contact_2,contact_4,contact_8,contact_16,"
     "contact_32,contact_64,contact_128,contact_256,contact_512\n";
 
-std::unique_ptr<MockAgent> MakeAgent(int64 uuid, HealthState::State state) {
+std::unique_ptr<MockAgent> MakeAgent(int64_t uuid, HealthState::State state) {
   auto agent = absl::make_unique<MockAgent>();
   EXPECT_CALL(*agent, uuid())
       .Times(testing::AnyNumber())
@@ -65,7 +65,7 @@ std::unique_ptr<MockAgent> MakeAgent(int64 uuid, HealthState::State state) {
   return agent;
 }
 
-std::unique_ptr<MockLocation> MakeLocation(int64 uuid) {
+std::unique_ptr<MockLocation> MakeLocation(int64_t uuid) {
   auto location = absl::make_unique<MockLocation>();
   EXPECT_CALL(*location, uuid())
       .Times(testing::AnyNumber())
@@ -86,7 +86,7 @@ TEST(HomeWorkSimulationObserverTest, ZerosReturnedForNoObservations) {
   {
     HomeWorkSimulationObserverFactory observer_factory(
         file.get(),
-        [](int64 uuid) {
+        [](int64_t uuid) {
           return uuid == 0 ? LocationReference::HOUSEHOLD
                            : LocationReference::BUSINESS;
         },
@@ -118,7 +118,7 @@ TEST(HomeWorkSimulationObserverTest, PassthroughFields) {
   {
     HomeWorkSimulationObserverFactory observer_factory(
         file.get(),
-        [](int64 uuid) {
+        [](int64_t uuid) {
           return uuid == 0 ? LocationReference::HOUSEHOLD
                            : LocationReference::BUSINESS;
         },
@@ -148,7 +148,7 @@ TEST(HomeWorkSimulationObserverTest, CorrectValuesForObservations) {
   {
     HomeWorkSimulationObserverFactory observer_factory(
         file.get(),
-        [](int64 uuid) {
+        [](int64_t uuid) {
           return uuid == 0 ? LocationReference::HOUSEHOLD
                            : LocationReference::BUSINESS;
         },
@@ -162,8 +162,8 @@ TEST(HomeWorkSimulationObserverTest, CorrectValuesForObservations) {
     auto work = MakeLocation(1);
 
     std::vector<Visit> home_visits, work_visits;
-    for (int64 i = 0; i < 4; ++i) {
-      int64 uuid = i;
+    for (int64_t i = 0; i < 4; ++i) {
+      int64_t uuid = i;
       home_visits.push_back({
           .location_uuid = 0,
           .agent_uuid = uuid,
@@ -188,8 +188,8 @@ TEST(HomeWorkSimulationObserverTest, CorrectValuesForObservations) {
       observers[0]->Observe(*MakeAgent(uuid, HealthState::SUSCEPTIBLE),
                             outcomes);
     }
-    for (int64 i = 0; i < 3; ++i) {
-      int64 uuid = 4 + i;
+    for (int64_t i = 0; i < 3; ++i) {
+      int64_t uuid = 4 + i;
       home_visits.push_back({
           .location_uuid = 0,
           .agent_uuid = uuid,
@@ -213,8 +213,8 @@ TEST(HomeWorkSimulationObserverTest, CorrectValuesForObservations) {
       }
       observers[0]->Observe(*MakeAgent(uuid, HealthState::EXPOSED), outcomes);
     }
-    for (int64 i = 0; i < 2; ++i) {
-      int64 uuid = 7 + i;
+    for (int64_t i = 0; i < 2; ++i) {
+      int64_t uuid = 7 + i;
       home_visits.push_back({
           .location_uuid = 0,
           .agent_uuid = uuid,
