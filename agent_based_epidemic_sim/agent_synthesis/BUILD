@@ -1,5 +1,7 @@
 # Libraries for synthesizing agents.
 
+load("//third_party/protobuf/bazel:proto_library.bzl", "proto_library")
+
 licenses(["notice"])
 
 package(default_visibility = [

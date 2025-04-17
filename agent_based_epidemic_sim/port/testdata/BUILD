@@ -1,5 +1,7 @@
 # Test data for ported libraries.
 
+load("//third_party/protobuf/bazel:proto_library.bzl", "proto_library")
+
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
