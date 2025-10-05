@@ -30,14 +30,14 @@ class LogMessage {
   //
   // file: source file that produced the log.
   // line: source code line that produced the log.
-  LogMessage(const char *file, int line);
+  LogMessage(const char* file, int line);
 
   // Constructs a new message with the specified severity.
   //
   // file: source file that produced the log.
   // line: source code line that produced the log.
   // severity: severity level of the log.
-  LogMessage(const char *file, int line, absl::LogSeverity severity);
+  LogMessage(const char* file, int line, absl::LogSeverity severity);
 
   // Constructs a log message with additional text that is provided by CHECK
   // macros.  Severity is implicitly FATAL.
@@ -45,25 +45,25 @@ class LogMessage {
   // file: source file that produced the log.
   // line: source code line that produced the log.
   // result: result message of the failed check.
-  LogMessage(const char *file, int line, const std::string &result);
+  LogMessage(const char* file, int line, const std::string& result);
 
   // The destructor flushes the message.
   ~LogMessage();
 
-  LogMessage(const LogMessage &) = delete;
-  void operator=(const LogMessage &) = delete;
+  LogMessage(const LogMessage&) = delete;
+  void operator=(const LogMessage&) = delete;
 
   // Gets a reference to the underlying string stream.
-  std::ostream &stream() { return stream_; }
+  std::ostream& stream() { return stream_; }
 
  protected:
   void Flush();
 
  private:
-  void Init(const char *file, int line, absl::LogSeverity severity);
+  void Init(const char* file, int line, absl::LogSeverity severity);
 
   // Sends the message to print.
-  void SendToLog(const std::string &message_text);
+  void SendToLog(const std::string& message_text);
 
   // stream_ reads all the input messages into a stringstream, then it's
   // converted into a string in the destructor for printing.
@@ -76,7 +76,7 @@ class LogMessage {
 // operator& is used because it has precedence lower than << but higher than :?
 class LogMessageVoidify {
  public:
-  void operator&(const std::ostream &) {}
+  void operator&(const std::ostream&) {}
 };
 
 // Default LogSeverity FATAL version of LogMessage.
@@ -87,7 +87,7 @@ class LogMessageFatal : public LogMessage {
   //
   // file: source file that produced the log.
   // line: source code line that produced the log.
-  LogMessageFatal(const char *file, int line)
+  LogMessageFatal(const char* file, int line)
       : LogMessage(file, line, absl::LogSeverity::kFatal) {}
 
   // Constructs a message with FATAL severity for use by CHECK macros.
@@ -95,7 +95,7 @@ class LogMessageFatal : public LogMessage {
   // file: source file that produced the log.
   // line: source code line that produced the log.
   // result: result message when check fails.
-  LogMessageFatal(const char *file, int line, const std::string &result)
+  LogMessageFatal(const char* file, int line, const std::string& result)
       : LogMessage(file, line, result) {}
 
   // Suppresses warnings in some cases, example:
