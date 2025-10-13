@@ -38,13 +38,13 @@ constexpr char kDefaultDirectory[] = "/tmp/";
 namespace {
 
 // The logging directory.
-ABSL_CONST_INIT std::string *log_file_directory = nullptr;
+ABSL_CONST_INIT std::string* log_file_directory = nullptr;
 
 // The log filename.
-ABSL_CONST_INIT std::string *log_basename = nullptr;
+ABSL_CONST_INIT std::string* log_basename = nullptr;
 
-const char *GetBasename(const char *file_path) {
-  const char *slash = strrchr(file_path, '/');
+const char* GetBasename(const char* file_path) {
+  const char* slash = strrchr(file_path, '/');
   return slash ? slash + 1 : file_path;
 }
 
@@ -66,20 +66,20 @@ std::string get_log_directory() {
 
 namespace logging_internal {
 
-LogMessage::LogMessage(const char *file, int line)
+LogMessage::LogMessage(const char* file, int line)
     : LogMessage(file, line, absl::LogSeverity::kInfo) {}
 
-LogMessage::LogMessage(const char *file, int line, const std::string &result)
+LogMessage::LogMessage(const char* file, int line, const std::string& result)
     : LogMessage(file, line, absl::LogSeverity::kFatal) {
   stream() << "Check failed: " << result << " ";
 }
 
-static constexpr const char *LogSeverityNames[4] = {"INFO", "WARNING", "ERROR",
+static constexpr const char* LogSeverityNames[4] = {"INFO", "WARNING", "ERROR",
                                                     "FATAL"};
 
-LogMessage::LogMessage(const char *file, int line, absl::LogSeverity severity)
+LogMessage::LogMessage(const char* file, int line, absl::LogSeverity severity)
     : severity_(severity) {
-  const char *filename = GetBasename(file);
+  const char* filename = GetBasename(file);
 
   // Write a prefix into the log message, including local date/time, severity
   // level, filename, and line number.
@@ -103,10 +103,10 @@ LogMessage::~LogMessage() {
   }
 }
 
-void LogMessage::SendToLog(const std::string &message_text) {
+void LogMessage::SendToLog(const std::string& message_text) {
   std::string log_path = get_log_directory() + get_log_basename();
 
-  FILE *file = fopen(log_path.c_str(), "ab");
+  FILE* file = fopen(log_path.c_str(), "ab");
   if (file) {
     if (fprintf(file, "%s", message_text.c_str()) > 0) {
       if (message_text.back() != '\n') {
