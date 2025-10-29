@@ -298,7 +298,7 @@ class WorkQueueBroker : public Broker<Msg> {
     WorkQueueBroker* const broker;
   };
   virtual void Delete(std::vector<std::vector<Msg>>* const msgs) {
-    absl::MutexLock l(&mu_);
+    absl::MutexLock l(mu_);
     DCHECK_EQ(msgs, &consume_);
     std::for_each(consume_.begin(), consume_.end(), [](auto& v) { v.clear(); });
     // We are using swapping buffers so we're always reading from one
@@ -316,7 +316,7 @@ class WorkQueueBroker : public Broker<Msg> {
         send_(chunker.Chunks().size()),
         consume_(chunker.Chunks().size()) {}
   void Send(const absl::Span<const Msg> msgs) override {
-    absl::MutexLock l(&mu_);
+    absl::MutexLock l(mu_);
     for (const Msg& msg : msgs) {
       int chunk = chunker_.Chunk(msg);
       send_[chunk].push_back(msg);
@@ -324,7 +324,7 @@ class WorkQueueBroker : public Broker<Msg> {
     sent_msgs_ = true;
   }
   virtual std::unique_ptr<std::vector<std::vector<Msg>>, Deleter> Consume() {
-    absl::MutexLock l(&mu_);
+    absl::MutexLock l(mu_);
     DCHECK(std::all_of(consume_.begin(), consume_.end(),
                        [](const std::vector<Msg>& v) { return v.empty(); }));
     sent_msgs_ = false;
@@ -369,7 +369,7 @@ void ParallelAgentPhase(const Timestep& timestep, Executor& executor,
         absl::Span<ContactReport> my_reports;
         absl::Span<const std::unique_ptr<Agent>> my_agents;
         {
-          absl::MutexLock l(&mu);
+          absl::MutexLock l(mu);
           int chunk = next_chunk++;
           if (chunk >= chunker.Chunks().size()) break;
           my_agents = chunker.Chunks()[chunk];
@@ -413,7 +413,7 @@ void ParallelLocationPhase(const Timestep& timestep, Executor& executor,
         absl::Span<Visit> my_visits;
         absl::Span<const std::unique_ptr<Location>> my_locations;
         {
-          absl::MutexLock l(&mu);
+          absl::MutexLock l(mu);
           int chunk = next_chunk++;
           if (chunk >= chunker.Chunks().size()) break;
           my_locations = chunker.Chunks()[chunk];
