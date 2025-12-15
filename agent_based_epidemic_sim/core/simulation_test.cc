@@ -80,7 +80,7 @@ std::unique_ptr<Agent> MakeAgent(int64 uuid, OutcomeMap* outcome_counts,
               ASSERT_EQ(outcome.agent_uuid, uuid);
             }
             {
-              absl::MutexLock l(&map_mu);
+              absl::MutexLock l(map_mu);
               (*outcome_counts)[uuid] += infection_outcomes.size();
             }
             if (!last_timestep->has_value()) {
@@ -98,7 +98,7 @@ std::unique_ptr<Agent> MakeAgent(int64 uuid, OutcomeMap* outcome_counts,
                          absl::Span<const ContactReport> symptom_reports,
                          Broker<ContactReport>* symptom_broker) {
         {
-          absl::MutexLock l(&map_mu);
+          absl::MutexLock l(map_mu);
           for (const auto& report : symptom_reports) {
             ASSERT_EQ(report.to_agent_uuid, uuid);
             ASSERT_EQ(report.test_result.time_received,
@@ -128,7 +128,7 @@ std::unique_ptr<Location> MakeLocation(int64 uuid, VisitMap* visit_counts) {
             for (const Visit& visit : visits) {
               ASSERT_EQ(visit.location_uuid, uuid);
               {
-                absl::MutexLock l(&map_mu);
+                absl::MutexLock l(map_mu);
                 (*visit_counts)[{uuid, visit.agent_uuid}]++;
               }
               infection_broker->Send({{.agent_uuid = visit.agent_uuid}});
@@ -228,7 +228,7 @@ std::unique_ptr<Simulation> BuildSimulator(SimBuilder builder,
 
 void CheckSimulatorResults(const OutcomeMap& outcomes, const VisitMap& visits,
                            const ReportMap& reports) {
-  absl::MutexLock l(&map_mu);
+  absl::MutexLock l(map_mu);
   for (int i = 0; i < kNumAgents; i++) {
     auto outcome = outcomes.find(i);
     ASSERT_NE(outcome, outcomes.end());
