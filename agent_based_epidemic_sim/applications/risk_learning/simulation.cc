@@ -338,7 +338,7 @@ class RiskLearningSimulation : public Simulation {
         LocationProto proto;
         while (reader.ReadRecord(proto)) {
           {
-            absl::MutexLock l(&location_mu);
+            absl::MutexLock l(location_mu);
             result->location_types_[proto.reference().uuid()] =
                 proto.reference().type();
           }
@@ -350,7 +350,7 @@ class RiskLearningSimulation : public Simulation {
           } else if (proto.reference().type() == LocationReference::RANDOM) {
             transmissibility = random_transmissibility;
           } else {
-            absl::MutexLock l(&status_mu);
+            absl::MutexLock l(status_mu);
             statuses.push_back(absl::InvalidArgumentError(absl::StrCat(
                 "Invalid type ", i, ": ", proto.reference().DebugString())));
             return;
@@ -369,7 +369,7 @@ class RiskLearningSimulation : public Simulation {
                       : non_work_drop_prob;
               {
                 const int64 uuid = proto.reference().uuid();
-                absl::MutexLock l(&location_mu);
+                absl::MutexLock l(location_mu);
                 locations.push_back(NewGraphLocation(
                     uuid, transmissibility, drop_prob, std::move(edges),
                     *result->exposure_generators_[result->get_location_type_(
@@ -379,27 +379,27 @@ class RiskLearningSimulation : public Simulation {
             }
             case LocationProto::kRandom: {
               const int64 uuid = proto.reference().uuid();
-              absl::MutexLock l(&location_mu);
+              absl::MutexLock l(location_mu);
               locations.push_back(NewRandomGraphLocation(
                   uuid, transmissibility, random_interaction_multiplier,
                   *result->exposure_generators_[result->get_location_type_(
                       uuid)]));
             } break;
             default: {
-              absl::MutexLock l(&status_mu);
+              absl::MutexLock l(status_mu);
               statuses.push_back(absl::InvalidArgumentError(absl::StrCat(
                   "Invalid location ", i, ": ", proto.DebugString())));
             }
               return;
           }
           {
-            absl::MutexLock l(&location_mu);
+            absl::MutexLock l(location_mu);
             i++;
           }
         }
         absl::Status status = reader.status();
         if (!status.ok()) {
-          absl::MutexLock l(&status_mu);
+          absl::MutexLock l(status_mu);
           statuses.push_back(status);
           return;
         }
@@ -504,7 +504,7 @@ class RiskLearningSimulation : public Simulation {
         while (reader.ReadRecord(proto)) {
           auto profile_iter = profile_data.find(proto.population_profile_id());
           if (profile_iter == profile_data.end()) {
-            absl::MutexLock l(&status_mu);
+            absl::MutexLock l(status_mu);
             statuses.push_back(absl::InvalidArgumentError(
                 absl::StrCat("Invalid population profile id for agent: ",
                              proto.DebugString())));
@@ -517,7 +517,7 @@ class RiskLearningSimulation : public Simulation {
               config.tracing_policy(), result->risk_score_policy_,
               result->risk_score_model_.get(), result->get_location_type_);
           if (!risk_score_or.ok()) {
-            absl::MutexLock l(&status_mu);
+            absl::MutexLock l(status_mu);
             statuses.push_back(risk_score_or.status());
             return;
           }
@@ -535,7 +535,7 @@ class RiskLearningSimulation : public Simulation {
             transmission_model = result->transmission_model_.get();
           }
           {
-            absl::MutexLock l(&agent_mu);
+            absl::MutexLock l(agent_mu);
             if (max_population > 0 && agents.size() == max_population) {
               break;
             }
@@ -555,7 +555,7 @@ class RiskLearningSimulation : public Simulation {
         }
         absl::Status status = reader.status();
         if (!status.ok()) {
-          absl::MutexLock l(&status_mu);
+          absl::MutexLock l(status_mu);
           statuses.push_back(status);
         }
         reader.Close();
