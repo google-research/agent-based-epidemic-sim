@@ -32,6 +32,7 @@ py_binary(
 py_library(
     name = "ens_simulator",
     srcs = ["ens_simulator.py"],
+    strict_deps = False,
     deps = [
         requirement("numpy"),
         requirement("scipy"),
@@ -51,6 +52,7 @@ py_test(
 py_library(
     name = "abesim_data_loader",
     srcs = ["abesim_data_loader.py"],
+    strict_deps = False,
     deps = [
         "//agent_based_epidemic_sim/applications/risk_learning:exposures_per_test_result_py_pb2",
         "//agent_based_epidemic_sim/core:pandemic_py_pb2",
