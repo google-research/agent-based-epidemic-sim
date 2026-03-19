@@ -27,7 +27,7 @@ enum class TestEnum {
 };
 
 TEST(EnumIndexedArray, BracketOperator) {
-  EnumIndexedArray<int64, TestEnum, 3> a{{1, 4, 6}};
+  EnumIndexedArray<int64_t, TestEnum, 3> a{{1, 4, 6}};
   EXPECT_EQ(a[TestEnum::kCase0], 1);
   EXPECT_EQ(a[TestEnum::kCase1], 4);
   EXPECT_EQ(a[TestEnum::kCase2], 6);
@@ -46,7 +46,7 @@ TEST(EnumIndexedArray, BracketOperator) {
 }
 
 TEST(EnumIndexedArray, BracketOperatorConst) {
-  const EnumIndexedArray<int64, TestEnum, 3> a{{2, 5, 8}};
+  const EnumIndexedArray<int64_t, TestEnum, 3> a{{2, 5, 8}};
   EXPECT_EQ(a[TestEnum::kCase0], 2);
   EXPECT_EQ(a[TestEnum::kCase1], 5);
   EXPECT_EQ(a[TestEnum::kCase2], 8);
