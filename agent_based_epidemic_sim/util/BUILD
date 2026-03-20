@@ -5,9 +5,12 @@ load("@rules_cc//cc:cc_test.bzl", "cc_test")
 
 licenses(["notice"])
 
-package(default_visibility = [
-    "//agent_based_epidemic_sim:internal",
-])
+package(
+    default_applicable_licenses = ["//agent_based_epidemic_sim:license"],  # copybara:strip
+    default_visibility = [
+        "//agent_based_epidemic_sim:internal",
+    ],
+)
 
 cc_library(
     name = "histogram",
