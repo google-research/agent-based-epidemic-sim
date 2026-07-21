@@ -179,7 +179,7 @@ TEST(LocationDiscreteEventSimulatorTest, ContactTracing) {
 }
 
 TEST(LocationDiscreteEventSimulatorTest, ProcessVisitsRejectsWrongUuid) {
-  auto infection_broker = absl::make_unique<MockBroker<InfectionOutcome>>();
+  auto infection_broker = std::make_unique<MockBroker<InfectionOutcome>>();
   const int64 kUuid = 42LL;
   std::vector<Visit> visits{Visit{.location_uuid = 314LL,
                                   .agent_uuid = 0LL,
@@ -194,7 +194,7 @@ TEST(LocationDiscreteEventSimulatorTest, ProcessVisitsRejectsWrongUuid) {
 
 TEST(LocationDiscreteEventSimulatorTest,
      ProcessVisitsRejectsStartTimeNotBeforeEndTime) {
-  auto infection_broker = absl::make_unique<MockBroker<InfectionOutcome>>();
+  auto infection_broker = std::make_unique<MockBroker<InfectionOutcome>>();
   const int64 kUuid = 42LL;
   std::vector<Visit> visits{Visit{.location_uuid = kUuid,
                                   .agent_uuid = 0LL,

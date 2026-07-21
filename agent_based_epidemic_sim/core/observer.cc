@@ -32,7 +32,7 @@ void ObserverManager::AggregateForTimestep(const Timestep& timestep) {
 }
 
 ObserverShard* ObserverManager::MakeShard(const Timestep& timestep) {
-  shards_.push_back(absl::make_unique<ObserverShard>());
+  shards_.push_back(std::make_unique<ObserverShard>());
   for (ObserverFactoryBase* factory : factories_) {
     factory->MakeObserverForShard(timestep, shards_.back().get());
   }

@@ -36,7 +36,7 @@ std::unique_ptr<ExposureGenerator> MicroExposureGeneratorBuilder::Build()
     fixed_length_proximity_trace_distribution.push_back(
         fixed_length_proximity_trace);
   }
-  return absl::make_unique<MicroExposureGenerator>(
+  return std::make_unique<MicroExposureGenerator>(
       fixed_length_proximity_trace_distribution);
 }
 

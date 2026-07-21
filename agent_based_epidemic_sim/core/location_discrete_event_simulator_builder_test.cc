@@ -28,7 +28,7 @@ class MockUuidGenerator : public UuidGenerator {
 
 TEST(LocationDiscreteEventSimulatorBuilderTest, BuildsAgents) {
   LocationDiscreteEventSimulatorBuilder location_builder(
-      absl::make_unique<MockUuidGenerator>());
+      std::make_unique<MockUuidGenerator>());
   EXPECT_NE(nullptr, location_builder.Build());
 }
 

@@ -60,7 +60,7 @@ std::array<int, kReportsPerAgent> ReportRecipients(int64 agent_id) {
 
 std::unique_ptr<Agent> MakeAgent(int64 uuid, OutcomeMap* outcome_counts,
                                  ReportMap* report_counts) {
-  auto agent = absl::make_unique<testing::NiceMock<MockAgent>>();
+  auto agent = std::make_unique<testing::NiceMock<MockAgent>>();
   auto last_timestep = std::make_shared<absl::optional<Timestep>>();
   ON_CALL(*agent, uuid()).WillByDefault(testing::Return(uuid));
   ON_CALL(*agent, ComputeVisits(testing::_, testing::_))
@@ -119,7 +119,7 @@ std::unique_ptr<Agent> MakeAgent(int64 uuid, OutcomeMap* outcome_counts,
 }
 
 std::unique_ptr<Location> MakeLocation(int64 uuid, VisitMap* visit_counts) {
-  auto location = absl::make_unique<testing::NiceMock<MockLocation>>();
+  auto location = std::make_unique<testing::NiceMock<MockLocation>>();
   ON_CALL(*location, uuid()).WillByDefault([uuid]() { return uuid; });
   ON_CALL(*location, ProcessVisits(testing::_, testing::_))
       .WillByDefault(
@@ -170,7 +170,7 @@ class FakeObserver : public AgentInfectionObserver,
 class FakeObserverFactory : public ObserverFactory<FakeObserver> {
  public:
   std::unique_ptr<FakeObserver> MakeObserver(const Timestep&) const override {
-    return absl::make_unique<FakeObserver>();
+    return std::make_unique<FakeObserver>();
   }
   void Aggregate(
       const Timestep& timestep,

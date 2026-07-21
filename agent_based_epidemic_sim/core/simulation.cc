@@ -443,14 +443,13 @@ class Parallel : public BaseSimulation {
         report_broker_(agent_chunker_),
         visit_broker_(location_chunker_) {
     for (int w = 0; w < num_workers; ++w) {
-      agent_workers_[w].visit_broker =
-          absl::make_unique<BufferingBroker<Visit>>(kPerThreadBrokerBuffer,
-                                                    &visit_broker_);
+      agent_workers_[w].visit_broker = std::make_unique<BufferingBroker<Visit>>(
+          kPerThreadBrokerBuffer, &visit_broker_);
       agent_workers_[w].report_broker =
-          absl::make_unique<BufferingBroker<ContactReport>>(
+          std::make_unique<BufferingBroker<ContactReport>>(
               kPerThreadBrokerBuffer, &report_broker_);
       location_workers_[w].outcome_broker =
-          absl::make_unique<BufferingBroker<InfectionOutcome>>(
+          std::make_unique<BufferingBroker<InfectionOutcome>>(
               kPerThreadBrokerBuffer, &outcome_broker_);
     }
   }
@@ -509,15 +508,15 @@ class DistributedParallel : public BaseSimulation {
         distributed_manager_(distributed_manager) {
     for (int w = 0; w < num_workers; ++w) {
       agent_workers_[w].visit_broker =
-          absl::make_unique<DistributingBroker<Visit>>(
+          std::make_unique<DistributingBroker<Visit>>(
               kPerThreadBrokerBuffer, distributed_manager->VisitMessenger(),
               &visit_broker_);
       agent_workers_[w].report_broker =
-          absl::make_unique<DistributingBroker<ContactReport>>(
+          std::make_unique<DistributingBroker<ContactReport>>(
               kPerThreadBrokerBuffer,
               distributed_manager->ContactReportMessenger(), &report_broker_);
       location_workers_[w].outcome_broker =
-          absl::make_unique<DistributingBroker<InfectionOutcome>>(
+          std::make_unique<DistributingBroker<InfectionOutcome>>(
               kPerThreadBrokerBuffer, distributed_manager->OutcomeMessenger(),
               &outcome_broker_);
     }
@@ -585,15 +584,15 @@ class DistributedParallel : public BaseSimulation {
 std::unique_ptr<Simulation> SerialSimulation(
     absl::Time start, std::vector<std::unique_ptr<Agent>> agents,
     std::vector<std::unique_ptr<Location>> locations) {
-  return absl::make_unique<Serial>(start, std::move(agents),
-                                   std::move(locations));
+  return std::make_unique<Serial>(start, std::move(agents),
+                                  std::move(locations));
 }
 
 std::unique_ptr<Simulation> ParallelSimulation(
     absl::Time start, std::vector<std::unique_ptr<Agent>> agents,
     std::vector<std::unique_ptr<Location>> locations, const int num_workers) {
-  return absl::make_unique<Parallel>(start, std::move(agents),
-                                     std::move(locations), num_workers);
+  return std::make_unique<Parallel>(start, std::move(agents),
+                                    std::move(locations), num_workers);
 }
 
 std::unique_ptr<Simulation> ParallelDistributedSimulation(
@@ -601,7 +600,7 @@ std::unique_ptr<Simulation> ParallelDistributedSimulation(
     std::vector<std::unique_ptr<Location>> locations,
     const int num_local_workers,
     DistributedManager* const distributed_manager) {
-  return absl::make_unique<DistributedParallel>(
+  return std::make_unique<DistributedParallel>(
       start, std::move(agents), std::move(locations), num_local_workers,
       distributed_manager);
 }

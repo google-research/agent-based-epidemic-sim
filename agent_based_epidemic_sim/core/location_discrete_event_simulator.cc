@@ -66,7 +66,7 @@ void ConvertVisitsToEvents(
       LOG(DFATAL) << "Skipping visit end_time <= start_time: " << visit;
       continue;
     }
-    visit_nodes->push_back(absl::make_unique<VisitNode>(&visit));
+    visit_nodes->push_back(std::make_unique<VisitNode>(&visit));
     events->push_back(
         {.type = EventType::ARRIVAL, .node = visit_nodes->back().get()});
     events->push_back(

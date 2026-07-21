@@ -37,7 +37,7 @@ IndexedLocationVisitGenerator::IndexedLocationVisitGenerator(
          }});
   }
   visit_generator_ =
-      absl::make_unique<DurationSpecifiedVisitGenerator>(location_durations);
+      std::make_unique<DurationSpecifiedVisitGenerator>(location_durations);
 }
 
 void IndexedLocationVisitGenerator::GenerateVisits(

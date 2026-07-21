@@ -34,7 +34,7 @@ class NullRiskScoreModel : public RiskScoreModel {
 }  // namespace
 
 std::unique_ptr<RiskScoreModel> NewNullRiskScoreModel() {
-  return absl::make_unique<NullRiskScoreModel>();
+  return std::make_unique<NullRiskScoreModel>();
 }
 
 }  // namespace abesim

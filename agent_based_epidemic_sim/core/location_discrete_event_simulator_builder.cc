@@ -22,7 +22,7 @@ namespace abesim {
 
 std::unique_ptr<Location> LocationDiscreteEventSimulatorBuilder::Build() const {
   MicroExposureGeneratorBuilder meg_builder(kNonParametricTraceDistribution);
-  return absl::make_unique<LocationDiscreteEventSimulator>(
+  return std::make_unique<LocationDiscreteEventSimulator>(
       uuid_generator_->GenerateUuid(), meg_builder.Build());
 }
 

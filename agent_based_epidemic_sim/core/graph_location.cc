@@ -174,7 +174,7 @@ std::unique_ptr<Location> NewGraphLocation(
     std::function<float()> drop_probability,
     std::vector<std::pair<int64, int64>> graph,
     const ExposureGenerator& exposure_generator) {
-  return absl::make_unique<GraphLocation>(
+  return std::make_unique<GraphLocation>(
       uuid, std::move(location_transmissibility), std::move(drop_probability),
       std::move(graph), exposure_generator);
 }
@@ -183,7 +183,7 @@ std::unique_ptr<Location> NewRandomGraphLocation(
     int64 uuid, std::function<float()> location_transmissibility,
     std::function<float()> lockdown_multiplier,
     const ExposureGenerator& exposure_generator) {
-  return absl::make_unique<RandomGraphLocation>(
+  return std::make_unique<RandomGraphLocation>(
       uuid, std::move(location_transmissibility),
       std::move(lockdown_multiplier), exposure_generator);
 }
