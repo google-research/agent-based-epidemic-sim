@@ -56,7 +56,7 @@ std::unique_ptr<ShuffledSampler> MakeBusinessSampler(
         std::make_pair(locations->back().reference().uuid(), size));
     population += size;
   }
-  return absl::make_unique<ShuffledSampler>(uuid_to_sizes);
+  return std::make_unique<ShuffledSampler>(uuid_to_sizes);
 }
 
 std::unique_ptr<ShuffledSampler> MakeHouseholdSampler(
@@ -78,7 +78,7 @@ std::unique_ptr<ShuffledSampler> MakeHouseholdSampler(
         std::make_pair(locations->back().reference().uuid(), size));
     population += size;
   }
-  return absl::make_unique<ShuffledSampler>(uuid_to_sizes);
+  return std::make_unique<ShuffledSampler>(uuid_to_sizes);
 }
 
 }  // namespace abesim
