@@ -24,7 +24,7 @@ using ::testing::Return;
 
 std::unique_ptr<Agent> MakeAgentInState(HealthState::State state,
                                         const Timestep& timestep) {
-  auto agent = absl::make_unique<testing::NiceMock<MockAgent>>();
+  auto agent = std::make_unique<testing::NiceMock<MockAgent>>();
   ON_CALL(*agent, CurrentHealthState()).WillByDefault(testing::Return(state));
   ON_CALL(*agent, CurrentTestResult(testing::_))
       .WillByDefault(testing::Return(TestResult{
@@ -140,9 +140,8 @@ class LearningObserverTest : public testing::Test {
  protected:
   LearningObserverTest()
       : filename_(absl::StrCat(getenv("TEST_TMPDIR"), "/", "learning")),
-        hazard_transmission_model_(
-            absl::make_unique<HazardTransmissionModel>()),
-        factory_(absl::make_unique<LearningObserverFactory>(
+        hazard_transmission_model_(std::make_unique<HazardTransmissionModel>()),
+        factory_(std::make_unique<LearningObserverFactory>(
             filename_,
             /*parallelism=*/1,
             /*reporting_delay=*/absl::ZeroDuration(),
@@ -177,7 +176,7 @@ class LearningObserverTest : public testing::Test {
 
 TEST_F(LearningObserverTest, DoesNotRecordTestsForOtherDays) {
   auto make_agent = [this](absl::Time received_time) {
-    auto agent = absl::make_unique<testing::NiceMock<MockAgent>>();
+    auto agent = std::make_unique<testing::NiceMock<MockAgent>>();
     ON_CALL(*agent, CurrentTestResult(timestep_))
         .WillByDefault(
             testing::Return(TestResult{.time_received = received_time}));

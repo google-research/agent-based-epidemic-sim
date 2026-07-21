@@ -763,13 +763,13 @@ absl::StatusOr<std::unique_ptr<RiskScoreModel>> CreateLearningRiskScoreModel(
                      b.days_since_symptom_onset_max();
             });
 
-  return absl::make_unique<LearningRiskScoreModel>(ble_buckets,
-                                                   infectiousness_buckets);
+  return std::make_unique<LearningRiskScoreModel>(ble_buckets,
+                                                  infectiousness_buckets);
 }
 
 std::unique_ptr<RiskScoreModel> CreateTimeVaryingRiskScoreModel(
     std::function<const RiskScoreModel*()> get_model_fn) {
-  return absl::make_unique<TimeVaryingRiskScoreModel>(std::move(get_model_fn));
+  return std::make_unique<TimeVaryingRiskScoreModel>(std::move(get_model_fn));
 }
 
 absl::StatusOr<std::unique_ptr<RiskScore>> CreateLearningRiskScore(
@@ -780,20 +780,20 @@ absl::StatusOr<std::unique_ptr<RiskScore>> CreateLearningRiskScore(
   // member rather than creating it for every RiskScore instance.
   PANDEMIC_ASSIGN_OR_RETURN(const TracingPolicy tracing_policy,
                             FromProto(tracing_policy_proto));
-  return absl::make_unique<LearningRiskScore>(tracing_policy, risk_score_model,
-                                              risk_score_policy, location_type);
+  return std::make_unique<LearningRiskScore>(tracing_policy, risk_score_model,
+                                             risk_score_policy, location_type);
 }
 
 std::unique_ptr<RiskScore> CreateAppEnabledRiskScore(
     const bool is_app_enabled, std::unique_ptr<RiskScore> risk_score) {
-  return absl::make_unique<AppEnabledRiskScore>(is_app_enabled,
-                                                std::move(risk_score));
+  return std::make_unique<AppEnabledRiskScore>(is_app_enabled,
+                                               std::move(risk_score));
 }
 
 std::unique_ptr<RiskScore> CreateHazardQueryingRiskScore(
     std::unique_ptr<Hazard> hazard, std::unique_ptr<RiskScore> risk_score) {
-  return absl::make_unique<HazardQueryingRiskScore>(std::move(hazard),
-                                                    std::move(risk_score));
+  return std::make_unique<HazardQueryingRiskScore>(std::move(hazard),
+                                                   std::move(risk_score));
 }
 
 }  // namespace abesim

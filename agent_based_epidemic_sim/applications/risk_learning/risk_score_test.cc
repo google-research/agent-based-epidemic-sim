@@ -372,7 +372,7 @@ TEST_F(RiskScoreTest, GetsContactRetentionDuration) {
 }
 
 TEST_F(RiskScoreTest, AppEnabledRiskScoreTogglesBehaviorOn) {
-  auto risk_score = absl::make_unique<MockRiskScore>();
+  auto risk_score = std::make_unique<MockRiskScore>();
   EXPECT_CALL(*risk_score, AddExposureNotification).Times(1);
   EXPECT_CALL(*risk_score, GetContactTracingPolicy)
       .WillOnce(testing::Return(RiskScore::ContactTracingPolicy{
@@ -387,7 +387,7 @@ TEST_F(RiskScoreTest, AppEnabledRiskScoreTogglesBehaviorOn) {
 }
 
 TEST_F(RiskScoreTest, AppEnabledRiskScoreTogglesBehaviorOff) {
-  auto risk_score = absl::make_unique<MockRiskScore>();
+  auto risk_score = std::make_unique<MockRiskScore>();
   EXPECT_CALL(*risk_score, AddExposureNotification).Times(0);
   EXPECT_CALL(*risk_score, GetContactTracingPolicy).Times(0);
   auto app_enabled_risk_score = CreateAppEnabledRiskScore(
@@ -401,11 +401,11 @@ TEST_F(RiskScoreTest, AppEnabledRiskScoreTogglesBehaviorOff) {
 
 TEST_F(RiskScoreTest, HazardQueryingRiskScoreAppendsHazard) {
   absl::SetFlag(&FLAGS_request_test_using_hazard, true);
-  auto risk_score = absl::make_unique<MockRiskScore>();
+  auto risk_score = std::make_unique<MockRiskScore>();
   auto mock_risk_score = risk_score.get();
   auto request_time = absl::UnixEpoch() + absl::Hours(24);
   Timestep timestep(request_time, absl::Hours(24));
-  auto hazard = absl::make_unique<Hazard>();
+  auto hazard = std::make_unique<Hazard>();
   std::vector<Exposure> exposures{{
       .start_time = absl::UnixEpoch(),
       .duration = absl::Hours(48),
@@ -432,7 +432,7 @@ TEST_F(RiskScoreTest, HazardQueryingRiskScoreAppendsHazard) {
 }
 
 TEST_F(RiskScoreTest, GetRiskScoreCountsCorrectly) {
-  auto risk_score_model = absl::make_unique<MockRiskScoreModel>();
+  auto risk_score_model = std::make_unique<MockRiskScoreModel>();
   InitializeRiskScoreFromModel(
       GetTracingPolicyProto(/*test_on_symptoms=*/false,
                             /*traceable_interaction_fraction=*/1.0,
@@ -531,7 +531,7 @@ TEST_F(RiskScoreTest, GetRiskScoreCountsCorrectly) {
 }
 
 TEST_F(RiskScoreTest, TestsOnSymptoms) {
-  auto risk_score_model = absl::make_unique<MockRiskScoreModel>();
+  auto risk_score_model = std::make_unique<MockRiskScoreModel>();
   InitializeRiskScoreFromModel(
       GetTracingPolicyProto(/*test_on_symptoms=*/true,
                             /*traceable_interaction_fraction=*/1.0,
@@ -559,7 +559,7 @@ TEST_F(RiskScoreTest, TestsOnSymptoms) {
 }
 
 TEST_F(RiskScoreTest, QuarantinesOnPositive) {
-  auto risk_score_model = absl::make_unique<MockRiskScoreModel>();
+  auto risk_score_model = std::make_unique<MockRiskScoreModel>();
   InitializeRiskScoreFromModel(
       GetTracingPolicyProto(/*test_on_symptoms=*/true,
                             /*traceable_interaction_fraction=*/1.0,
@@ -581,7 +581,7 @@ TEST_F(RiskScoreTest, QuarantinesOnPositive) {
 }
 
 TEST_F(RiskScoreTest, DropsIfNoTraceableInteractionFraction) {
-  auto risk_score_model = absl::make_unique<MockRiskScoreModel>();
+  auto risk_score_model = std::make_unique<MockRiskScoreModel>();
   EXPECT_CALL(*risk_score_model, ComputeRiskScore).Times(0);
   InitializeRiskScoreFromModel(GetTracingPolicyProto(
                                    /*test_on_symptoms=*/false,

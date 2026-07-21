@@ -57,7 +57,7 @@ std::unique_ptr<ExposureGenerator> TripleExposureGeneratorBuilder::Build()
     ble_params.tx = ble_params_proto.tx();
   }
 
-  return absl::make_unique<TripleExposureGenerator>(
-      distance_params, duration_params, ble_params);
+  return std::make_unique<TripleExposureGenerator>(distance_params,
+                                                   duration_params, ble_params);
 }
 }  // namespace abesim

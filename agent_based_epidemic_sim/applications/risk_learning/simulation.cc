@@ -82,7 +82,7 @@ class RiskLearningVisitGenerator : public VisitGenerator {
  public:
   RiskLearningVisitGenerator(const AgentProto& agent,
                              PopulationProfileData& profile)
-      : generator_(absl::make_unique<DurationSpecifiedVisitGenerator>(
+      : generator_(std::make_unique<DurationSpecifiedVisitGenerator>(
             GetLocationDurations(agent, *profile.profile))),
         susceptibility_(profile.profile->susceptibility()),
         visit_dynamics_(GenerateVisitDynamics(profile)) {}
@@ -152,7 +152,7 @@ const VisitGenerator& GetVisitGenerator(
   }
   std::unique_ptr<VisitGenerator>& value = cache[key];
   if (value == nullptr) {
-    value = absl::make_unique<RiskLearningVisitGenerator>(agent, profile);
+    value = std::make_unique<RiskLearningVisitGenerator>(agent, profile);
   }
   return *value;
 }
@@ -409,22 +409,21 @@ class RiskLearningSimulation : public Simulation {
     }
 
     // TODO: Specify parameters explicitly here.
-    result->transmission_model_ = absl::make_unique<HazardTransmissionModel>();
+    result->transmission_model_ = std::make_unique<HazardTransmissionModel>();
 
     result->infectivity_model_ =
-        absl::make_unique<RiskLearningInfectivityModel>(
-            config.global_profile());
+        std::make_unique<RiskLearningInfectivityModel>(config.global_profile());
 
     auto reporting_delay = DecodeGoogleApiProto(config.reporting_delay());
     CHECK(reporting_delay.ok()) << reporting_delay.status();
     if (!config.learning_filename().empty()) {
-      result->learning_observer_ = absl::make_unique<LearningObserverFactory>(
+      result->learning_observer_ = std::make_unique<LearningObserverFactory>(
           config.learning_filename(), num_workers, *reporting_delay,
           result->transmission_model_.get());
     }
     if (!config.hazard_histogram_filename().empty()) {
       result->hazard_histogram_observer_ =
-          absl::make_unique<HazardHistogramObserverFactory>(
+          std::make_unique<HazardHistogramObserverFactory>(
               config.hazard_histogram_filename());
     }
 
@@ -527,7 +526,7 @@ class RiskLearningSimulation : public Simulation {
               std::move(*risk_score_or));
           TransmissionModel* transmission_model;
           if (config.append_hazard_to_test_results()) {
-            auto hazard = absl::make_unique<Hazard>();
+            auto hazard = std::make_unique<Hazard>();
             transmission_model = hazard->GetTransmissionModel();
             risk_score = CreateHazardQueryingRiskScore(std::move(hazard),
                                                        std::move(risk_score));
@@ -618,7 +617,7 @@ class RiskLearningSimulation : public Simulation {
         stepwise_params_(stepwise_params),
         get_location_type_(
             [this](int64 uuid) { return location_types_[uuid]; }),
-        summary_observer_(absl::make_unique<SummaryObserverFactory>(
+        summary_observer_(std::make_unique<SummaryObserverFactory>(
             config.summary_filename())) {
     current_lockdown_multipliers_.fill(1.0f);
   }

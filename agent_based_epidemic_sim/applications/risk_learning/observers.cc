@@ -69,7 +69,7 @@ SummaryObserverFactory::~SummaryObserverFactory() {
 
 std::unique_ptr<SummaryObserver> SummaryObserverFactory::MakeObserver(
     const Timestep& timestep) const {
-  return absl::make_unique<SummaryObserver>(timestep);
+  return std::make_unique<SummaryObserver>(timestep);
 }
 
 void SummaryObserverFactory::Aggregate(
@@ -214,8 +214,8 @@ LearningObserverFactory::~LearningObserverFactory() {
 
 std::unique_ptr<LearningObserver> LearningObserverFactory::MakeObserver(
     const Timestep& timestep) const {
-  return absl::make_unique<LearningObserver>(timestep, reporting_delay_,
-                                             hazard_transmission_model_);
+  return std::make_unique<LearningObserver>(timestep, reporting_delay_,
+                                            hazard_transmission_model_);
 }
 
 void LearningObserverFactory::Aggregate(
@@ -259,7 +259,7 @@ HazardHistogramObserverFactory::~HazardHistogramObserverFactory() {
 
 std::unique_ptr<HazardHistogramObserver>
 HazardHistogramObserverFactory::MakeObserver(const Timestep& timestep) const {
-  return absl::make_unique<HazardHistogramObserver>(timestep);
+  return std::make_unique<HazardHistogramObserver>(timestep);
 }
 
 void HazardHistogramObserverFactory::Aggregate(
