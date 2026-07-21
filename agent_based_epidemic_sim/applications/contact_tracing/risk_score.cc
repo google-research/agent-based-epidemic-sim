@@ -178,7 +178,7 @@ absl::StatusOr<std::unique_ptr<RiskScore>> CreateTracingRiskScore(
     return test_latency_or.status();
   }
   config.test_latency = *test_latency_or;
-  return absl::make_unique<TracingRiskScore>(location_type, config);
+  return std::make_unique<TracingRiskScore>(location_type, config);
 }
 
 }  // namespace abesim

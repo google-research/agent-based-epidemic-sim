@@ -47,7 +47,7 @@ void RunSimulation(absl::string_view output_file_path,
                    const ContactTracingHomeWorkSimulationConfig& config,
                    int num_workers) {
   auto get_risk_score_generator = [&config](LocationTypeFn location_type) {
-    return absl::make_unique<TracingRiskScoreGenerator>(
+    return std::make_unique<TracingRiskScoreGenerator>(
         config.tracing_policy(), std::move(location_type));
   };
   auto context = GetSimulationContext(config.home_work_config());
