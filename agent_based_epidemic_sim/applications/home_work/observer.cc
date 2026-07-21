@@ -153,7 +153,7 @@ void HomeWorkSimulationObserverFactory::Aggregate(
 std::unique_ptr<HomeWorkSimulationObserver>
 HomeWorkSimulationObserverFactory::MakeObserver(
     const Timestep& timestep) const {
-  return absl::make_unique<HomeWorkSimulationObserver>(location_type_);
+  return std::make_unique<HomeWorkSimulationObserver>(location_type_);
 }
 
 }  // namespace abesim

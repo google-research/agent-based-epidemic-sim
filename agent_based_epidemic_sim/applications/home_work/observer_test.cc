@@ -55,7 +55,7 @@ const char* kExpectedHeaders =
     "contact_32,contact_64,contact_128,contact_256,contact_512\n";
 
 std::unique_ptr<MockAgent> MakeAgent(int64 uuid, HealthState::State state) {
-  auto agent = absl::make_unique<MockAgent>();
+  auto agent = std::make_unique<MockAgent>();
   EXPECT_CALL(*agent, uuid())
       .Times(testing::AnyNumber())
       .WillRepeatedly(testing::Return(uuid));
@@ -66,7 +66,7 @@ std::unique_ptr<MockAgent> MakeAgent(int64 uuid, HealthState::State state) {
 }
 
 std::unique_ptr<MockLocation> MakeLocation(int64 uuid) {
-  auto location = absl::make_unique<MockLocation>();
+  auto location = std::make_unique<MockLocation>();
   EXPECT_CALL(*location, uuid())
       .Times(testing::AnyNumber())
       .WillRepeatedly(testing::Return(uuid));
@@ -81,7 +81,7 @@ TEST(HomeWorkSimulationObserverTest, ZerosReturnedForNoObservations) {
   Timestep t(absl::UnixEpoch(), absl::Hours(24));
 
   std::string output;
-  auto file = absl::make_unique<MemFileWriterImpl>(&output);
+  auto file = std::make_unique<MemFileWriterImpl>(&output);
 
   {
     HomeWorkSimulationObserverFactory observer_factory(
@@ -111,7 +111,7 @@ TEST(HomeWorkSimulationObserverTest, PassthroughFields) {
   Timestep t(absl::UnixEpoch(), absl::Hours(24));
 
   std::string output;
-  auto file = absl::make_unique<MemFileWriterImpl>(&output);
+  auto file = std::make_unique<MemFileWriterImpl>(&output);
 
   std::vector<std::pair<std::string, std::string>> passthrough = {{"k1", "v1"},
                                                                   {"k2", "v2"}};
@@ -143,7 +143,7 @@ TEST(HomeWorkSimulationObserverTest, CorrectValuesForObservations) {
   Timestep t(absl::UnixEpoch(), absl::Hours(24));
 
   std::string output;
-  auto file = absl::make_unique<MemFileWriterImpl>(&output);
+  auto file = std::make_unique<MemFileWriterImpl>(&output);
 
   {
     HomeWorkSimulationObserverFactory observer_factory(

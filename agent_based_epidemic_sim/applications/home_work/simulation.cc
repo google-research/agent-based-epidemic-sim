@@ -179,7 +179,7 @@ SimulationContext GetSimulationContext(const HomeWorkSimulationConfig& config) {
   SimulationContext context;
   std::vector<LocationProto>& locations = context.locations;
   auto uuid_generator =
-      absl::make_unique<ShardedGlobalIdUuidGenerator>(kUuidShard);
+      std::make_unique<ShardedGlobalIdUuidGenerator>(kUuidShard);
   auto business_sampler = MakeBusinessSampler(
       config.location_distributions().business_distribution(),
       config.population_size(), *uuid_generator, &locations);
@@ -249,7 +249,7 @@ void RunSimulation(
   const auto step_size = step_size_or.value();
 
   auto transmission_model =
-      absl::make_unique<AggregatedTransmissionModel>(config.transmissibility());
+      std::make_unique<AggregatedTransmissionModel>(config.transmissibility());
   absl::FixedArray<std::unique_ptr<TransitionModel>> transition_models(
       context.population_profiles.population_profiles_size());
   for (int i = 0; i < transition_models.size(); ++i) {
@@ -263,14 +263,14 @@ void RunSimulation(
   visit_generators.reserve(context.agents.size());
   for (const auto& agent : context.agents) {
     visit_generators.push_back(
-        absl::make_unique<DurationSpecifiedVisitGenerator>(GetLocationDurations(
+        std::make_unique<DurationSpecifiedVisitGenerator>(GetLocationDurations(
             agent, context.population_profiles.population_profiles(
                        agent.population_profile_id()))));
     seir_agents.push_back(SEIRAgent::Create(
         agent.uuid(),
         {.time = init_time, .health_state = agent.initial_health_state()},
         transmission_model.get(), SEIRAgent::default_infectivity_model(),
-        absl::make_unique<WrappedTransitionModel>(
+        std::make_unique<WrappedTransitionModel>(
             transition_models[agent.population_profile_id()].get()),
         *visit_generators.back(), policy_generator->NextRiskScore()));
   }
@@ -279,7 +279,7 @@ void RunSimulation(
   location_des.reserve(context.locations.size());
   for (const auto& location : context.locations) {
     // TODO: Load a ProximityTrace Distribution from file.
-    location_des.push_back(absl::make_unique<LocationDiscreteEventSimulator>(
+    location_des.push_back(std::make_unique<LocationDiscreteEventSimulator>(
         location.reference().uuid(), meg_builder.Build()));
   }
   // Initializes Simulation.

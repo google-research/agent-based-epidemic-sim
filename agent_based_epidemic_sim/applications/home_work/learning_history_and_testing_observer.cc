@@ -72,7 +72,7 @@ void LearningHistoryAndTestingObserverFactory::Aggregate(
 std::unique_ptr<LearningHistoryAndTestingObserver>
 LearningHistoryAndTestingObserverFactory::MakeObserver(
     const Timestep& timestep) const {
-  return absl::make_unique<LearningHistoryAndTestingObserver>(timestep);
+  return std::make_unique<LearningHistoryAndTestingObserver>(timestep);
 }
 
 }  // namespace abesim

@@ -121,7 +121,7 @@ std::unique_ptr<RiskScore> ToggleRiskScoreGenerator::GetRiskScore(
     return NewNullRiskScore();
   }
   iter--;
-  return absl::make_unique<TogglingRiskScore>(location_type_, iter->toggles);
+  return std::make_unique<TogglingRiskScore>(location_type_, iter->toggles);
 }
 
 ToggleRiskScoreGenerator::ToggleRiskScoreGenerator(LocationTypeFn location_type,

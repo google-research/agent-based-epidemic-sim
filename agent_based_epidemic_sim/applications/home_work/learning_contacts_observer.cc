@@ -55,7 +55,7 @@ void LearningContactsObserverFactory::Aggregate(
 
 std::unique_ptr<LearningContactsObserver>
 LearningContactsObserverFactory::MakeObserver(const Timestep& timestep) const {
-  return absl::make_unique<LearningContactsObserver>();
+  return std::make_unique<LearningContactsObserver>();
 }
 
 }  // namespace abesim
