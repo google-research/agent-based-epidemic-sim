@@ -7,7 +7,7 @@ RUN apt-get -y update
 RUN apt-get -y upgrade
 RUN apt-get --no-install-recommends -y install ca-certificates clang curl gnupg
 RUN echo "deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8" | tee /etc/apt/sources.list.d/bazel.list \
-  && curl https://bazel.build/bazel-release.pub.gpg | apt-key add -
+  && curl https://releases.bazel.build/bazel-release.pub.gpg | apt-key add -
 RUN apt-get -y update
 RUN apt-get --no-install-recommends -y install bazel python3 python-is-python3 \
   python3-distutils python3-dev python3-pip
