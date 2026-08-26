@@ -105,7 +105,7 @@ class LogMessageFatal : public LogMessage {
   //   return 0;
   // which would otherwise yield the following compiler warning.
   // "warning: control reaches end of non-void function [-Wreturn-type]"
-  ABSL_ATTRIBUTE_NORETURN ~LogMessageFatal();
+  [[noreturn]] ~LogMessageFatal();
 };
 
 }  // namespace logging_internal
