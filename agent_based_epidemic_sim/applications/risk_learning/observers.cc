@@ -2,6 +2,7 @@
 
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/time/time.h"
 #include "agent_based_epidemic_sim/applications/risk_learning/exposures_per_test_result.pb.h"
