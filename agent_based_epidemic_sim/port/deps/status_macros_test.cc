@@ -65,7 +65,7 @@ TEST(AssignOrReturn, Works) {
     EXPECT_EQ(2, value2);
     PANDEMIC_ASSIGN_OR_RETURN(const int& value3, ReturnStatusOrValue(3));
     EXPECT_EQ(3, value3);
-    PANDEMIC_ASSIGN_OR_RETURN(ABSL_ATTRIBUTE_UNUSED int value4,
+    PANDEMIC_ASSIGN_OR_RETURN([[maybe_unused]] int value4,
                               ReturnStatusOrError("EXPECTED"));
     return ReturnError("ERROR");
   };
@@ -79,7 +79,7 @@ TEST(AssignOrReturn, WorksWithAppend) {
     return "FAILURE";
   };
   auto func = [&]() -> absl::Status {
-    ABSL_ATTRIBUTE_UNUSED int value;
+    [[maybe_unused]] int value;
     PANDEMIC_ASSIGN_OR_RETURN(value, ReturnStatusOrValue(1),
                               _ << fail_test_if_called());
     PANDEMIC_ASSIGN_OR_RETURN(value, ReturnStatusOrError("EXPECTED A"),
@@ -100,7 +100,7 @@ TEST(AssignOrReturn, WorksWithAdaptorFunc) {
     return builder << "EXPECTED B";
   };
   auto func = [&]() -> absl::Status {
-    ABSL_ATTRIBUTE_UNUSED int value;
+    [[maybe_unused]] int value;
     PANDEMIC_ASSIGN_OR_RETURN(value, ReturnStatusOrValue(1),
                               fail_test_if_called(_));
     PANDEMIC_ASSIGN_OR_RETURN(value, ReturnStatusOrError("EXPECTED A"),
@@ -114,7 +114,7 @@ TEST(AssignOrReturn, WorksWithAdaptorFunc) {
 
 TEST(AssignOrReturn, WorksWithAppendIncludingLocals) {
   auto func = [&](const std::string& str) -> absl::Status {
-    ABSL_ATTRIBUTE_UNUSED int value;
+    [[maybe_unused]] int value;
     PANDEMIC_ASSIGN_OR_RETURN(value, ReturnStatusOrError("EXPECTED A"),
                               _ << str);
     return ReturnOk();
